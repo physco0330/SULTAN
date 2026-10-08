@@ -74,7 +74,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
 
         <button
           onClick={() => setQuickView(true)}
-          className="absolute bottom-3 right-3 z-20 flex h-9 w-9 translate-y-2 items-center justify-center border border-gold/40 bg-night/50 text-silver backdrop-blur transition-all duration-300 hover:border-gold hover:text-gold group-hover:translate-y-0"
+          className="absolute right-3 top-[3.5rem] z-20 flex h-9 w-9 items-center justify-center border border-gold/40 bg-night/50 text-silver backdrop-blur transition-all duration-300 hover:border-gold hover:text-gold"
           aria-label={t('misc.view')}
         >
           <Eye size={15} />
@@ -164,7 +164,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
               <p className="mt-4 text-xs text-gold">{t('product.lowStock')} — {product.stock} {t('misc.view').toLowerCase()}</p>
             )}
 
-            <div className="mt-6 flex flex-col gap-3">
+            <div className="mt-6">
               <button
                 disabled={product.stock === 0}
                 onClick={() => {
@@ -176,17 +176,10 @@ export function ProductCard({ product, className }: { product: Product; classNam
                   quickAdd(product, size)
                   setQuickView(false)
                 }}
-                className="flex w-full items-center justify-center gap-2 bg-gold px-6 py-3.5 text-xs font-bold uppercase tracking-[0.25em] text-night transition-all hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex w-full items-center justify-center gap-2 bg-gold px-3 py-3.5 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-night transition-all hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ShoppingBag size={14} /> {t('product.addToCart')}
               </button>
-              <Link
-                to={`/producto/${product.slug}`}
-                onClick={() => setQuickView(false)}
-                className="flex w-full items-center justify-center border border-gold/50 px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold hover:text-night"
-              >
-                {t('misc.view')} →
-              </Link>
             </div>
           </div>
         </div>

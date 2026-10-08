@@ -100,7 +100,19 @@
     "reset": "重置筛选",
     "apply": "应用",
     "result": "件",
-    "types": { "shirts": "衬衫", "tshirts": "T恤", "trousers": "长裤", "jeans": "牛仔裤", "jackets": "夹克", "coats": "大衣", "hoodies": "卫衣", "dresses": "连衣裙", "skirts": "半身裙", "sets": "套装", "accessories": "配饰" }
+    "types": {
+      "shirts": "衬衫",
+      "tshirts": "T恤",
+      "trousers": "长裤",
+      "jeans": "牛仔裤",
+      "jackets": "夹克",
+      "coats": "大衣",
+      "hoodies": "卫衣",
+      "dresses": "连衣裙",
+      "skirts": "半身裙",
+      "sets": "套装",
+      "accessories": "配饰"
+    }
   },
   "product": {
     "selectSize": "选择尺码",
@@ -283,5 +295,25 @@
     "added": "已加入购物袋",
     "outOfStockToast": "该单品已售罄",
     "selectSizeToast": "请选择尺码"
+  },
+  "reviews": {
+    "title": "Customer Reviews",
+    "subtitle": "What people say about the collection",
+    "count": "reviews published",
+    "latest50": "showing the 50 most recent",
+    "empty": "No reviews yet. Be the first to share your experience!",
+    "leaveTitle": "Leave a review",
+    "leaveSubtitle": "Your opinion helps us get better.",
+    "rating": "Your rating",
+    "name": "Name",
+    "nameRequired": "Enter your name to publish",
+    "city": "City (optional)",
+    "comment": "Your comment",
+    "commentPlaceholder": "Tell us about the product and the service...",
+    "commentRequired": "Write a comment with at least 4 characters",
+    "send": "Publish review",
+    "sendError": "Could not publish review",
+    "success": "Thanks! Your review was published",
+    "verified": "Verified purchase"
   }
 }

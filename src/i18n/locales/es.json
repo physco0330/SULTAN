@@ -114,7 +114,19 @@
     "reset": "Reiniciar filtros",
     "apply": "Aplicar",
     "result": "resultado",
-    "types": { "shirts": "Camisas", "tshirts": "Camisetas", "trousers": "Pantalones", "jeans": "Jeans", "jackets": "Chaquetas", "coats": "Abrigos", "hoodies": "Sudaderas", "dresses": "Vestidos", "skirts": "Faldas", "sets": "Conjuntos", "accessories": "Accesorios" }
+    "types": {
+      "shirts": "Camisas",
+      "tshirts": "Camisetas",
+      "trousers": "Pantalones",
+      "jeans": "Jeans",
+      "jackets": "Chaquetas",
+      "coats": "Abrigos",
+      "hoodies": "Sudaderas",
+      "dresses": "Vestidos",
+      "skirts": "Faldas",
+      "sets": "Conjuntos",
+      "accessories": "Accesorios"
+    }
   },
   "product": {
     "selectSize": "Seleccionar talla",
@@ -484,6 +496,26 @@
     "backendNote": "Esta vista previa usa datos locales simulados. Cuando el backend esté listo, este panel leerá productos, pedidos, stock y analítica en vivo a través de endpoints autenticados.",
     "sampleData": "Datos de muestra con fines de maquetación",
     "signinNote": "Ruta protegida por autenticación backend cuando esté disponible."
+  },
+  "reviews": {
+    "title": "Reseñas de clientes",
+    "subtitle": "Lo que opinan quienes ya visten la colección",
+    "count": "reseñas publicadas",
+    "latest50": "mostrando las 50 más recientes",
+    "empty": "Aún no hay reseñas. ¡Sé el primero en compartir tu experiencia!",
+    "leaveTitle": "Deja tu reseña",
+    "leaveSubtitle": "Tu opinión nos ayuda a ser mejores.",
+    "rating": "Tu calificación",
+    "name": "Nombre",
+    "nameRequired": "Escribe tu nombre para publicar",
+    "city": "Ciudad (opcional)",
+    "comment": "Tu comentario",
+    "commentPlaceholder": "Cuéntanos tu experiencia con el producto y el servicio...",
+    "commentRequired": "Escribe un comentario de al menos 4 caracteres",
+    "send": "Publicar reseña",
+    "sendError": "No se pudo publicar la reseña",
+    "success": "¡Gracias! Tu reseña fue publicada",
+    "verified": "Compra verificada"
   },
   "misc": {
     "loading": "Cargando",

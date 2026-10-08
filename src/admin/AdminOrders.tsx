@@ -310,7 +310,11 @@ export function AdminOrders() {
         </div>
       </Modal>
 
-      <OrderFormModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={() => load(filter, period)} />
+      <OrderFormModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(created) => setOrders((list) => [created, ...list])}
+      />
     </div>
   )
 }

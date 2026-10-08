@@ -114,7 +114,19 @@
     "reset": "Filtreleri sıfırla",
     "apply": "Uygula",
     "result": "sonuç",
-    "types": { "shirts": "Gömlek", "tshirts": "Tişört", "trousers": "Pantolon", "jeans": "Jeans", "jackets": "Ceket", "coats": "Palto", "hoodies": "Sweatshirt", "dresses": "Elbise", "skirts": "Etek", "sets": "Takım", "accessories": "Aksesuar" }
+    "types": {
+      "shirts": "Gömlek",
+      "tshirts": "Tişört",
+      "trousers": "Pantolon",
+      "jeans": "Jeans",
+      "jackets": "Ceket",
+      "coats": "Palto",
+      "hoodies": "Sweatshirt",
+      "dresses": "Elbise",
+      "skirts": "Etek",
+      "sets": "Takım",
+      "accessories": "Aksesuar"
+    }
   },
   "product": {
     "selectSize": "Beden seçin",
@@ -484,6 +496,26 @@
     "backendNote": "Bu önizleme yerel simülasyon verileri kullanır. Backend hazır olduğunda bu panel, kimliği doğrulanmış API uçları üzerinden canlı ürünleri, siparişleri, stokları ve analizleri okuyacak.",
     "sampleData": "Mizanpaj amaçlı örnek veriler",
     "signinNote": "Rota kullanılabilir olduğunda backend kimlik doğrulamasıyla korunur."
+  },
+  "reviews": {
+    "title": "Müşteri Yorumları",
+    "subtitle": "Koleksiyon hakkında ne diyorlar",
+    "count": "yayınlanan yorum",
+    "latest50": "en son 50 gösteriliyor",
+    "empty": "Henüz yorum yok. İlk sen paylaş!",
+    "leaveTitle": "Yorum bırak",
+    "leaveSubtitle": "Görüşün daha iyi olmamıza yardımcı olur.",
+    "rating": "Puanın",
+    "name": "Ad",
+    "nameRequired": "Yayınlamak için adını yaz",
+    "city": "Şehir (isteğe bağlı)",
+    "comment": "Yorumun",
+    "commentPlaceholder": "Ürün ve hizmet deneyimini anlat...",
+    "commentRequired": "En az 4 karakterlik bir yorum yaz",
+    "send": "Yorumu yayınla",
+    "sendError": "Yorum yayınlanamadı",
+    "success": "Teşekkürler! Yorumun yayınlandı",
+    "verified": "Doğrulanmış satın alma"
   },
   "misc": {
     "loading": "Yükleniyor",

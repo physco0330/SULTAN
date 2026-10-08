@@ -106,6 +106,15 @@ export interface AuditRow {
   created_at: string
 }
 
+export interface ReviewRow {
+  id: number
+  name: string
+  city: string | null
+  rating: number
+  comment: string
+  created_at: string
+}
+
 export const adminService = {
   login: (username: string, password: string) =>
     api.post<{ token: string; user: AdminUser }>('/admin/auth/login', { username, password }),
@@ -139,7 +148,7 @@ export const adminService = {
     customer: { name: string; email?: string; phone?: string; city?: string; country?: string; address?: string; zip?: string }
     shipping?: ShippingMethod
     promoCode?: string
-  }) => api.post<{ ok: boolean; order: { id: number; number: string; status: string; total: number } }>('/admin/orders', body),
+  }) => api.post<{ ok: boolean; order: AdminOrder }>('/admin/orders', body),
   deleteOrder: (id: number) => api.del<{ ok: boolean }>(`/admin/orders/${id}`),
 
   settings: () => api.get<{ settings: Record<string, string>; coupons: CouponRow[] }>('/admin/settings'),
@@ -158,5 +167,7 @@ export const adminService = {
   deleteContact: (id: number) => api.del<{ ok: boolean }>(`/admin/contacts/${id}`),
 
   customers: () => api.get<{ items: CustomerRow[] }>('/admin/customers'),
+  reviews: () => api.get<{ items: ReviewRow[] }>('/admin/reviews'),
+  deleteReview: (id: number) => api.del<{ ok: boolean }>(`/admin/reviews/${id}`),
   audit: () => api.get<{ items: AuditRow[] }>('/admin/audit'),
 }

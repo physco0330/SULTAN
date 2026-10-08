@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { PRODUCTS } from '@/data/products'
 import type { Product } from '@/types'
 import { fetchCatalog } from '@/services/productService'
+import { subscribeDataVersion } from '@/utils/liveSync'
 
 let cache: Product[] | null = null
 let inflight: Promise<Product[]> | null = null
@@ -75,6 +76,25 @@ export function useCatalog(): CatalogState {
       dead = true
     }
   }, [])
+
+  /* Live sync: when the admin (or another tab) changes data, refresh the
+   * list silently in place — no loading spinner, no page reload. */
+  useEffect(
+    () =>
+      subscribeDataVersion(() => {
+        cache = null
+        inflight = null
+        fetchCatalog().then((list) => {
+          cache = list
+          setProducts(list)
+          setOnline(true)
+          setError(null)
+        }).catch(() => {
+          /* keep the current list when offline */
+        })
+      }),
+    [],
+  )
 
   return { products, loading, online, error, reload }
 }

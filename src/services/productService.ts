@@ -188,7 +188,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   companyPhone: '',
   companyWhatsapp: '',
   companyAddress: 'Istanbul, Türkiye',
-  defaultCurrency: 'USD',
+  defaultCurrency: 'COP',
   freeShippingThreshold: FREE_SHIPPING_THRESHOLD_USD,
   flatShipping: FLAT_SHIPPING_USD,
   expressShipping: EXPRESS_SHIPPING_USD,

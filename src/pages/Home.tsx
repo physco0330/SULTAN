@@ -7,6 +7,7 @@ import { Reveal } from '@/components/Reveal'
 import { SectionTitle } from '@/components/SectionTitle'
 import { ProductGrid } from '@/components/ProductGrid'
 import { NewsletterForm } from '@/components/NewsletterForm'
+import { ReviewsSection } from '@/components/Reviews'
 
 function Hero() {
   const { t } = useTranslation()
@@ -16,21 +17,25 @@ function Hero() {
         <img
           src={heroImage()}
           alt=""
-          className="h-full w-full object-cover opacity-50 animate-slow-zoom"
+          className="h-full w-full object-cover opacity-75 animate-slow-zoom"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-night/70 via-night/20 to-night" />
+        <div className="absolute inset-0 bg-gradient-to-b from-night/50 via-transparent to-night/80" />
         <div className="absolute inset-0 bg-radial-fade" />
       </div>
 
       <div className="relative z-10 mx-auto -mt-10 max-w-4xl px-6 pb-20 text-center">
         <Reveal variant="fade-up">
-          <p className="mb-5 flex items-center justify-center gap-2 text-[0.66rem] font-semibold uppercase tracking-[0.5em] text-silver">
+          <p className="mb-6 flex items-center justify-center gap-2 text-[0.66rem] font-semibold uppercase tracking-[0.5em] text-gold">
             <MapPin size={12} aria-hidden="true" /> {t('hero.location')}
           </p>
         </Reveal>
         <Reveal variant="fade-up" delay={120}>
-          <h1 className="font-display text-5xl font-semibold text-gold-gradient md:text-7xl lg:text-8xl">
-            {t('hero.brand')}
+          <h1 className="flex justify-center">
+            <img
+              src="/logo.jpg"
+              alt="SULTAN BLACK"
+              className="h-28 w-auto object-contain drop-shadow-[0_0_50px_rgba(212,175,55,0.55)] sm:h-40 lg:h-52"
+            />
           </h1>
         </Reveal>
         <Reveal variant="fade-up" delay={240}>
@@ -241,6 +246,7 @@ export default function Home() {
       <Featured />
       <Philosophy />
       <TurkishExperience />
+      <ReviewsSection />
       <NewsletterCta />
     </>
   )

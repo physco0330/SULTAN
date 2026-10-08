@@ -77,6 +77,7 @@ export interface Language {
   code: string
   label: string
   native: string
+  flag: string
   dir: 'ltr' | 'rtl'
   enabled: boolean
 }

@@ -26,6 +26,7 @@ export function LanguageSelector({ compact = false }: { compact?: boolean }) {
         )}
       >
         {compact ? <Languages size={16} /> : null}
+        <span className="text-base leading-none">{current.flag}</span>
         <span>{current.native}</span>
         <ChevronDown size={12} className={cn('transition-transform', open && 'rotate-180')} />
       </button>
@@ -47,6 +48,7 @@ export function LanguageSelector({ compact = false }: { compact?: boolean }) {
               )}
             >
               <span className="flex items-center gap-3">
+                <span className="text-base leading-none">{l.flag}</span>
                 <span className="font-medium">{l.native}</span>
                 <span className="text-[0.65rem] uppercase text-bone">{l.code}</span>
               </span>

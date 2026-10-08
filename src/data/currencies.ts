@@ -1,6 +1,7 @@
 import type { Currency } from '@/types'
 
 export const CURRENCIES: Currency[] = [
+  { code: 'COP', symbol: '$', locale: 'es-CO', decimals: 0, rate: 4100, label: 'Colombian Peso' },
   { code: 'USD', symbol: '$', locale: 'en-US', decimals: 2, rate: 1, label: 'US Dollar' },
   { code: 'CNY', symbol: '¥', locale: 'zh-CN', decimals: 2, rate: 7.18, label: 'Chinese Yuan' },
   { code: 'INR', symbol: '₹', locale: 'en-IN', decimals: 2, rate: 83.2, label: 'Indian Rupee' },
@@ -18,7 +19,7 @@ export const CURRENCIES: Currency[] = [
   { code: 'TRY', symbol: '₺', locale: 'tr-TR', decimals: 2, rate: 33.4, label: 'Turkish Lira' },
 ]
 
-export const DEFAULT_CURRENCY = 'USD'
+export const DEFAULT_CURRENCY = 'COP'
 
 /* IMPORTANT: rates above are MOCK display rates for the frontend prototype.
  * They are intentionally not real market values. Wire a real exchange-rate

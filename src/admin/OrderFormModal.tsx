@@ -5,7 +5,7 @@ import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { useUi } from '@/store/ui'
 import { Spinner } from '@/admin/ui'
-import type { AdminProduct, ShippingMethod } from '@/services/adminService'
+import type { AdminProduct, AdminOrder, ShippingMethod } from '@/services/adminService'
 
 const input =
   'w-full border border-gold/25 bg-night px-3 py-2 text-sm text-ivory placeholder:text-bone/60 focus:border-gold focus:outline-none'
@@ -30,7 +30,7 @@ export function OrderFormModal({
 }: {
   open: boolean
   onClose: () => void
-  onCreated: () => void
+  onCreated: (order: AdminOrder) => void
 }) {
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [lines, setLines] = useState<Line[]>([{ productId: '', quantity: 1, size: 'M', color: 'Black' }])
@@ -74,9 +74,9 @@ export function OrderFormModal({
         shipping,
         promoCode: promo.trim() || undefined,
       })
-      pushToast(`Pedido ${res.order.number} creado ($${res.order.total})`)
+      pushToast(`Pedido ${res.order.number} creado ($${res.order.total_usd})`)
       invalidateCatalogCache()
-      onCreated()
+      onCreated(res.order)
       onClose()
     } catch (err) {
       pushToast(err instanceof Error ? err.message : 'No se pudo crear el pedido', 'error')

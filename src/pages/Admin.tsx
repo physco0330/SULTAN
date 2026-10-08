@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Package, ShoppingBag, LogOut, Wifi, ServerOff, Mail, Users, ClipboardList, Banknote, ShieldCheck, PencilRuler } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, LogOut, Wifi, ServerOff, Mail, Users, ClipboardList, Banknote, ShieldCheck, PencilRuler, MessageSquare } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getAdminToken, setAdminToken } from '@/services/api'
 import { adminService } from '@/services/adminService'
@@ -26,6 +26,7 @@ const CONFIG_NAV: { key: AdminSettingsSection; label: string; icon: typeof Penci
   { key: 'Suscriptores', label: 'Suscriptores', icon: Mail },
   { key: 'Contactos', label: 'Contactos', icon: ClipboardList },
   { key: 'Clientes', label: 'Clientes', icon: Users },
+  { key: 'Reseñas', label: 'Reseñas', icon: MessageSquare },
   { key: 'Auditoría', label: 'Auditoría', icon: ShieldCheck },
 ]
 
@@ -38,6 +39,7 @@ const SECTION_TITLE: Record<string, string> = {
   Suscriptores: 'Configuración · Suscriptores',
   Contactos: 'Configuración · Contactos',
   Clientes: 'Configuración · Clientes',
+  Reseñas: 'Configuración · Reseñas',
   Auditoría: 'Configuración · Auditoría',
 }
 
@@ -107,8 +109,8 @@ export default function Admin() {
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-gold/15 bg-carbon/60 lg:flex">
         <div className="border-b border-gold/15 px-6 py-6">
           <button onClick={() => setSection('dashboard')} className="text-left">
-            <span className="font-display text-xl font-semibold tracking-[0.18em] text-gold-gradient">SULTAN</span>
-            <span className="block pl-1 text-[0.58rem] font-medium uppercase tracking-[0.6em] text-silver">Administración</span>
+            <img src="/logo.jpg" alt="SULTAN BLACK" className="h-10 w-auto object-contain" />
+            <span className="mt-1 block pl-0.5 text-[0.58rem] font-medium uppercase tracking-[0.6em] text-silver">Administración</span>
           </button>
         </div>
 

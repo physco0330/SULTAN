@@ -100,7 +100,19 @@
     "reset": "Réinitialiser les filtres",
     "apply": "Appliquer",
     "result": "résultat",
-    "types": { "shirts": "Chemises", "tshirts": "T-shirts", "trousers": "Pantalons", "jeans": "Jeans", "jackets": "Vestes", "coats": "Manteaux", "hoodies": "Sweats", "dresses": "Robes", "skirts": "Jupes", "sets": "Ensembles", "accessories": "Accessoires" }
+    "types": {
+      "shirts": "Chemises",
+      "tshirts": "T-shirts",
+      "trousers": "Pantalons",
+      "jeans": "Jeans",
+      "jackets": "Vestes",
+      "coats": "Manteaux",
+      "hoodies": "Sweats",
+      "dresses": "Robes",
+      "skirts": "Jupes",
+      "sets": "Ensembles",
+      "accessories": "Accessoires"
+    }
   },
   "product": {
     "selectSize": "Choisir la taille",
@@ -280,5 +292,25 @@
     "added": "Ajouté au panier",
     "outOfStockToast": "Cette pièce est épuisée",
     "selectSizeToast": "Veuillez choisir une taille"
+  },
+  "reviews": {
+    "title": "Customer Reviews",
+    "subtitle": "What people say about the collection",
+    "count": "reviews published",
+    "latest50": "showing the 50 most recent",
+    "empty": "No reviews yet. Be the first to share your experience!",
+    "leaveTitle": "Leave a review",
+    "leaveSubtitle": "Your opinion helps us get better.",
+    "rating": "Your rating",
+    "name": "Name",
+    "nameRequired": "Enter your name to publish",
+    "city": "City (optional)",
+    "comment": "Your comment",
+    "commentPlaceholder": "Tell us about the product and the service...",
+    "commentRequired": "Write a comment with at least 4 characters",
+    "send": "Publish review",
+    "sendError": "Could not publish review",
+    "success": "Thanks! Your review was published",
+    "verified": "Verified purchase"
   }
 }

@@ -114,7 +114,19 @@
     "reset": "Reset filters",
     "apply": "Apply",
     "result": "result",
-    "types": { "shirts": "Shirts", "tshirts": "T-Shirts", "trousers": "Trousers", "jeans": "Jeans", "jackets": "Jackets", "coats": "Coats", "hoodies": "Hoodies", "dresses": "Dresses", "skirts": "Skirts", "sets": "Sets", "accessories": "Accessories" }
+    "types": {
+      "shirts": "Shirts",
+      "tshirts": "T-Shirts",
+      "trousers": "Trousers",
+      "jeans": "Jeans",
+      "jackets": "Jackets",
+      "coats": "Coats",
+      "hoodies": "Hoodies",
+      "dresses": "Dresses",
+      "skirts": "Skirts",
+      "sets": "Sets",
+      "accessories": "Accessories"
+    }
   },
   "product": {
     "selectSize": "Select size",
@@ -484,6 +496,26 @@
     "backendNote": "This preview uses local mock data. When the backend is ready, this panel will read live products, orders, stock and analytics through authenticated API endpoints.",
     "sampleData": "Sample data for layout purposes",
     "signinNote": "Route protected by backend auth when available."
+  },
+  "reviews": {
+    "title": "Customer Reviews",
+    "subtitle": "What people say about the collection",
+    "count": "reviews published",
+    "latest50": "showing the 50 most recent",
+    "empty": "No reviews yet. Be the first to share your experience!",
+    "leaveTitle": "Leave a review",
+    "leaveSubtitle": "Your opinion helps us get better.",
+    "rating": "Your rating",
+    "name": "Name",
+    "nameRequired": "Enter your name to publish",
+    "city": "City (optional)",
+    "comment": "Your comment",
+    "commentPlaceholder": "Tell us about the product and the service...",
+    "commentRequired": "Write a comment with at least 4 characters",
+    "send": "Publish review",
+    "sendError": "Could not publish review",
+    "success": "Thanks! Your review was published",
+    "verified": "Verified purchase"
   },
   "misc": {
     "loading": "Loading",

@@ -356,6 +356,26 @@ app.post('/api/newsletter', (req, res) => {
   res.status(201).json({ ok: true })
 })
 
+/* ---------------- public: reviews ---------------- */
+
+app.get('/api/reviews', (_req, res) => {
+  const rows = db.prepare('SELECT * FROM reviews ORDER BY created_at DESC, id DESC LIMIT 50').all()
+  res.json({ items: rows })
+})
+
+app.post('/api/reviews', (req, res) => {
+  const name = String(req.body.name ?? '').trim()
+  const city = String(req.body.city ?? '').trim()
+  const rating = Math.round(toNum(req.body.rating, 5))
+  const comment = String(req.body.comment ?? '').trim()
+  if (!name || name.length > 60) return res.status(422).json({ error: 'Nombre requerido' })
+  if (rating < 1 || rating > 5) return res.status(422).json({ error: 'Calificación inválida' })
+  if (comment.length < 4 || comment.length > 800) return res.status(422).json({ error: 'El comentario debe tener al menos 4 caracteres' })
+  db.prepare('INSERT INTO reviews (name, city, rating, comment) VALUES (?,?,?,?)').run(name, city || null, rating, comment)
+  audit(null, 'review.create', 'reviews', null, `${name} dejó una reseña de ${rating}★`)
+  res.status(201).json({ ok: true })
+})
+
 /* ---------------- admin: auth ---------------- */
 
 app.post('/api/admin/auth/login', (req, res) => {
@@ -690,7 +710,29 @@ app.post('/api/admin/orders', requireAuth, (req, res) => {
 
   audit(req.auth.username, 'order.create', 'orders', number, `Creó pedido ${number} por ${total} USD`)
 
-  res.status(201).json({ ok: true, order: { id: orderId, number, status: 'pending', total } })
+  const order = {
+    id: orderId,
+    number,
+    status: 'pending',
+    total,
+    customer_name: String(info.name).trim(),
+    customer_email: String(info.email ?? '').trim().toLowerCase(),
+    customer_phone: String(info.phone ?? '').trim() || null,
+    ship_city: String(info.city ?? '').trim() || null,
+    ship_country: String(info.country ?? '').trim() || null,
+    ship_address: String(info.address ?? '').trim() || null,
+    ship_zip: String(info.zip ?? '').trim() || null,
+    subtotal_usd: Math.round(subtotal),
+    shipping_usd: shipping,
+    discount_usd: discount,
+    total_usd: total,
+    currency: 'USD',
+    coupon_code: couponCode,
+    created_at: nowIso(),
+    itemCount: prepared.length,
+    quantity: prepared.reduce((s, p) => s + p.qty, 0),
+  }
+  res.status(201).json({ ok: true, order })
 })
 
 app.delete('/api/admin/orders/:id', requireAuth, (req, res) => {
@@ -799,6 +841,18 @@ app.get('/api/admin/customers', requireAuth, (_req, res) => {
     GROUP BY c.id ORDER BY total_spent DESC
   `).all()
   res.json({ items: rows })
+})
+
+app.get('/api/admin/reviews', requireAuth, (_req, res) => {
+  res.json({ items: db.prepare('SELECT * FROM reviews ORDER BY created_at DESC, id DESC LIMIT 200').all() })
+})
+
+app.delete('/api/admin/reviews/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Reseña no encontrada' })
+  db.prepare('DELETE FROM reviews WHERE id = ?').run(row.id)
+  audit(req.auth.username, 'review.delete', 'reviews', row.id, `Eliminó reseña de ${row.name}`)
+  res.json({ ok: true })
 })
 
 app.get('/api/admin/audit', requireAuth, (_req, res) => {

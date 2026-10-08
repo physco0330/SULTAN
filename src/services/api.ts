@@ -1,6 +1,8 @@
 /* Minimal API client. All calls go through Vite proxy: /api -> http://localhost:4001
  * When the backend is offline every service falls back to its local mock. */
 
+import { bumpDataVersion } from '@/utils/liveSync'
+
 export class ApiError extends Error {
   status: number
   constructor(message: string, status: number) {
@@ -38,6 +40,10 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
       /* keep fallback message */
     }
     throw new ApiError(message, res.status)
+  }
+  const method = (options.method ?? 'GET').toUpperCase()
+  if (method !== 'GET' && method !== 'HEAD' && !path.includes('/admin/auth/') && path !== '/admin/me') {
+    bumpDataVersion()
   }
   return res.json() as Promise<T>
 }

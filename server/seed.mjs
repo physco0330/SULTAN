@@ -161,14 +161,14 @@ function seedSettings() {
     company_name: 'SULTAN BLACK',
     company_tagline: 'Where Turkish Craft Meets Modern Luxury',
     company_email: 'sales@sultanblack.com',
-    company_phone: '+90 212 000 00 00',
-    company_whatsapp: '+90 212 000 00 00',
+    company_phone: '+57 311 7317614',
+    company_whatsapp: '+57 311 7317614',
     company_address: 'Istanbul, Türkiye',
-    default_currency: 'USD',
+    default_currency: 'COP',
     free_shipping_threshold: '300',
     flat_shipping: '15',
     express_shipping: '45',
-    instagram_url: '',
+    instagram_url: 'https://www.instagram.com/sultanblack_store',
   }
   const insert = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?,?)')
   Object.entries(values).forEach(([k, v]) => insert.run(k, String(v)))

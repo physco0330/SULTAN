@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchConfig, FALLBACK_CONFIG } from '@/services/productService'
 import type { StoreConfig } from '@/services/productService'
+import { subscribeDataVersion } from '@/utils/liveSync'
 
 let cache: StoreConfig | null = null
 
@@ -29,5 +30,18 @@ export function useStoreConfig(): StoreConfig {
       dead = true
     }
   }, [])
+
+  /* Live sync: reflect admin settings changes in place, no reload. */
+  useEffect(
+    () =>
+      subscribeDataVersion(() => {
+        fetchConfig().then((c) => {
+          cache = c
+          setConfig(c)
+        }).catch(() => {})
+      }),
+    [],
+  )
+
   return config
 }
