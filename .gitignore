@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+
+# Base de datos local (se recrea y siembra sola al arrancar)
+server/data/
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.local
+
+# Entorno / secretos
+.env
+.env.*
+!.env.example

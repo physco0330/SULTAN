@@ -1,0 +1,98 @@
+{
+  "nav": {
+    "home": "Главная", "men": "Мужчинам", "women": "Женщинам", "newCollection": "Новая коллекция", "catalog": "Каталог", "offers": "Предложения",
+    "search": "Поиск", "searchPlaceholder": "Поиск товаров, категорий, SKU…", "favorites": "Избранное", "account": "Аккаунт", "cart": "Корзина",
+    "menu": "Меню", "filterSort": "Фильтры и сортировка", "close": "Закрыть", "viewAll": "Смотреть все", "openMenu": "Открыть меню"
+  },
+  "hero": {
+    "brand": "SULTAN BLACK", "title": "Искусство роскоши", "subtitle": "Оригинальная мода. Исключительное качество. Элегантность без границ.",
+    "ctaDiscover": "Открыть коллекцию", "ctaBuy": "Купить сейчас", "scroll": "Прокрутить", "location": "Стамбул · Türkiye"
+  },
+  "badges": { "new": "Новинка", "limited": "Лимитировано", "bestseller": "Хит", "sale": "Скидка" },
+  "sections": {
+    "categories": { "title": "Исследуйте мир", "subtitle": "Четыре вселенных, один стандарт совершенства." },
+    "featured": { "title": "Выбор Султана", "subtitle": "Вещи, отобранные за редкость, ткань и отделку." },
+    "philosophy": {
+      "title": "Философия Султана", "subtitle": "Каждая вещь рождается как идея и доводится до совершенства вручную.",
+      "quality": "Турецкое качество", "design": "Оригинальный дизайн", "materials": "Премиальные материалы", "detail": "Внимание к деталям",
+      "exclusive": "Эксклюзивность", "produccion": "Тщательное производство"
+    },
+    "turkey": { "title": "Турецкий опыт", "subtitle": "Анатолийское ремесло, османские линии, свет Босфора." },
+    "newsletter": {
+      "title": "Вступите в Sultan Circle", "subtitle": "Первыми узнавайте об эксклюзивных коллекциях и предложениях.",
+      "placeholder": "Ваш e-mail", "subscribe": "Подписаться", "success": "Добро пожаловать в Circle.",
+      "privacy": "Без спама. Отписка в любой момент."
+    },
+    "marquee": {
+      "freeShipping": "Бесплатная доставка от $300", "international": "Международная доставка", "authentic": "100% оригинальные вещи",
+      "returns": "Лёгкий возврат за 30 дней", "secure": "Безопасная покупка"
+    }
+  },
+  "catalog": {
+    "title": "Коллекция", "men": "Мужчинам", "women": "Женщинам", "all": "Все", "filters": "Фильтры", "sortBy": "Сортировать",
+    "sortRelevance": "Релевантность", "sortNewest": "Новинки", "sortPriceAsc": "Сначала дешевле", "sortPriceDesc": "Сначала дороже",
+    "sortBestSellers": "Хиты продаж", "sortRated": "Лучшие рейтинги", "category": "Категория", "type": "Тип изделия", "size": "Размер",
+    "color": "Цвет", "price": "Цена", "collection": "Коллекция", "availability": "Наличие", "available": "В наличии",
+    "lowStock": "Последние единицы", "soldOut": "Нет в наличии", "productsShown": "товаров показано", "noProducts": "Товары не найдены",
+    "noProductsHint": "Попробуйте изменить фильтры.", "reset": "Сбросить фильтры", "apply": "Применить", "result": "результат",
+    "types": { "shirts": "Рубашки", "tshirts": "Футболки", "trousers": "Брюки", "jeans": "Джинсы", "jackets": "Куртки", "coats": "Пальто", "hoodies": "Худи", "dresses": "Платья", "skirts": "Юбки", "sets": "Комплекты", "accessories": "Аксессуары" }
+  },
+  "product": {
+    "selectSize": "Выберите размер", "selectColor": "Выберите цвет", "quantity": "Количество", "addToCart": "В корзину", "buyNow": "Купить сейчас",
+    "addWishlist": "В избранное", "removeWishlist": "Убрать из избранного", "sizeGuide": "Таблица размеров", "sku": "SKU", "availability": "Наличие",
+    "inStock": "В наличии", "lowStock": "Осталось мало", "outOfStock": "Нет в наличии", "infoTitle": "Информация о товаре",
+    "description": "Описание", "material": "Материал", "manufacturing": "Производство", "care": "Уход", "shippingTab": "Доставка", "returns": "Возврат",
+    "share": "Поделиться", "copyLink": "Копировать ссылку", "copied": "Ссылка скопирована", "related": "Вам может понравиться",
+    "sizeGuideTitle": "Таблица размеров — SULTAN BLACK", "sizeGuideNote": "Размеры в сантиметрах.", "sizeTableSize": "Размер", "sizeTableChest": "Грудь",
+    "sizeTableWaist": "Талия", "sizeTableHips": "Бёдра"
+  },
+  "cart": {
+    "title": "Ваша корзина", "drawerTitle": "Корзина", "empty": "Корзина пуста", "emptyHint": "Откройте коллекцию и добавьте первую вещь.",
+    "continue": "Продолжить покупки", "subtotal": "Промежуточный итог", "shipping": "Доставка", "discount": "Скидка", "total": "Итого",
+    "promo": "Промокод", "promoPlaceholder": "Введите код", "apply": "Применить", "checkout": "Оформить заказ", "remove": "Удалить",
+    "size": "Размер", "color": "Цвет", "qty": "Кол-во", "freeShipping": "До бесплатной доставки ${{amount}}.",
+    "freeShippingMet": "Ваш заказ доставляется бесплатно.", "promoApplied": "Код применён: {{code}}", "promoInvalid": "Неверный код."
+  },
+  "checkout": {
+    "title": "Безопасная оплата", "contact": "Контактные данные", "firstName": "Имя", "lastName": "Фамилия", "email": "E-mail", "phone": "Телефон",
+    "addressTitle": "Адрес доставки", "country": "Страна", "city": "Город", "address": "Адрес", "postalCode": "Почтовый индекс", "shippingMethod": "Способ доставки",
+    "standard": "Стандарт — {{days}} дней", "express": "Экспресс — {{days}} дней", "paymentMethod": "Способ оплаты", "card": "Банковская карта",
+    "cardNote": "Безопасная оплата. Данные карты не касаются этого фронтенда.", "cod": "Оплата при доставке", "placeOrder": "Оформить заказ",
+    "placeOrderLoading": "Обработка…", "secure": "Безопасная покупка", "protected": "Данные защищены", "safePayment": "Безопасная оплата",
+    "international": "Международная доставка", "orderSuccess": "Заказ оформлен", "orderSuccessMsg": "Спасибо. Заказ получен.",
+    "backHome": "На главную", "required": "Обязательное поле", "emailInvalid": "Неверный e-mail", "paymentGateway": "Оплата через безопасного провайдера."
+  },
+  "favorites": {
+    "title": "Избранное", "empty": "Пока нет избранного", "emptyHint": "Нажимайте на сердце, чтобы сохранить вещи.", "viewAll": "Смотреть избранное"
+  },
+  "account": {
+    "title": "Мой Аккаунт", "subtitle": "Ваше личное пространство Sultan.", "signin": "Войти", "create": "Создать аккаунт", "email": "E-mail", "password": "Пароль",
+    "name": "Полное имя", "orders": "Заказы", "ordersEmpty": "Пока нет заказов.", "wishlist": "Избранное", "settings": "Настройки", "logout": "Выйти"
+  },
+  "footer": {
+    "tagline": "Где турецкое ремесло встречается с современной роскошью.", "shop": "Магазин", "help": "Помощь", "legal": "Правовая информация", "contactTitle": "Контакты",
+    "privacidad": "Конфиденциальность", "terminos": "Условия", "cookies": "Cookies", "envios": "Доставка", "devoluciones": "Возврат", "sizeGuide": "Таблица размеров",
+    "newsletterTitle": "Вступите в Sultan Circle", "subscribe": "ПОДПИСАТЬСЯ", "rights": "Все права защищены.", "madeIn": "Дизайн в Стамбуле"
+  },
+  "contact": {
+    "title": "Контакты", "subtitle": "Отвечаем в течение 24 часов.", "name": "Имя", "email": "E-mail", "subject": "Тема", "message": "Сообщение",
+    "send": "Отправить", "sent": "Сообщение получено."
+  },
+  "about": { "title": "Философия Султана", "p1": "SULTAN BLACK родился на берегах Босфора с идеей: мода может чтить традиции и принадлежать будущему." },
+  "faq": {
+    "title": "Частые вопросы", "q1": "Где производятся вещи?", "a1": "Каждая вещь создана и отделана в Стамбуле.",
+    "q2": "Доставляете за границу?", "a2": "Да. Доставляем по всему миру.", "q3": "Политика возврата?", "a3": "Возврат в течение 30 дней.", "q4": "Вещи оригинальны?", "a4": "Каждая вещь имеет сертификат подлинности."
+  },
+  "policies": {
+    "title": "Политики", "privacidad": "Конфиденциальность", "terminos": "Условия", "cookies": "Cookies", "envios": "Доставка", "devoluciones": "Возврат",
+    "placeholder": "Документ будет финализирован."
+  },
+  "search": {
+    "title": "Поиск", "placeholder": "Попробуйте «sultan jacket», «шёлк», «SKU»…", "recent": "Недавние запросы", "results": "Результаты",
+    "noResults": "Нет результатов для «{{query}}»", "noResultsHint": "Проверьте написание.", "clear": "Очистить"
+  },
+  "misc": {
+    "loading": "Загрузка", "error": "Что-то пошло не так", "retry": "Повторить", "language": "Язык", "currency": "Валюта", "price": "Цена",
+    "needHelp": "Нужна помощь?", "added": "Добавлено в корзину", "outOfStockToast": "Вещь раскуплена", "selectSizeToast": "Выберите размер"
+  }
+}

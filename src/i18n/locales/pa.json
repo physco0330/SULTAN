@@ -1,0 +1,99 @@
+{
+  "nav": {
+    "home": "ਹੋਮ", "men": "ਪੁਰਸ਼", "women": "ਮਹਿਲਾ", "newCollection": "ਨਵਾਂ ਕਲੈਕਸ਼ਨ", "catalog": "ਕੈਟਾਲਾਗ", "offers": "ਆਫ਼ਰ",
+    "search": "ਖੋਜ", "searchPlaceholder": "ਉਤਪਾਦ, ਸ਼੍ਰੇਣੀ, SKU ਖੋਜੋ…", "favorites": "ਪਸੰਦੀਦਾ", "account": "ਖਾਤਾ", "cart": "ਕਾਰਟ",
+    "menu": "ਮੀਨੂ", "filterSort": "ਫਿਲਟਰ ਅਤੇ ਕ੍ਰਮ", "close": "ਬੰਦ ਕਰੋ", "viewAll": "ਸਾਰੇ ਦੇਖੋ", "openMenu": "ਮੀਨੂ ਖੋਲ੍ਹੋ"
+  },
+  "hero": {
+    "brand": "SULTAN BLACK", "title": "ਆਡੰਬਰ ਦੀ ਕਲਾ", "subtitle": "ਅਸਲੀ ਫੈਸ਼ਨ। ਬੇਮਿਸਾਲ ਕੁਆਲਿਟੀ। ਬੇਹੱਦ ਸੁੰਦਰਤਾ।",
+    "ctaDiscover": "ਕਲੈਕਸ਼ਨ ਦੇਖੋ", "ctaBuy": "ਹੁਣੇ ਖਰੀਦੋ", "scroll": "ਸਕ੍ਰੋਲ", "location": "ਇਸਤਾਂਬੁਲ · Türkiye"
+  },
+  "badges": { "new": "ਨਵਾਂ", "limited": "ਸੀਮਤ", "bestseller": "ਬੈਸਟ ਸੇਲਰ", "sale": "ਆਫ਼ਰ" },
+  "sections": {
+    "categories": { "title": "ਸੰਸਾਰ ਨੂੰ ਖੋਜੋ", "subtitle": "ਚਾਰ ਦੁਨੀਆਂ, ਇੱਕ ਉੱਤਮਤਾ ਦਾ ਮਿਆਰ।" },
+    "featured": { "title": "ਦਿ ਸੁਲਤਾਨ ਸਿਲੈਕਸ਼ਨ", "subtitle": "ਨਾਇਬਤਾ, ਕੱਪੜੇ ਅਤੇ ਫਿਨਿਸ਼ ਦੇ ਆਧਾਰ 'ਤੇ ਚੁਣੀਆਂ ਵਸਤੂਆਂ।" },
+    "philosophy": {
+      "title": "ਸੁਲਤਾਨ ਦਰਸ਼ਨ", "subtitle": "ਹਰ ਵਸਤੂ ਇੱਕ ਵਿਚਾਰ ਤੋਂ ਜਨਮ ਲੈਂਦੀ ਹੈ ਅਤੇ ਹੱਥਾਂ ਨਾਲ ਮੁਕੰਮਲ ਹੁੰਦੀ ਹੈ।",
+      "quality": "ਤੁਰਕੀ ਗੁਣਵੱਤਾ", "design": "ਅਸਲੀ ਡਿਜ਼ਾਈਨ", "materials": "ਪ੍ਰੀਮੀਅਮ ਸਮੱਗਰੀ", "detail": "ਵੇਰਵੇ ਉੱਤੇ ਧਿਆਨ",
+      "exclusive": "ਵਿਸ਼ੇਸ਼ਤਾ", "produccion": "ਸਾਵਧਾਨ ਉਤਪਾਦਨ"
+    },
+    "turkey": { "title": "ਤੁਰਕੀ ਅਨੁਭਵ", "subtitle": "ਅਨਾਤੋਲੀਆ ਦੀ ਕਾਰੀਗਰੀ, ਉਸਮਾਨੀ ਲੀਕਾਂ, ਬਾਸਫੋਰਸ ਦੀ ਰੋਸ਼ਨੀ।" },
+    "newsletter": {
+      "title": "ਸੁਲਤਾਨ ਸਰਕਲ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ", "subtitle": "ਵਿਸ਼ੇਸ਼ ਕਲੈਕਸ਼ਨ ਅਤੇ ਆਫ਼ਰ ਪਹਿਲਾਂ ਜਾਣੋ।",
+      "placeholder": "ਤੁਹਾਡਾ ਈਮੇਲ", "subscribe": "ਸਬਸਕ੍ਰਾਈਬ", "success": "ਸਰਕਲ ਵਿੱਚ ਸਵਾਗਤ ਹੈ।",
+      "privacy": "ਕੋਈ ਸਪੈਮ ਨਹੀਂ।"
+    },
+    "marquee": {
+      "freeShipping": "$300+ 'ਤੇ ਮੁਫ਼ਤ ਸ਼ਿਪਿੰਗ", "international": "ਅੰਤਰਰਾਸ਼ਟਰੀ ਸ਼ਿਪਿੰਗ", "authentic": "100% ਅਸਲੀ ਵਸਤੂਆਂ",
+      "returns": "30 ਦਿਨਾਂ ਵਿੱਚ ਆਸਾਨ ਵਾਪਸੀ", "secure": "ਸੁਰੱਖਿਅਤ ਚੈੱਕਆਉਟ"
+    }
+  },
+  "catalog": {
+    "title": "ਕਲੈਕਸ਼ਨ", "men": "ਪੁਰਸ਼", "women": "ਮਹਿਲਾ", "all": "ਸਭ", "filters": "ਫਿਲਟਰ", "sortBy": "ਕ੍ਰਮ",
+    "sortRelevance": "ਸੰਬੰਧਤਾ", "sortNewest": "ਨਵੀਨਤਮ", "sortPriceAsc": "ਕੀਮਤ: ਘੱਟ ਤੋਂ ਵੱਧ", "sortPriceDesc": "ਕੀਮਤ: ਵੱਧ ਤੋਂ ਘੱਟ",
+    "sortBestSellers": "ਬੈਸਟ ਸੇਲਰ", "sortRated": "ਉੱਚ ਰੇਟਿੰਗ", "category": "ਸ਼੍ਰੇਣੀ", "type": "ਪਹਿਰਾਵੇ ਦੀ ਕਿਸਮ", "size": "ਸਾਈਜ਼",
+    "color": "ਰੰਗ", "price": "ਕੀਮਤ", "collection": "ਕਲੈਕਸ਼ਨ", "availability": "ਉਪਲਬਧਤਾ", "available": "ਉਪਲਬਧ",
+    "lowStock": "ਆਖਰੀ ਯੂਨਿਟ", "soldOut": "ਵਿਕ ਗਿਆ", "productsShown": "ਉਤਪਾਦ ਦਿਖਾਏ ਗਏ", "noProducts": "ਕੋਈ ਉਤਪਾਦ ਨਹੀਂ ਮਿਲਿਆ",
+    "noProductsHint": "ਆਪਣੇ ਫਿਲਟਰ ਬਦਲ ਕੇ ਦੇਖੋ।", "reset": "ਫਿਲਟਰ ਰੀਸੈੱਟ", "apply": "ਲਾਗੂ ਕਰੋ", "result": "ਨਤੀਜਾ",
+    "types": { "shirts": "ਸ਼ਰਟਾਂ", "tshirts": "ਟੀ-ਸ਼ਰਟਾਂ", "trousers": "ਪੈਂਟ", "jeans": "ਜੀਨਸ", "jackets": "ਜੈਕਟਾਂ", "coats": "ਕੋਟ", "hoodies": "ਹੂਡੀਜ਼", "dresses": "ਡਰੈਸਾਂ", "skirts": "ਸਕਰਟਾਂ", "sets": "ਸੈੱਟ", "accessories": "ਐਕਸੈਸਰੀਜ਼" }
+  },
+  "product": {
+    "selectSize": "ਸਾਈਜ਼ ਚੁਣੋ", "selectColor": "ਰੰਗ ਚੁਣੋ", "quantity": "ਮਾਤਰਾ", "addToCart": "ਕਾਰਟ ਵਿੱਚ ਪਾਓ", "buyNow": "ਹੁਣੇ ਖਰੀਦੋ",
+    "addWishlist": "ਪਸੰਦੀਦਾ ਵਿੱਚ ਜੋੜੋ", "removeWishlist": "ਪਸੰਦੀਦਾ ਤੋਂ ਹਟਾਓ", "sizeGuide": "ਸਾਈਜ਼ ਗਾਈਡ", "sku": "SKU", "availability": "ਉਪਲਬਧਤਾ",
+    "inStock": "ਸਟਾਕ ਵਿੱਚ", "lowStock": "ਘੱਟ ਸਟਾਕ", "outOfStock": "ਵਿਕ ਗਿਆ", "infoTitle": "ਉਤਪਾਦ ਜਾਣਕਾਰੀ",
+    "description": "ਵੇਰਵਾ", "material": "ਸਮੱਗਰੀ", "manufacturing": "ਨਿਰਮਾਣ", "care": "ਦੇਖਭਾਲ", "shippingTab": "ਸ਼ਿਪਿੰਗ", "returns": "ਵਾਪਸੀ",
+    "share": "ਸਾਂਝਾ ਕਰੋ", "copyLink": "ਲਿੰਕ ਕਾਪੀ", "copied": "ਲਿੰਕ ਕਾਪੀ ਹੋਇਆ", "related": "ਤੁਹਾਨੂੰ ਇਹ ਵੀ ਪਸੰਦ ਆ ਸਕਦੇ ਹਨ",
+    "sizeGuideTitle": "ਸਾਈਜ਼ ਗਾਈਡ — SULTAN BLACK", "sizeGuideNote": "ਪੈਮਾਨੇ ਸੈਂਟੀਮੀਟਰ ਵਿੱਚ।", "sizeTableSize": "ਸਾਈਜ਼", "sizeTableChest": "ਛਾਤੀ",
+    "sizeTableWaist": "ਕਮਰ", "sizeTableHips": "ਕੁਲ੍ਹੇ"
+  },
+  "cart": {
+    "title": "ਤੁਹਾਡਾ ਕਾਰਟ", "drawerTitle": "ਸ਼ਾਪਿੰਗ ਬੈਗ", "empty": "ਤੁਹਾਡਾ ਕਾਰਟ ਖਾਲੀ ਹੈ", "emptyHint": "ਕਲੈਕਸ਼ਨ ਦੇਖੋ ਅਤੇ ਪਹਿਲੀ ਵਸਤੂ ਜੋੜੋ।",
+    "continue": "ਖਰੀਦਦਾਰੀ ਜਾਰੀ ਰੱਖੋ", "subtotal": "ਉਪ-ਕੁੱਲ", "shipping": "ਸ਼ਿਪਿੰਗ", "discount": "ਰਿਆਇਤ", "total": "ਕੁੱਲ", "promo": "ਪ੍ਰੋਮੋ ਕੋਡ",
+    "promoPlaceholder": "ਕੋਡ ਦਰਜ ਕਰੋ", "apply": "ਲਾਗੂ", "checkout": "ਖਰੀਦਦਾਰੀ ਪੂਰੀ ਕਰੋ", "remove": "ਹਟਾਓ", "size": "ਸਾਈਜ਼", "color": "ਰੰਗ",
+    "qty": "ਮਾਤਰਾ", "freeShipping": "ਮੁਫ਼ਤ ਸ਼ਿਪਿੰਗ ਲਈ ਹੋਰ ${{amount}}।", "freeShippingMet": "ਤੁਹਾਡੇ ਆਰਡਰ ਲਈ ਮੁਫ਼ਤ ਸ਼ਿਪਿੰਗ।",
+    "promoApplied": "ਕੋਡ ਲਾਗੂ: {{code}}", "promoInvalid": "ਅਵੈਧ ਕੋਡ।"
+  },
+  "checkout": {
+    "title": "ਸੁਰੱਖਿਅਤ ਚੈੱਕਆਉਟ", "contact": "ਸੰਪਰਕ ਜਾਣਕਾਰੀ", "firstName": "ਪਹਿਲਾ ਨਾਮ", "lastName": "ਅਖੀਰਲਾ ਨਾਮ", "email": "ਈਮੇਲ", "phone": "ਫ਼ੋਨ",
+    "addressTitle": "ਸ਼ਿਪਿੰਗ ਪਤਾ", "country": "ਦੇਸ਼", "city": "ਸ਼ਹਿਰ", "address": "ਪਤਾ", "postalCode": "ਪੋਸਟਲ ਕੋਡ", "shippingMethod": "ਸ਼ਿਪਿੰਗ ਵਿਧੀ",
+    "standard": "ਸਟੈਂਡਰਡ — {{days}} ਦਿਨ", "express": "ਐਕਸਪ੍ਰੈਸ — {{days}} ਦਿਨ", "paymentMethod": "ਭੁਗਤਾਨ ਵਿਧੀ", "card": "ਕ੍ਰੈਡਿਟ/ਡੈਬਿਟ ਕਾਰਡ",
+    "cardNote": "ਸੁਰੱਖਿਅਤ ਭੁਗਤਾਨ। ਕਾਰਡ ਡੇਟਾ ਇਸ ਫਰੰਟਐਂਡ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚਦਾ।", "cod": "ਡਿਲੀਵਰੀ 'ਤੇ ਭੁਗਤਾਨ", "placeOrder": "ਆਰਡਰ ਕਰੋ",
+    "placeOrderLoading": "ਕਾਰਵਾਈ…", "secure": "ਸੁਰੱਖਿਅਤ ਖਰੀਦਦਾਰੀ", "protected": "ਡੇਟਾ ਸੁਰੱਖਿਅਤ", "safePayment": "ਸੁਰੱਖਿਅਤ ਭੁਗਤਾਨ",
+    "international": "ਅੰਤਰਰਾਸ਼ਟਰੀ ਸ਼ਿਪਿੰਗ", "orderSuccess": "ਆਰਡਰ ਪੂਰਾ", "orderSuccessMsg": "ਧੰਨਵਾਦ। ਤੁਹਾਡਾ ਆਰਡਰ ਪ੍ਰਾਪਤ ਹੋਇਆ।",
+    "backHome": "ਹੋਮ ਵਾਪਸ", "required": "ਇਹ ਫੀਲਡ ਲਾਜ਼ਮੀ ਹੈ", "emailInvalid": "ਸਹੀ ਈਮੇਲ ਦਰਜ ਕਰੋ",
+    "paymentGateway": "ਭੁਗਤਾਨ ਸੁਰੱਖਿਅਤ ਪ੍ਰਦਾਤਾ ਦੁਆਰਾ ਹੁੰਦਾ ਹੈ।"
+  },
+  "favorites": {
+    "title": "ਪਸੰਦੀਦਾ", "empty": "ਅਜੇ ਕੋਈ ਪਸੰਦੀਦਾ ਨਹੀਂ", "emptyHint": "ਕਿਸੇ ਉਤਪਾਦ 'ਤੇ ਦਿਲ ਦਾ ਆਈਕਨ ਦਬਾਓ।", "viewAll": "ਪਸੰਦੀਦਾ ਦੇਖੋ"
+  },
+  "account": {
+    "title": "ਮੇਰਾ ਖਾਤਾ", "subtitle": "ਤੁਹਾਡੀ ਨਿੱਜੀ ਸੁਲਤਾਨ ਜਗ੍ਹਾ।", "signin": "ਸਾਈਨ ਇਨ", "create": "ਖਾਤਾ ਬਣਾਓ", "email": "ਈਮੇਲ", "password": "ਪਾਸਵਰਡ",
+    "name": "ਪੂਰਾ ਨਾਮ", "orders": "ਆਰਡਰ", "ordersEmpty": "ਅਜੇ ਕੋਈ ਆਰਡਰ ਨਹੀਂ।", "wishlist": "ਪਸੰਦੀਦਾ", "settings": "ਸੈਟਿੰਗਾਂ", "logout": "ਸਾਈਨ ਆਉਟ"
+  },
+  "footer": {
+    "tagline": "ਜਿੱਥੇ ਤੁਰਕੀ ਕਾਰੀਗਰੀ ਆਧੁਨਿਕ ਆਡੰਬਰ ਨਾਲ ਮਿਲਦੀ ਹੈ।", "shop": "ਸਟੋਰ", "help": "ਮਦਦ", "legal": "ਕਾਨੂੰਨੀ", "contactTitle": "ਸੰਪਰਕ",
+    "privacidad": "ਪਰਾਈਵੇਸੀ", "terminos": "ਸ਼ਰਤਾਂ", "cookies": "ਕੂਕੀਜ਼", "envios": "ਸ਼ਿਪਿੰਗ", "devoluciones": "ਵਾਪਸੀ", "sizeGuide": "ਸਾਈਜ਼ ਗਾਈਡ",
+    "newsletterTitle": "ਸੁਲਤਾਨ ਸਰਕਲ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ", "subscribe": "ਸਬਸਕ੍ਰਾਈਬ", "rights": "ਸਾਰੇ ਅਧਿਕਾਰ ਸੁਰੱਖਿਅਤ।", "madeIn": "ਇਸਤਾਂਬੁਲ ਵਿੱਚ ਡਿਜ਼ਾਈਨ"
+  },
+  "contact": {
+    "title": "ਸੰਪਰਕ", "subtitle": "ਅਸੀਂ 24 ਘੰਟਿਆਂ ਵਿੱਚ ਜਵਾਬ ਦਿੰਦੇ ਹਾਂ।", "name": "ਨਾਮ", "email": "ਈਮੇਲ", "subject": "ਵਿਸ਼ਾ", "message": "ਸੁਨੇਹਾ",
+    "send": "ਸੁਨੇਹਾ ਭੇਜੋ", "sent": "ਸੁਨੇਹਾ ਮਿਲਿਆ।"
+  },
+  "about": { "title": "ਸੁਲਤਾਨ ਦਰਸ਼ਨ", "p1": "SULTAN BLACK ਬਾਸਫੋਰਸ ਦੇ ਕਿਨਾਰੇ ਇੱਕ ਵਿਸ਼ਵਾਸ ਨਾਲ ਪੈਦਾ ਹੋਇਆ: ਫੈਸ਼ਨ ਪਰੰਪਰਾ ਦਾ ਸਨਮਾਨ ਕਰ ਸਕਦਾ ਹੈ ਅਤੇ ਆਉਣ ਵਾਲੇ ਕੱਲ ਦਾ ਹਿੱਸਾ ਬਣ ਸਕਦਾ ਹੈ।" },
+  "faq": {
+    "title": "ਆਮ ਸਵਾਲ", "q1": "ਵਸਤੂਆਂ ਕਿੱਥੇ ਬਣਦੀਆਂ ਹਨ?", "a1": "ਹਰ ਵਸਤੂ ਇਸਤਾਂਬੁਲ ਵਿੱਚ ਡਿਜ਼ਾਈਨ ਅਤੇ ਮੁਕੰਮਲ ਹੁੰਦੀ ਹੈ।",
+    "q2": "ਕੀ ਅੰਤਰਰਾਸ਼ਟਰੀ ਸ਼ਿਪਿੰਗ ਹੈ?", "a2": "ਹਾਂ। ਅਸੀਂ ਦੁਨੀਆ ਭਰ ਵਿੱਚ ਭੇਜਦੇ ਹਾਂ।", "q3": "ਵਾਪਸੀ ਨੀਤੀ?", "a3": "30 ਦਿਨਾਂ ਵਿੱਚ ਵਾਪਸੀ।", "q4": "ਕੀ ਵਸਤੂਆਂ ਅਸਲੀ ਹਨ?", "a4": "ਹਰ ਵਸਤੂ ਨਾਲ ਪ੍ਰਮਾਣਿਕਤਾ ਸਰਟੀਫਿਕੇਟ।"
+  },
+  "policies": {
+    "title": "ਨੀਤੀਆਂ", "privacidad": "ਪਰਾਈਵੇਸੀ", "terminos": "ਸ਼ਰਤਾਂ", "cookies": "ਕੂਕੀਜ਼", "envios": "ਸ਼ਿਪਿੰਗ", "devoluciones": "ਵਾਪਸੀ",
+    "placeholder": "ਦਸਤਾਵੇਜ਼ ਅੰਤਿਮ ਰੂਪ ਵਿੱਚ ਹੈ।"
+  },
+  "search": {
+    "title": "ਖੋਜ", "placeholder": "“sultan jacket”, “ਰੇਸ਼ਮ”, “SKU” ਅਜ਼ਮਾਓ…", "recent": "ਤਾਜ਼ਾ ਖੋਜਾਂ", "results": "ਨਤੀਜੇ",
+    "noResults": "“{{query}}” ਲਈ ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ", "noResultsHint": "ਸਪੈਲਿੰਗ ਦੇਖੋ।", "clear": "ਸਾਫ਼"
+  },
+  "misc": {
+    "loading": "ਲੋਡ ਹੋ ਰਿਹਾ", "error": "ਕੁਝ ਗਲਤ ਹੋਇਆ", "retry": "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼", "language": "ਭਾਸ਼ਾ", "currency": "ਮੁਦਰਾ", "price": "ਕੀਮਤ",
+    "needHelp": "ਮਦਦ ਚਾਹੀਦੀ ਹੈ?", "added": "ਕਾਰਟ ਵਿੱਚ ਜੋੜਿਆ", "outOfStockToast": "ਇਹ ਵਸਤੂ ਵਿਕ ਗਈ", "selectSizeToast": "ਕਿਰਪਾ ਕਰਕੇ ਸਾਈਜ਼ ਚੁਣੋ"
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "home": "ہوم", "men": "مردانہ", "women": "زنانہ", "newCollection": "نیا کلیکشن", "catalog": "کٹالاگ", "offers": "آفرز",
+    "search": "تلاش", "searchPlaceholder": "پروڈکٹ، زمرہ، SKU تلاش کریں…", "favorites": "پسندیدہ", "account": "اکاؤنٹ", "cart": "کارٹ",
+    "menu": "مینو", "filterSort": "فلٹر اور ترتیب", "close": "بند کریں", "viewAll": "سب دیکھیں", "openMenu": "مینو کھولیں"
+  },
+  "hero": {
+    "brand": "SULTAN BLACK",
+    "title": "عیش و آرام کا فن",
+    "subtitle": "اصلی فیشن۔ بہترین کوالٹی۔ بلا حصار خوبصورتی۔",
+    "ctaDiscover": "کلیکشن دریافت کریں",
+    "ctaBuy": "ابھی خریدیں",
+    "scroll": "اسکرول",
+    "location": "استنبول · Türkiye"
+  },
+  "badges": { "new": "نیا", "limited": "محدود", "bestseller": "بیسٹ سیلر", "sale": "آفر" },
+  "sections": {
+    "categories": { "title": "دنیا دریافت کریں", "subtitle": "چار جہان، ایک معیارِ کمال۔" },
+    "featured": { "title": "دی سلطان سلیکشن", "subtitle": "نایابیت، کپڑے اور تکمیل کی بنیاد پر چنی ہوئی اشیاء۔" },
+    "philosophy": {
+      "title": "سلطان کا فلسفہ", "subtitle": "ہر ٹکڑا ایک خیال سے جنم لیتا ہے اور ہاتھوں سے مکمل ہوتا ہے۔",
+      "quality": "ترک معیار", "design": "اصلی ڈیزائن", "materials": "پرییمیم مواد", "detail": "تفصیل پر توجہ",
+      "exclusive": "خصوصیت", "produccion": "محنت سے پیداوار"
+    },
+    "turkey": { "title": "ترک تجربہ", "subtitle": "اناطولیہ کی دستکاری، عثمانی خطوط، باسفورس کی روشنی۔" },
+    "newsletter": {
+      "title": "سلطان سرکل میں شامل ہوں",
+      "subtitle": "خصوصی کلیکشن اور آفرز سب سے پہلے جانیں۔",
+      "placeholder": "آپ کا ای میل", "subscribe": "سبسکرائب", "success": "سرکل میں خوش آمدید۔",
+      "privacy": "کوئی سپیم نہیں۔"
+    },
+    "marquee": {
+      "freeShipping": "$300+ پر فری شپنگ", "international": "بین الاقوامی شپنگ", "authentic": "100% اصلی اشیاء",
+      "returns": "30 دن میں آسان واپسی", "secure": "محفوظ چیک آؤٹ"
+    }
+  },
+  "catalog": {
+    "title": "کلیکشن", "men": "مردانہ", "women": "زنانہ", "all": "سب", "filters": "فلٹر", "sortBy": "ترتیب",
+    "sortRelevance": "مطابقت", "sortNewest": "سب سے نیا", "sortPriceAsc": "قیمت: کم سے زیادہ", "sortPriceDesc": "قیمت: زیادہ سے کم",
+    "sortBestSellers": "بیسٹ سیلرز", "sortRated": "بہترین ریٹنگ", "category": "زمرہ", "type": "لباس کی قسم", "size": "سائز",
+    "color": "رنگ", "price": "قیمت", "collection": "کلیکشن", "availability": "دستیابی", "available": "دستیاب",
+    "lowStock": "آخری یونٹ", "soldOut": "فروخت مکمل", "productsShown": "پروڈکٹس دکھائے گئے", "noProducts": "کوئی پروڈکٹ نہیں ملا",
+    "noProductsHint": "فلٹر تبدیل کر کے دیکھیں۔", "reset": "فلٹر ری سیٹ", "apply": "لاگو کریں", "result": "نتیجہ",
+    "types": { "shirts": "شرٹس", "tshirts": "ٹی شرٹس", "trousers": "پتلون", "jeans": "جینز", "jackets": "جیکٹس", "coats": "کوٹس", "hoodies": "ہوڈیز", "dresses": "ڈریسز", "skirts": "اسکرٹس", "sets": "سیٹس", "accessories": "لوازمات" }
+  },
+  "product": {
+    "selectSize": "سائز منتخب کریں", "selectColor": "رنگ منتخب کریں", "quantity": "مقدار", "addToCart": "کارٹ میں ڈالیں", "buyNow": "ابھی خریدیں",
+    "addWishlist": "پسندیدہ میں شامل کریں", "removeWishlist": "پسندیدہ سے ہٹائیں", "sizeGuide": "سائز گائیڈ", "sku": "SKU", "availability": "دستیابی",
+    "inStock": "اسٹاک میں", "lowStock": "کم اسٹاک", "outOfStock": "فروخت مکمل", "infoTitle": "پروڈکٹ کی معلومات",
+    "description": "تفصیل", "material": "مواد", "manufacturing": "تیاری", "care": "دیکھ بھال", "shippingTab": "شپنگ", "returns": "واپسی",
+    "share": "شیئر کریں", "copyLink": "لنک کاپی کریں", "copied": "لنک کاپی ہوا", "related": "یہ بھی پسند آسکتے ہیں",
+    "sizeGuideTitle": "سائز گائیڈ — SULTAN BLACK", "sizeGuideNote": "پیمائش سینٹی میٹر میں۔", "sizeTableSize": "سائز", "sizeTableChest": "سینہ",
+    "sizeTableWaist": "کمر", "sizeTableHips": "کولہے"
+  },
+  "cart": {
+    "title": "آپ کا کارٹ", "drawerTitle": "شاپنگ بیگ", "empty": "آپ کا کارٹ خالی ہے", "emptyHint": "کلیکشن دیکھیں اور پہلی شے شامل کریں۔",
+    "continue": "خریداری جاری رکھیں", "subtotal": "ذیلی کل", "shipping": "شپنگ", "discount": "رعایت", "total": "کل", "promo": "پرومو کوڈ",
+    "promoPlaceholder": "کوڈ درج کریں", "apply": "لاگو کریں", "checkout": "خریداری مکمل کریں", "remove": "ہٹائیں", "size": "سائز", "color": "رنگ",
+    "qty": "مقدار", "freeShipping": "فری شپنگ کے لیے مزید ${{amount}}۔", "freeShippingMet": "آپ کا آرڈر فری شپنگ کے قابل ہے۔",
+    "promoApplied": "کوڈ لاگو: {{code}}", "promoInvalid": "غلط کوڈ۔"
+  },
+  "checkout": {
+    "title": "محفوظ چیک آؤٹ", "contact": "رابطے کی معلومات", "firstName": "پہلا نام", "lastName": "مقام", "email": "ای میل", "phone": "فون",
+    "addressTitle": "شپنگ ایڈریس", "country": "ملک", "city": "شہر", "address": "پتہ", "postalCode": "پوسٹل کوڈ", "shippingMethod": "شپنگ طریقہ",
+    "standard": "معیاری — {{days}} دن", "express": "ایکسپریس — {{days}} دن", "paymentMethod": "ادائیگی کا طریقہ", "card": "کریڈٹ/ڈیبٹ کارڈ",
+    "cardNote": "محفوظ ادائیگی۔ کارڈ ڈیٹا اس فرنٹ اینڈ تک نہیں جاتا۔", "cod": "ڈیلیوری پر ادائیگی", "placeOrder": "آرڈر کریں",
+    "placeOrderLoading": "کارروائی…", "secure": "محفوظ خریداری", "protected": "ڈیٹا محفوظ", "safePayment": "محفوظ ادائیگی",
+    "international": "بین الاقوامی شپنگ", "orderSuccess": "آرڈر مکمل", "orderSuccessMsg": "شکریہ۔ آپ کا آرڈر موصول ہوا۔",
+    "backHome": "ہوم واپس", "required": "یہ فیلڈ ضروری ہے", "emailInvalid": "درست ای میل درج کریں",
+    "paymentGateway": "ادائیگی محفوظ فراہم کنندہ کے ذریعے ہوتی ہے۔"
+  },
+  "favorites": {
+    "title": "پسندیدہ", "empty": "ابھی کوئی پسندیدہ نہیں", "emptyHint": "کسی پروڈکٹ پر دل پر ٹیپ کریں۔", "viewAll": "پسندیدہ دیکھیں"
+  },
+  "account": {
+    "title": "میرا اکاؤنٹ", "subtitle": "آپ کی نجی سلطان جگہ۔", "signin": "سائن ان", "create": "اکاؤنٹ بنائیں", "email": "ای میل", "password": "پاس ورڈ",
+    "name": "مکمل نام", "orders": "آرڈرز", "ordersEmpty": "ابھی کوئی آرڈر نہیں۔", "wishlist": "پسندیدہ", "settings": "ترتیبات", "logout": "سائن آؤٹ"
+  },
+  "footer": {
+    "tagline": "جہاں ترکی دستکاری جدید عیش و آرام سے ملتی ہے۔", "shop": "اسٹور", "help": "مدد", "legal": "قانونی", "contactTitle": "رابطہ",
+    "privacidad": "پرائیویسی", "terminos": "شرائط", "cookies": "کوکیز", "envios": "شپنگ", "devoluciones": "واپسی", "sizeGuide": "سائز گائیڈ",
+    "newsletterTitle": "سلطان سرکل میں شامل ہوں", "subscribe": "سبسکرائب", "rights": "جملہ حقوق محفوظ۔", "madeIn": "استنبول میں ڈیزائن"
+  },
+  "contact": {
+    "title": "رابطہ", "subtitle": "ہم 24 گھنٹے میں جواب دیتے ہیں۔", "name": "نام", "email": "ای میل", "subject": "موضوع", "message": "پیغام",
+    "send": "پیغام بھیجیں", "sent": "پیغام موصول ہوا۔"
+  },
+  "about": { "title": "سلطان کا فلسفہ", "p1": "SULTAN BLACK باسفورس کے کنارے ایک یقین کے ساتھ پیدا ہوا: فیشن روایت کا احترام کر سکتا ہے اور کل کا حصہ بن سکتا ہے۔" },
+  "faq": {
+    "title": "عمومی سوالات", "q1": "اشیاء کہاں بنتی ہیں؟", "a1": "ہر چیز استنبول میں ڈیزائن اور مکمل ہوتی ہے۔",
+    "q2": "کیا بین الاقوامی شپنگ ہے؟", "a2": "جی ہاں۔ ہم دنیا بھر میں بھیجتے ہیں۔", "q3": "واپسی کی پالیسی؟", "a3": "30 دن کے اندر واپسی۔", "q4": "کیا اشیاء اصلی ہیں؟", "a4": "ہر چیز کے ساتھ صداقت کا سرٹیفکیٹ۔"
+  },
+  "policies": {
+    "title": "پالیسیز", "privacidad": "پرائیویسی", "terminos": "شرائط", "cookies": "کوکیز", "envios": "شپنگ", "devoluciones": "واپسی",
+    "placeholder": "دستاویز حتمی شکل میں جاری ہے۔"
+  },
+  "search": {
+    "title": "تلاش", "placeholder": "“sultan jacket”, “ریشم”, “SKU” آزمائیں…", "recent": "حالیہ تلاشیں", "results": "نتائج",
+    "noResults": "“{{query}}” کے لیے کوئی نتیجہ نہیں", "noResultsHint": "ہجے درست کریں۔", "clear": "صاف کریں"
+  },
+  "misc": {
+    "loading": "لوڈ ہو رہا ہے", "error": "کچھ غلط ہوا", "retry": "دوبارہ کوشش", "language": "زبان", "currency": "کرنسی", "price": "قیمت",
+    "needHelp": "مدد چاہیے؟", "added": "کارٹ میں شامل ہو گیا", "outOfStockToast": "یہ چیز فروخت ہو چکی", "selectSizeToast": "براہ کرم سائز منتخب کریں"
+  }
+}
