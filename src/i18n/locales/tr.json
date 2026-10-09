@@ -24,7 +24,7 @@
     "ctaDiscover": "Koleksiyonu Keşfet",
     "ctaBuy": "Hemen Al",
     "scroll": "Kaydır",
-    "location": "İstanbul · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "Yeni",
@@ -533,5 +533,13 @@
     "selectSizeToast": "Lütfen bir beden seçin",
     "emptyStateTitle": "Henüz hiçbir şey yok",
     "back": "Geri"
+  },
+  "wa": {
+    "waOrder": "Sipariş",
+    "waDate": "Tarih",
+    "waCustomer": "Müşteri bilgileri",
+    "waItems": "Sipariş ürünleri",
+    "waButton": "Siparişi WhatsApp'tan gönder",
+    "waNote": "Ödeme ve teslimat için siparişinizi WhatsApp üzerinden gönderin."
   }
 }

@@ -24,7 +24,7 @@
     "ctaDiscover": "Descubrir Colección",
     "ctaBuy": "Comprar Ahora",
     "scroll": "Deslizar",
-    "location": "Estambul · Istanbul, Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "Nuevo",
@@ -533,5 +533,13 @@
     "selectSizeToast": "Selecciona una talla",
     "emptyStateTitle": "Nada aquí todavía",
     "back": "Volver"
+  },
+  "wa": {
+    "waOrder": "Pedido",
+    "waDate": "Fecha",
+    "waCustomer": "Datos del cliente",
+    "waItems": "Prendas del pedido",
+    "waButton": "Enviar pedido por WhatsApp",
+    "waNote": "Envía tu pedido por WhatsApp para coordinar el pago y la entrega."
   }
 }

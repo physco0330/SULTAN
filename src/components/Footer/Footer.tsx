@@ -129,7 +129,7 @@ export function Footer() {
           <p>
             © {year} {brandConfig.name}. {t('footer.rights')}
           </p>
-          <p>{t('footer.madeIn')} — Istanbul, Türkiye</p>
+          <p>{t('footer.madeIn')} — {brandConfig.address}</p>
         </div>
       </div>
     </footer>

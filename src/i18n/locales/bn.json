@@ -24,7 +24,7 @@
     "ctaDiscover": "কালেকশন আবিষ্কার",
     "ctaBuy": "এখনই কিনুন",
     "scroll": "স্ক্রল করুন",
-    "location": "ইস্তাম্বুল · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "নতুন",
@@ -312,5 +312,13 @@
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
     "verified": "Verified purchase"
+  },
+  "wa": {
+    "waOrder": "অর্ডার",
+    "waDate": "তারিখ",
+    "waCustomer": "ক্রেতার তথ্য",
+    "waItems": "অর্ডারের পণ্য",
+    "waButton": "হোয়াটসঅ্যাপে অর্ডার পাঠান",
+    "waNote": "পেমেন্ট ও ডেলিভারি নিশ্চিত করতে হোয়াটসঅ্যাপে অর্ডারটি পাঠান।"
   }
 }

@@ -24,7 +24,7 @@
     "ctaDiscover": "اكتشف المجموعة",
     "ctaBuy": "اشترِ الآن",
     "scroll": "مرر للأسفل",
-    "location": "إسطنبول · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "جديد",
@@ -312,5 +312,13 @@
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
     "verified": "Verified purchase"
+  },
+  "wa": {
+    "waOrder": "الطلب",
+    "waDate": "التاريخ",
+    "waCustomer": "بيانات العميل",
+    "waItems": "عناصر الطلب",
+    "waButton": "إرسال الطلب عبر واتساب",
+    "waNote": "أرسل طلبك عبر واتساب لتنسيق الدفع والتسليم."
   }
 }

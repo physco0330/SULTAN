@@ -2,6 +2,9 @@ import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import { scryptSync, timingSafeEqual } from 'node:crypto'
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { db, initDb, audit, nowIso } from './db.mjs'
 import { seedAll } from './seed.mjs'
 
@@ -868,7 +871,19 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Error interno del servidor' })
 })
 
-app.listen(PORT, () => {
-  console.log(`SULTAN BLACK API escuchando en http://localhost:${PORT}`)
-  console.log(`Admin: http://localhost:5174/admin  (admin / sultan2026)`)
+/* ---------------- static frontend (production) ---------------- */
+
+const distDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
+if (existsSync(distDir)) {
+  app.use(express.static(distDir))
+  app.get(/^\/(?!api\/).*/, (_req, res) => {
+    res.sendFile(join(distDir, 'index.html'))
+  })
+} else {
+  app.get('/', (_req, res) => res.json({ ok: true, service: 'sultan-black-api' }))
+}
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`SULTAN BLACK API escuchando en http://0.0.0.0:${PORT}`)
+  console.log(`Admin: /admin  (admin / sultan2026)`)
 })

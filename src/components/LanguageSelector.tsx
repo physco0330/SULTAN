@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { useClickOutside } from '@/hooks/useClickOutside'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/utils/cn'
+import { CountryFlag } from '@/components/CountryFlag'
 
 export function LanguageSelector({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation()
@@ -26,7 +27,7 @@ export function LanguageSelector({ compact = false }: { compact?: boolean }) {
         )}
       >
         {compact ? <Languages size={16} /> : null}
-        <span className="text-base leading-none">{current.flag}</span>
+        <CountryFlag code={current.flag} />
         <span>{current.native}</span>
         <ChevronDown size={12} className={cn('transition-transform', open && 'rotate-180')} />
       </button>
@@ -48,7 +49,7 @@ export function LanguageSelector({ compact = false }: { compact?: boolean }) {
               )}
             >
               <span className="flex items-center gap-3">
-                <span className="text-base leading-none">{l.flag}</span>
+                <CountryFlag code={l.flag} />
                 <span className="font-medium">{l.native}</span>
                 <span className="text-[0.65rem] uppercase text-bone">{l.code}</span>
               </span>

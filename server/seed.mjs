@@ -163,7 +163,7 @@ function seedSettings() {
     company_email: 'sales@sultanblack.com',
     company_phone: '+57 311 7317614',
     company_whatsapp: '+57 311 7317614',
-    company_address: 'Istanbul, Türkiye',
+    company_address: 'Bello Antioquia, Colombia',
     default_currency: 'COP',
     free_shipping_threshold: '300',
     flat_shipping: '15',

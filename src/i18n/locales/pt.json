@@ -24,7 +24,7 @@
     "ctaDiscover": "Descobrir Coleção",
     "ctaBuy": "Comprar Agora",
     "scroll": "Rolar",
-    "location": "Istambul · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "Novo",
@@ -312,5 +312,13 @@
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
     "verified": "Verified purchase"
+  },
+  "wa": {
+    "waOrder": "Pedido",
+    "waDate": "Data",
+    "waCustomer": "Dados do cliente",
+    "waItems": "Itens do pedido",
+    "waButton": "Enviar pedido pelo WhatsApp",
+    "waNote": "Envie seu pedido pelo WhatsApp para combinar pagamento e entrega."
   }
 }

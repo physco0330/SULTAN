@@ -24,7 +24,7 @@
     "ctaDiscover": "探索系列",
     "ctaBuy": "立即购买",
     "scroll": "向下滚动",
-    "location": "伊斯坦布尔 · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "新品",
@@ -315,5 +315,13 @@
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
     "verified": "Verified purchase"
+  },
+  "wa": {
+    "waOrder": "订单",
+    "waDate": "日期",
+    "waCustomer": "客户信息",
+    "waItems": "订单商品",
+    "waButton": "通过 WhatsApp 发送订单",
+    "waNote": "通过 WhatsApp 发送您的订单，以便协调付款和送货。"
   }
 }

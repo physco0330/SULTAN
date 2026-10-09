@@ -1,7 +1,10 @@
 import { spawn } from 'node:child_process'
+import { resolve } from 'node:path'
 
-const server = spawn(process.execPath, ['server/index.mjs'], { stdio: 'inherit', cwd: new URL('..', import.meta.url) })
-const vite = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['vite', '--host'], { stdio: 'inherit', cwd: new URL('..', import.meta.url) })
+const cwd = resolve(import.meta.url, '..')
+
+const server = spawn(process.execPath, ['server/index.mjs'], { stdio: 'inherit', cwd })
+const vite = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['vite', '--host'], { stdio: 'inherit', cwd })
 
 const stop = (signal) => {
   ;[server, vite].forEach((p) => p.kill(signal))

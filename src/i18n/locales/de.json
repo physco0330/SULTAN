@@ -24,7 +24,7 @@
     "ctaDiscover": "Kollektion entdecken",
     "ctaBuy": "Jetzt kaufen",
     "scroll": "Scrollen",
-    "location": "Istanbul · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "Neu",
@@ -312,5 +312,13 @@
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
     "verified": "Verified purchase"
+  },
+  "wa": {
+    "waOrder": "Bestellung",
+    "waDate": "Datum",
+    "waCustomer": "Kundendaten",
+    "waItems": "Bestellte Artikel",
+    "waButton": "Bestellung per WhatsApp senden",
+    "waNote": "Sende deine Bestellung per WhatsApp, um Zahlung und Lieferung abzustimmen."
   }
 }

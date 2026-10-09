@@ -187,7 +187,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   companyEmail: '',
   companyPhone: '',
   companyWhatsapp: '',
-  companyAddress: 'Istanbul, Türkiye',
+  companyAddress: 'Bello Antioquia, Colombia',
   defaultCurrency: 'COP',
   freeShippingThreshold: FREE_SHIPPING_THRESHOLD_USD,
   flatShipping: FLAT_SHIPPING_USD,

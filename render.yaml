@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: sultan-black
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: SULTAN_SECRET
+        generateValue: true
+    autoDeploy: true

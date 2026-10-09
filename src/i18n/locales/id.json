@@ -24,7 +24,7 @@
     "ctaDiscover": "Temukan Koleksi",
     "ctaBuy": "Beli Sekarang",
     "scroll": "Gulir",
-    "location": "Istanbul · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "Baru",
@@ -312,5 +312,13 @@
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
     "verified": "Verified purchase"
+  },
+  "wa": {
+    "waOrder": "Pesanan",
+    "waDate": "Tanggal",
+    "waCustomer": "Data pelanggan",
+    "waItems": "Item pesanan",
+    "waButton": "Kirim pesanan via WhatsApp",
+    "waNote": "Kirim pesanan Anda via WhatsApp untuk mengatur pembayaran dan pengiriman."
   }
 }

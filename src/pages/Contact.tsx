@@ -34,7 +34,7 @@ export default function Contact() {
   const info = [
     { icon: Mail, label: t('contact.email'), value: brandConfig.email || 'info@sultanblack.com' },
     { icon: Phone, label: t('contact.phone'), value: brandConfig.whatsappNumber?.replace('+', '+ ') || '+90 212 000 00 00' },
-    { icon: MapPin, label: t('contact.address'), value: 'Nişantaşı, Istanbul, Türkiye' },
+    { icon: MapPin, label: t('contact.address'), value: brandConfig.address },
     { icon: Clock, label: t('contact.hours'), value: t('contact.hoursValue') },
   ]
 

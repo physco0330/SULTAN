@@ -24,7 +24,7 @@
     "ctaDiscover": "ਕਲੈਕਸ਼ਨ ਦੇਖੋ",
     "ctaBuy": "ਹੁਣੇ ਖਰੀਦੋ",
     "scroll": "ਸਕ੍ਰੋਲ",
-    "location": "ਇਸਤਾਂਬੁਲ · Türkiye"
+    "location": "Bello Antioquia · Colombia"
   },
   "badges": {
     "new": "ਨਵਾਂ",
@@ -312,5 +312,13 @@
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
     "verified": "Verified purchase"
+  },
+  "wa": {
+    "waOrder": "ਆਰਡਰ",
+    "waDate": "ਤਾਰੀਖ",
+    "waCustomer": "ਗਾਹਕ ਦੀ ਜਾਣਕਾਰੀ",
+    "waItems": "ਆਰਡਰ ਦੀਆਂ ਚੀਜ਼ਾਂ",
+    "waButton": "ਵਟਸਐਪ ਰਾਹੀਂ ਆਰਡਰ ਭੇਜੋ",
+    "waNote": "ਭੁਗਤਾਨ ਅਤੇ ਡਿਲੀਵਰੀ ਨੂੰ ਤਅ ਕਰਨ ਲਈ ਵਟਸਐਪ ਰਾਹੀਂ ਆਪਣਾ ਆਰਡਰ ਭੇਜੋ।"
   }
 }

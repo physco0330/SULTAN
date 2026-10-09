@@ -4,7 +4,7 @@ export const brandConfig = {
   whatsappNumber: '573117317614',
   instagramUrl: 'https://www.instagram.com/sultanblack_store',
   email: 'sales@sultanblack.com',
-  address: 'Istanbul, Türkiye',
+  address: 'Bello Antioquia, Colombia',
   defaultCurrency: 'COP',
   defaultLanguage: 'es',
   imageBaseUrl: '',

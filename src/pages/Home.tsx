@@ -196,7 +196,7 @@ function TurkishExperience() {
         <div className="max-w-xl">
           <Reveal>
             <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.42em] text-gold">
-              — <MapPin size={12} className="inline" /> Istanbul —
+              — <MapPin size={12} className="inline" /> Bello Antioquia —
             </p>
             <h2 className="font-display text-3xl font-semibold text-ivory md:text-5xl">{t('sections.turkey.title')}</h2>
             <p className="mt-5 text-sm font-light leading-relaxed text-silver md:text-base">{t('sections.turkey.subtitle')}</p>
