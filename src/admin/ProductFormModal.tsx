@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
 import { useUi } from '@/store/ui'
 import { adminService } from '@/services/adminService'
@@ -8,10 +8,19 @@ import { Spinner } from '@/admin/ui'
 import { cn } from '@/utils/cn'
 import { isFeatureEnabled } from '@/config/features'
 import type { Gender, CollectionId, CategoryId } from '@/types'
-import type { AdminProduct } from '@/services/adminService'
+import type { AdminProduct, ProductImageRow } from '@/services/adminService'
 
 const GENDERS: Gender[] = isFeatureEnabled('women') ? ['men', 'women', 'unisex'] : ['men', 'unisex']
 const COLLECTIONS: CollectionId[] = ['new', 'premium', 'limited', 'bestsellers', 'offers']
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
+
+interface PendingFile {
+  key: string
+  name: string
+  dataUrl: string
+}
 
 export function ProductFormModal({
   open,
@@ -47,11 +56,23 @@ export function ProductFormModal({
   })
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [images, setImages] = useState<ProductImageRow[]>([])
+  const [pending, setPending] = useState<PendingFile[]>([])
+  const [loadingImages, setLoadingImages] = useState(false)
+  const [imageBusy, setImageBusy] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!open) return
     setErrors({})
+    setPending([])
     if (product) {
+      setLoadingImages(true)
+      adminService
+        .productImages(product.id)
+        .then((r) => setImages(r.items))
+        .catch(() => setImages([]))
+        .finally(() => setLoadingImages(false))
       setForm({
         name: product.name,
         gender: product.gender,
@@ -73,9 +94,68 @@ export function ProductFormModal({
         isOnSale: product.isOnSale,
       })
     } else {
+      setImages([])
       setForm((f) => ({ ...f, name: '', price: '', compareAtPrice: '', stock: '0', sku: '', description: '', costToUsd: '' }))
     }
   }, [open, product])
+
+  const onPickFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    const accepted: PendingFile[] = []
+    const rejected: string[] = []
+    for (const file of Array.from(files)) {
+      if (!ACCEPTED.includes(file.type)) { rejected.push(`${file.name} (formato)`); continue }
+      if (file.size > MAX_IMAGE_BYTES) { rejected.push(`${file.name} (máx. 5 MB)`); continue }
+      try {
+        accepted.push({
+          key: `${file.name}-${file.size}-${Math.random().toString(36).slice(2)}`,
+          name: file.name,
+          dataUrl: await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(String(reader.result))
+            reader.onerror = () => reject(new Error('lectura'))
+            reader.readAsDataURL(file)
+          }),
+        })
+      } catch {
+        rejected.push(`${file.name} (lectura)`)
+      }
+    }
+    if (rejected.length > 0) pushToast(`Rechazado: ${rejected.join(', ')}`, 'error')
+    if (accepted.length > 0) setPending((p) => [...p, ...accepted].slice(0, 10))
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  const removeExistingImage = async (id: number) => {
+    setImageBusy(true)
+    try {
+      await adminService.deleteImage(id)
+      setImages((list) => list.filter((i) => i.id !== id))
+      invalidateCatalogCache()
+      pushToast('Imagen eliminada')
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'No se pudo eliminar', 'error')
+    } finally {
+      setImageBusy(false)
+    }
+  }
+
+  const makePrimary = async (id: number) => {
+    setImageBusy(true)
+    try {
+      await adminService.updateImage(id, { isPrimary: true })
+      if (product) {
+        const r = await adminService.productImages(product.id)
+        setImages(r.items)
+      }
+      invalidateCatalogCache()
+      pushToast('Portada actualizada')
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'No se pudo cambiar la portada', 'error')
+    } finally {
+      setImageBusy(false)
+    }
+  }
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) => {
     setForm((f) => ({ ...f, [k]: v }))
@@ -125,8 +205,21 @@ export function ProductFormModal({
       const res = product
         ? await adminService.updateProduct(product.id, payload)
         : await adminService.createProduct(payload)
+      const savedId = res.product?.id
+      if (pending.length > 0 && savedId) {
+        await adminService.uploadImages(
+          savedId,
+          pending.map((p) => ({ data: p.dataUrl, alt: '' })),
+        )
+      }
       invalidateCatalogCache()
-      pushToast(product ? 'Producto actualizado' : 'Producto creado')
+      pushToast(
+        product
+          ? 'Producto actualizado'
+          : pending.length > 0
+            ? 'Producto creado con imágenes'
+            : 'Producto creado',
+      )
       onSaved(res.product)
       onClose()
     } catch (err) {
@@ -296,6 +389,82 @@ export function ProductFormModal({
               {text}
             </label>
           ))}
+        </div>
+
+        <div className="md:col-span-2 border-t border-gold/15 pt-5">
+          <label className={label}>Imágenes del producto</label>
+          <p className="mb-3 text-[0.62rem] leading-relaxed text-bone">
+            JPEG, PNG o WebP · máximo 5 MB por foto · la primera será la portada del catálogo.
+          </p>
+          <div
+            onClick={() => fileRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => { e.preventDefault(); void onPickFiles(e.dataTransfer.files) }}
+            className="flex cursor-pointer flex-col items-center justify-center gap-1.5 border border-dashed border-gold/30 px-4 py-8 text-center transition-colors hover:border-gold/60 hover:bg-gold/5"
+          >
+            <span className="text-sm text-ivory">Arrastra las fotos aquí o haz clic para elegir</span>
+            <span className="text-[0.62rem] text-bone">Se previsualizan antes de guardar</span>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="hidden"
+              onChange={(e) => void onPickFiles(e.target.files)}
+            />
+          </div>
+
+          {loadingImages && (
+            <p className="mt-3 flex items-center gap-2 text-xs text-bone"><Spinner /> Cargando imágenes…</p>
+          )}
+
+          {images.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-[0.24em] text-bone">Imágenes actuales</p>
+              <div className="flex flex-wrap gap-2">
+                {[...images].sort((a, b) => a.position - b.position || a.id - b.id).map((img) => (
+                  <div key={img.id} className={cn('group relative h-24 w-19 overflow-hidden border', img.is_primary ? 'border-gold' : 'border-gold/15')} style={{ width: '4.75rem' }}>
+                    <img src={img.path} alt={img.alt || ''} className="h-full w-full object-cover" />
+                    {img.is_primary && (
+                      <span className="absolute left-1 top-1 bg-gold px-1.5 py-0.5 text-[0.5rem] font-bold uppercase text-night">Portada</span>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1 bg-night/85 py-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      {!img.is_primary && (
+                        <button type="button" onClick={() => void makePrimary(img.id)} disabled={imageBusy} title="Marcar como portada" aria-label="Marcar como portada" className="text-bone hover:text-gold disabled:opacity-40">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.26L21.5 9.27l-4.75 4.37 1.13 6.36L12 17.1l-5.88 2.9 1.13-6.36L2.5 9.27l6.6-1.01L12 2z"/></svg>
+                        </button>
+                      )}
+                      <button type="button" onClick={() => void removeExistingImage(img.id)} disabled={imageBusy} title="Eliminar imagen" aria-label="Eliminar imagen" className="text-bone hover:text-red-400 disabled:opacity-40">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {pending.length > 0 && (
+            <div className="mt-4">
+              <p className="mb-2 text-[0.6rem] font-semibold uppercase tracking-[0.24em] text-gold">Por publicar ({pending.length})</p>
+              <div className="flex flex-wrap gap-2">
+                {pending.map((p) => (
+                  <div key={p.key} className="group relative h-24 w-19 overflow-hidden border border-gold/40" style={{ width: '4.75rem' }}>
+                    <img src={p.dataUrl} alt={p.name} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setPending((list) => list.filter((x) => x.key !== p.key))}
+                      aria-label={`Quitar ${p.name}`}
+                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center bg-night/85 text-bone hover:text-red-400"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                    <p className="absolute inset-x-0 bottom-0 truncate bg-night/85 px-1 py-0.5 text-[0.5rem] text-bone" title={p.name}>{p.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-2 flex justify-end gap-2 border-t border-gold/15 pt-5">

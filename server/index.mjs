@@ -1013,7 +1013,13 @@ app.patch('/api/admin/products/:id', requireAuth, (req, res) => {
 app.delete('/api/admin/products/:id', requireAuth, (req, res) => {
   const row = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id)
   if (!row) return res.status(404).json({ error: 'Producto no encontrado' })
+  /* borrar también los archivos físicos de sus imágenes */
+  const imgs = db.prepare('SELECT path FROM product_images WHERE product_id = ?').all(row.id)
   db.prepare('DELETE FROM products WHERE id = ?').run(row.id)
+  for (const im of imgs) {
+    const file = join(UPLOADS_DIR, im.path.replace('/uploads/', ''))
+    try { if (existsSync(file)) unlinkSync(file) } catch { /* ignorar */ }
+  }
   audit(req.auth.username, 'product.delete', 'products', row.id, `Eliminó ${row.name}`)
   res.json({ ok: true })
 })
