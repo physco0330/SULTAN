@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Search, Plus, Pencil, Trash2, Eye, EyeOff, Star } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Eye, EyeOff, Star, ImageIcon } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { useUi } from '@/store/ui'
@@ -9,7 +9,7 @@ import { usd, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/ad
 import { cn } from '@/utils/cn'
 import type { AdminProduct } from '@/services/adminService'
 
-export function AdminProducts() {
+export function AdminProducts({ onManageImages }: { onManageImages?: (productId: string) => void }) {
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -174,6 +174,14 @@ export function AdminProducts() {
                         className="flex h-8 w-8 items-center justify-center border border-gold/20 text-bone transition-colors hover:text-gold"
                       >
                         <Pencil size={13} />
+                      </button>
+                      <button
+                        onClick={() => onManageImages?.(p.id)}
+                        aria-label="Gestionar imágenes"
+                        title="Gestionar imágenes de este producto"
+                        className="flex h-8 items-center gap-1.5 border border-gold/20 px-2 text-[0.6rem] uppercase tracking-wider text-bone transition-colors hover:border-gold/50 hover:text-gold"
+                      >
+                        <ImageIcon size={13} /> Imágenes
                       </button>
                       <button
                         onClick={() => setDeleting(p)}

@@ -3,23 +3,37 @@ import { Link } from 'react-router-dom'
 import { DollarSign, ShoppingBag, Package, AlertTriangle, Star, Users, Mail, Truck, FileSpreadsheet, File as FileIcon, FileText, RefreshCw, Receipt } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { useUi } from '@/store/ui'
-import { PeriodSelector } from '@/admin/PeriodSelector'
+import { PeriodPicker, periodLabel } from '@/admin/Calendar'
+import type { PeriodValue } from '@/admin/Calendar'
 import { Section, StatCard, StatusBadge, shortDate, usd, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { exportCsv, exportXlsx, exportPdf } from '@/admin/exporters'
 import type { AdminStats, PeriodKey } from '@/services/adminService'
 
+const EMPTY_PERIOD: PeriodValue = { mode: 'range', from: null, to: null }
+
+function periodToQuery(v: PeriodValue): { period: PeriodKey; from?: string; to?: string } {
+  if (!v.from) return { period: 'all' }
+  const from = new Date(v.from)
+  const to = v.to ? new Date(v.to) : new Date(from.getFullYear(), from.getMonth(), from.getDate(), 23, 59, 59)
+  const iso = (d: Date) => d.toISOString()
+  if (v.mode === 'month') return { period: 'month', from: iso(new Date(from.getFullYear(), from.getMonth(), 1)), to: iso(new Date(from.getFullYear(), from.getMonth() + 1, 0, 23, 59, 59)) }
+  if (v.mode === 'year') return { period: 'year' }
+  return { period: 'all', from: iso(from), to: iso(to) }
+}
+
 export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'products') => void }) {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [busy, setBusy] = useState(true)
-  const [period, setPeriod] = useState<PeriodKey>('all')
+  const [periodValue, setPeriodValue] = useState<PeriodValue>(EMPTY_PERIOD)
   const [exporting, setExporting] = useState(false)
   const pushToast = useUi((s) => s.pushToast)
 
   const load = useCallback(
-    (p: PeriodKey) => {
+    (v: PeriodValue) => {
       setBusy(true)
+      const q = periodToQuery(v)
       return adminService
-        .stats(p)
+        .stats(q.period, { from: q.from, to: q.to })
         .then(setStats)
         .catch((e) => pushToast(e instanceof Error ? e.message : 'Error al cargar', 'error'))
         .finally(() => setBusy(false))
@@ -29,8 +43,9 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
 
   useEffect(() => {
     let dead = false
+    const q = periodToQuery(periodValue)
     adminService
-      .stats(period)
+      .stats(q.period, { from: q.from, to: q.to })
       .then((s) => {
         if (!dead) setStats(s)
       })
@@ -43,7 +58,7 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
     return () => {
       dead = true
     }
-  }, [period])
+  }, [periodValue])
 
   if (busy && !stats) {
     return (
@@ -89,7 +104,7 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <PeriodSelector value={period} onChange={setPeriod} />
+        <div className="w-[13.5rem]"><PeriodPicker value={periodValue} onChange={setPeriodValue} /></div>
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => exportStats('xlsx')} disabled={exporting} title="Exportar a Excel" className="flex items-center gap-2 border border-emerald-400/40 px-3.5 py-2 text-[0.6rem] font-semibold uppercase tracking-widest text-emerald-300 hover:bg-emerald-400/10 disabled:opacity-40">
             <FileSpreadsheet size={13} /> Excel
@@ -101,9 +116,9 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
             {exporting ? <Spinner className="border-red-400/30 border-t-red-400" /> : <FileText size={13} />} PDF
           </button>
           <span className="mx-2 hidden h-6 w-px bg-gold/15 sm:block" />
-          <p className="text-lg text-bone">{stats.period.label}</p>
+          <p className="text-lg text-bone">{periodLabel(periodValue)}</p>
           <button
-            onClick={() => load(period)}
+            onClick={() => load(periodValue)}
             title="Actualizar"
             className="ml-1 flex h-9 w-9 items-center justify-center border border-gold/40 text-gold hover:bg-gold hover:text-night"
           >

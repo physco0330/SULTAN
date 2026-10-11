@@ -39,10 +39,10 @@ interface PendingImage {
   size: number
 }
 
-export function AdminImages() {
+export function AdminImages({ initialProductId = '' }: { initialProductId?: string }) {
   const pushToast = useUi((s) => s.pushToast)
   const [products, setProducts] = useState<AdminProduct[]>([])
-  const [productId, setProductId] = useState('')
+  const [productId, setProductId] = useState(initialProductId)
   const [images, setImages] = useState<ProductImageRow[]>([])
   const [loadingProducts, setLoadingProducts] = useState(true)
   const [loadingImages, setLoadingImages] = useState(false)
@@ -85,6 +85,9 @@ export function AdminImages() {
 
   useEffect(() => { loadProducts() }, [loadProducts])
   useEffect(() => { loadImages(productId) }, [productId, loadImages])
+  useEffect(() => {
+    if (initialProductId) setProductId(initialProductId)
+  }, [initialProductId])
 
   const onFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return

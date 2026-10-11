@@ -153,8 +153,14 @@ export const adminService = {
     api.post<{ token: string; user: AdminUser }>('/admin/auth/login', { username, password }),
   me: () => api.get<{ user: AdminUser }>('/admin/me'),
 
-  stats: (period?: PeriodKey) =>
-    api.get<AdminStats>(`/admin/stats${period && period !== 'all' ? `?period=${period}` : ''}`),
+  stats: (period?: PeriodKey, range?: { from?: string; to?: string }) => {
+    const qp = new URLSearchParams()
+    if (period && period !== 'all') qp.set('period', period)
+    if (range?.from) qp.set('from', range.from)
+    if (range?.to) qp.set('to', range.to)
+    const qs = qp.toString()
+    return api.get<AdminStats>(`/admin/stats${qs ? `?${qs}` : ''}`)
+  },
 
   products: (q?: string) =>
     api.get<{ items: AdminProduct[] }>(`/admin/products${q ? `?q=${encodeURIComponent(q)}` : ''}`),

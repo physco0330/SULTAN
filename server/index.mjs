@@ -805,12 +805,21 @@ app.get('/api/admin/me', requireAuth, (req, res) => {
 
 /* ---------------- admin: stats ---------------- */
 
-function periodRange(period) {
+function periodRange(period, opts = {}) {
   const now = new Date()
   const startOfDay = () => {
     const d = new Date(now)
     d.setHours(0, 0, 0, 0)
     return d
+  }
+  /* Override por rango personalizado (calendario del dashboard) */
+  if (opts.from) {
+    const start = new Date(opts.from)
+    if (Number.isNaN(start.getTime())) return { start: null, end: null, prevStart: null, label: 'Todo el historial' }
+    const end = opts.to ? new Date(opts.to) : new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59, 999)
+    const fmt = (d) => new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })
+    const label = opts.to && end.getTime() !== start.getTime() ? `${fmt(start)} — ${fmt(end)}` : fmt(start)
+    return { start, end: Number.isNaN(end.getTime()) ? null : end, prevStart: null, label }
   }
   switch (period) {
     case 'week': {
@@ -818,30 +827,39 @@ function periodRange(period) {
       start.setDate(start.getDate() - 6)
       const prevStart = new Date(start)
       prevStart.setDate(prevStart.getDate() - 7)
-      return { start, prevStart, label: 'Últimos 7 días' }
+      return { start, end: null, prevStart, label: 'Últimos 7 días' }
     }
     case 'month': {
       const start = new Date(now.getFullYear(), now.getMonth(), 1)
       const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      return { start, prevStart, label: 'Mes actual' }
+      return { start, end: null, prevStart, label: 'Mes actual' }
     }
     case 'year': {
       const start = new Date(now.getFullYear(), 0, 1)
       const prevStart = new Date(now.getFullYear() - 1, 0, 1)
-      return { start, prevStart, label: 'Año actual' }
+      return { start, end: null, prevStart, label: 'Año actual' }
     }
     default:
-      return { start: null, prevStart: null, label: 'Todo el historial' }
+      return { start: null, end: null, prevStart: null, label: 'Todo el historial' }
   }
 }
 
 app.get('/api/admin/stats', requireAuth, (req, res) => {
   const period = String(req.query.period ?? 'all').trim()
-  const { start, prevStart, label } = periodRange(period)
-  const base = "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND created_at >= ?"
+  const { start, end, prevStart, label } = periodRange(period, {
+    from: req.query.from ? String(req.query.from) : null,
+    to: req.query.to ? String(req.query.to) : null,
+  })
+  const base = start === null
+    ? "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled'"
+    : end
+      ? "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND created_at >= ? AND created_at <= ?"
+      : "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND created_at >= ?"
   const revenue = start === null
-    ? db.prepare("SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled'").get()
-    : db.prepare(base).get(start.toISOString())
+    ? db.prepare(base).get()
+    : end
+      ? db.prepare(base).get(start.toISOString(), end.toISOString())
+      : db.prepare(base).get(start.toISOString())
   const previousRevenue = prevStart === null || start === null
     ? null
     : db.prepare("SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND created_at >= ? AND created_at < ?")
@@ -874,7 +892,9 @@ app.get('/api/admin/stats', requireAuth, (req, res) => {
   const orderOffset = start === null ? '0' : '8'
   const recent = start === null
     ? db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 8').all()
-    : db.prepare('SELECT * FROM orders WHERE created_at >= ? ORDER BY created_at DESC LIMIT 8').all(start.toISOString())
+    : end
+      ? db.prepare('SELECT * FROM orders WHERE created_at >= ? AND created_at <= ? ORDER BY created_at DESC LIMIT 8').all(start.toISOString(), end.toISOString())
+      : db.prepare('SELECT * FROM orders WHERE created_at >= ? ORDER BY created_at DESC LIMIT 8').all(start.toISOString())
   const lowStock = db.prepare(
     'SELECT * FROM products WHERE active = 1 AND stock > 0 AND stock <= 8 ORDER BY stock ASC LIMIT 8',
   ).all().map(toProduct)
