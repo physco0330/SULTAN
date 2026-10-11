@@ -5,10 +5,10 @@ import { invalidateConfigCache } from '@/hooks/useStoreConfig'
 import { useUi } from '@/store/ui'
 import { usd, shortDate, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { cn } from '@/utils/cn'
-import type { CouponRow, SubscriberRow, ContactRow, CustomerRow, AuditRow, ReviewRow } from '@/services/adminService'
+import type { CouponRow, SubscriberRow, CustomerRow, AuditRow, ReviewRow } from '@/services/adminService'
 
-export type AdminSettingsSection = 'Empresa' | 'Cupones' | 'Suscriptores' | 'Contactos' | 'Clientes' | 'Reseñas' | 'Auditoría'
-const TABS: AdminSettingsSection[] = ['Empresa', 'Cupones', 'Suscriptores', 'Contactos', 'Clientes', 'Reseñas', 'Auditoría']
+export type AdminSettingsSection = 'Empresa' | 'Cupones' | 'Suscriptores' | 'Clientes' | 'Reseñas' | 'Auditoría'
+const TABS: AdminSettingsSection[] = ['Empresa', 'Cupones', 'Suscriptores', 'Clientes', 'Reseñas', 'Auditoría']
 
 const input = 'w-full border border-gold/25 bg-night px-3 py-2.5 text-sm text-ivory placeholder:text-bone/60 focus:border-gold focus:outline-none'
 
@@ -40,7 +40,6 @@ export function AdminSettings({
       {tab === 'Empresa' && <SettingsForm />}
       {tab === 'Cupones' && <CouponsPanel />}
       {tab === 'Suscriptores' && <SubscribersPanel />}
-      {tab === 'Contactos' && <ContactsPanel />}
       {tab === 'Clientes' && <CustomersPanel />}
       {tab === 'Reseñas' && <ReviewsPanel />}
       {tab === 'Auditoría' && <AuditPanel />}
@@ -326,66 +325,6 @@ function SubscribersPanel() {
   )
 }
 
-function ContactsPanel() {
-  const [items, setItems] = useState<ContactRow[]>([])
-  const [busy, setBusy] = useState(true)
-  const pushToast = useUi((s) => s.pushToast)
-
-  const load = useCallback(() => {
-    setBusy(true)
-    adminService
-      .contacts()
-      .then((r) => setItems(r.items))
-      .catch((e) => pushToast(e instanceof Error ? e.message : 'Error', 'error'))
-      .finally(() => setBusy(false))
-  }, [pushToast])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  const remove = async (id: number) => {
-    try {
-      await adminService.deleteContact(id)
-      setItems((list) => list.filter((x) => x.id !== id))
-      pushToast('Mensaje eliminado')
-    } catch (err) {
-      pushToast(err instanceof Error ? err.message : 'Error', 'error')
-    }
-  }
-
-  return (
-    <div className="overflow-hidden border border-gold/15 bg-carbon/40">
-      <TableScroller>
-        <table className="w-full min-w-[720px]">
-          <thead className="border-b border-gold/15">
-            <tr><Th>De</Th><Th>Asunto</Th><Th>Mensaje</Th><Th>Fecha</Th><Th right>Acciones</Th></tr>
-          </thead>
-          <tbody className="divide-y divide-gold/10">
-            {busy && items.length === 0 && <EmptyRow colSpan={5} message="Cargando…" />}
-            {!busy && items.length === 0 && <EmptyRow colSpan={5} message="Sin mensajes" />}
-            {items.map((c) => (
-              <tr key={c.id} className="hover:bg-carbon/60">
-                <Td>
-                  <p className="text-ivory">{c.name}</p>
-                  <p className="text-xs text-bone">{c.email}</p>
-                </Td>
-                <Td className="text-bone">{c.subject ?? '—'}</Td>
-                <Td><span className="line-clamp-2 max-w-[260px] text-bone">{c.message}</span></Td>
-                <Td><span className="text-bone">{shortDate(c.created_at)}</span></Td>
-                <Td right>
-                  <button onClick={() => remove(c.id)} aria-label="Eliminar" className="flex h-8 w-8 items-center justify-center border border-gold/20 text-bone hover:border-red-400/40 hover:text-red-400">
-                    <Trash2 size={13} />
-                  </button>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableScroller>
-    </div>
-  )
-}
 
 function CustomersPanel() {
   const [items, setItems] = useState<CustomerRow[]>([])

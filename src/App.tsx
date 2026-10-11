@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from '@/components/Layout'
 import { Loader } from '@/components/Loader'
 import { Toaster } from '@/components/Toaster'
+import { isFeatureEnabled } from '@/config/features'
 
 const Home = lazy(() => import('@/pages/Home'))
 const Men = lazy(() => import('@/pages/Men'))
@@ -27,7 +28,11 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/hombre" element={<Men />} />
-          <Route path="/mujer" element={<Women />} />
+          {isFeatureEnabled('women') ? (
+            <Route path="/mujer" element={<Women />} />
+          ) : (
+            <Route path="/mujer" element={<Navigate to="/hombre" replace />} />
+          )}
           <Route path="/nueva-coleccion" element={<NewCollection />} />
           <Route path="/ofertas" element={<Offers />} />
           <Route path="/catalogo" element={<Catalog />} />

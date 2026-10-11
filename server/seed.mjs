@@ -166,8 +166,7 @@ function seedSettings() {
     company_address: 'Bello Antioquia, Colombia',
     default_currency: 'COP',
     free_shipping_threshold: '300',
-    flat_shipping: '15',
-    express_shipping: '45',
+    flat_shipping: '15',    express_shipping: '45',
     instagram_url: 'https://www.instagram.com/sultanblack_store',
   }
   const insert = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?,?)')

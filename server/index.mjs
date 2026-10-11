@@ -1,11 +1,11 @@
 import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
-import { scryptSync, timingSafeEqual } from 'node:crypto'
-import { existsSync } from 'node:fs'
+import { scryptSync, timingSafeEqual, randomUUID } from 'node:crypto'
+import { existsSync, mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { db, initDb, audit, nowIso } from './db.mjs'
+import { db, initDb, runMigrations, audit, nowIso } from './db.mjs'
 import { seedAll } from './seed.mjs'
 
 process.on('warning', (w) => {
@@ -15,14 +15,141 @@ process.on('warning', (w) => {
 
 const PORT = Number(process.env.PORT || 4001)
 const JWT_SECRET = process.env.SULTAN_SECRET || 'sultan-black-demo-secret-2026'
+const JWT_ISSUER = 'sultan-black'
+const JWT_AUDIENCE = 'sultan-black-admin'
 const TOKEN_TTL = '12h'
+const UPLOADS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'uploads')
 
 initDb()
+const migration = runMigrations()
+if (migration.applied.length > 0) {
+  console.log(`[migraciones] aplicadas: ${migration.applied.join(', ')}${migration.backup ? ` (backup: ${migration.backup})` : ''}`)
+}
 seedAll()
 
 const app = express()
-app.use(cors())
-app.use(express.json({ limit: '2mb' }))
+app.disable('x-powered-by')
+
+/* ---------- encabezados de seguridad (equivalente Helmet) ---------- */
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-Frame-Options', 'DENY')
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-site')
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "img-src 'self' data: blob: https:",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "script-src 'self' 'unsafe-inline'",
+      "connect-src 'self' https://wa.me",
+      "frame-ancestors 'none'",
+    ].join('; '),
+  )
+  next()
+})
+
+/* ---------- CORS restringido ---------- */
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+app.use(
+  cors({
+    origin: ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS : true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 600,
+  }),
+)
+
+/* ---------- rate limiting en memoria ---------- */
+const rateBuckets = new Map()
+const RATE_WINDOW_MS = 60_000
+const rateLimit = (keyPrefix, max) => (req, res, next) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown'
+  const key = `${keyPrefix}:${ip}`
+  const now = Date.now()
+  let bucket = rateBuckets.get(key)
+  if (!bucket || now > bucket.reset) {
+    bucket = { count: 0, reset: now + RATE_WINDOW_MS }
+    rateBuckets.set(key, bucket)
+  }
+  bucket.count += 1
+  if (bucket.count > max) {
+    res.setHeader('Retry-After', Math.ceil((bucket.reset - now) / 1000))
+    return res.status(429).json({ error: 'Demasiadas solicitudes. Intenta de nuevo en un minuto.' })
+  }
+  next()
+}
+setInterval(() => {
+  const now = Date.now()
+  for (const [k, v] of rateBuckets) if (now > v.reset) rateBuckets.delete(k)
+}, RATE_WINDOW_MS).unref()
+
+app.use(express.json({ limit: '1mb' }))
+app.use('/api/admin/products/:id/images', express.json({ limit: '12mb' }))
+
+/* ---------- utilidades de validación de imágenes ---------- */
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const IMAGE_SIGNATURES = [
+  { ext: 'jpg', mime: 'image/jpeg', magic: Buffer.from([0xff, 0xd8, 0xff]) },
+  { ext: 'png', mime: 'image/png', magic: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]) },
+  { ext: 'webp', mime: 'image/webp', magic: Buffer.from('RIFF', 'ascii'), extra: 'WEBP' },
+]
+const IMAGE_STATUSES = ['published', 'pending', 'disabled']
+
+function sniffImage(buf) {
+  for (const sig of IMAGE_SIGNATURES) {
+    if (buf.length < sig.magic.length + 4) continue
+    if (!buf.subarray(0, sig.magic.length).equals(sig.magic)) continue
+    if (sig.extra && buf.subarray(8, 12).toString('ascii') !== sig.extra) continue
+    return sig
+  }
+  return null
+}
+
+function imageDimensions(buf, sig) {
+  try {
+    if (sig.ext === 'png') {
+      return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) }
+    }
+    if (sig.ext === 'jpg') {
+      let offset = 2
+      while (offset < buf.length - 9) {
+        if (buf[offset] !== 0xff) { offset += 1; continue }
+        const marker = buf[offset + 1]
+        if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+          return { height: buf.readUInt16BE(offset + 5), width: buf.readUInt16BE(offset + 7) }
+        }
+        offset += 2 + buf.readUInt16BE(offset + 2)
+      }
+    }
+    if (sig.ext === 'webp' && buf.subarray(12, 16).toString('ascii') === 'VP8X') {
+      return { width: (buf.readUIntLE(24, 3) + 1), height: (buf.readUIntLE(27, 3) + 1) }
+    }
+  } catch { /* dimensiones desconocidas no bloquean la subida */ }
+  return null
+}
+
+function decodeBase64Image(dataUrl) {
+  if (typeof dataUrl !== 'string' || !dataUrl) return null
+  const match = /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/=\s]+)$/.exec(dataUrl.trim())
+  if (!match) return { error: 'Formato no permitido. Usa JPEG, PNG o WebP' }
+  let buf
+  try {
+    buf = Buffer.from(match[2].replace(/\s+/g, ''), 'base64')
+  } catch {
+    return { error: 'Imagen corrupta' }
+  }
+  if (buf.length > MAX_IMAGE_BYTES) return { error: 'La imagen supera el tamaño máximo de 5 MB' }
+  const sig = sniffImage(buf)
+  if (!sig) return { error: 'El contenido del archivo no es una imagen válida' }
+  return { buf, mime: sig.mime, ext: sig.ext, dimensions: imageDimensions(buf, sig) }
+}
 
 /* ---------------- utils ---------------- */
 
@@ -41,8 +168,15 @@ const asArray = (v) => {
   return String(v).split(',')
 }
 
+function productImagesOf(productId) {
+  return db
+    .prepare("SELECT path, alt FROM product_images WHERE product_id = ? AND status = 'published' ORDER BY is_primary DESC, position ASC, id ASC")
+    .all(productId)
+}
+
 function toProduct(row) {
   if (!row) return null
+  const images = productImagesOf(row.id)
   return {
     id: row.id,
     name: row.name,
@@ -66,7 +200,9 @@ function toProduct(row) {
     description: row.description,
     colors: JSON.parse(row.colors_json || '[]'),
     sizes: JSON.parse(row.sizes_json || '[]'),
-    images: row.image_base_url ? [{ src: `${row.image_base_url}/${row.slug}-0.jpg`, alt: `${row.name} — front view` }] : [],
+    images: images.length > 0
+      ? images.map((im) => ({ src: im.path, alt: im.alt || `${row.name} — imagen` }))
+      : JSON.parse(row.images_json || '[]'),
     active: !!row.active,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -77,6 +213,9 @@ function getSetting(key, fallback = '') {
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key)
   return row ? row.value : fallback
 }
+
+/** Módulo Mujer desactivado: la API nunca expone productos women. */
+const WOMEN_ENABLED = getSetting('module_women', '0') === '1'
 
 function publicConfig() {
   return {
@@ -101,7 +240,11 @@ function verifyPassword(password, salt, expected) {
 }
 
 function signAuth(user) {
-  return jwt.sign({ username: user.username, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: TOKEN_TTL })
+  return jwt.sign(
+    { username: user.username, role: user.role, name: user.name },
+    JWT_SECRET,
+    { expiresIn: TOKEN_TTL, issuer: JWT_ISSUER, audience: JWT_AUDIENCE },
+  )
 }
 
 function requireAuth(req, res, next) {
@@ -109,7 +252,7 @@ function requireAuth(req, res, next) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null
   if (!token) return res.status(401).json({ error: 'Autenticación requerida' })
   try {
-    req.auth = jwt.verify(token, JWT_SECRET)
+    req.auth = jwt.verify(token, JWT_SECRET, { issuer: JWT_ISSUER, audience: JWT_AUDIENCE })
     next()
   } catch {
     return res.status(401).json({ error: 'Sesión inválida o expirada' })
@@ -194,6 +337,7 @@ app.get('/api/products', (req, res) => {
 
   const where = ['active = 1']
   const params = []
+  if (!WOMEN_ENABLED) where.push("gender != 'women'")
   if (gender.length) { where.push(`gender IN (${gender.map(() => '?').join(',')})`); params.push(...gender) }
   if (category.length) { where.push(`category IN (${category.map(() => '?').join(',')})`); params.push(...category) }
   if (collection.length) { where.push(`collection IN (${collection.map(() => '?').join(',')})`); params.push(...collection) }
@@ -243,7 +387,58 @@ app.get('/api/products/:slug', (req, res) => {
 
 /* ---------------- public: checkout ---------------- */
 
-app.post('/api/orders', (req, res) => {
+/* Resuelve o crea el cliente del pedido. Identificador fiable: email normalizado.
+ * Devuelve el id del cliente. No depende únicamente del nombre. */
+function resolveCustomer(info, { create = true } = {}) {
+  const email = String(info.email ?? '').trim().toLowerCase()
+  const name = String(info.name ?? '').trim()
+  const existing = email ? db.prepare('SELECT * FROM customers WHERE email = ?').get(email) : null
+  if (existing) {
+    db.prepare(`UPDATE customers SET
+      name = COALESCE(NULLIF(?, ''), name),
+      phone = COALESCE(?, phone),
+      city = COALESCE(?, city),
+      country = COALESCE(?, country),
+      address = COALESCE(?, address),
+      document = COALESCE(?, document)
+      WHERE id = ?`)
+      .run(
+        name,
+        String(info.phone ?? '').trim() || null,
+        String(info.city ?? '').trim() || null,
+        String(info.country ?? '').trim() || null,
+        String(info.address ?? '').trim() || null,
+        String(info.document ?? '').trim().slice(0, 40) || null,
+        existing.id,
+      )
+    return existing.id
+  }
+  if (!create) return null
+  const result = db.prepare(
+    'INSERT INTO customers (name, email, phone, city, country, address, document) VALUES (?,?,?,?,?,?,?)',
+  ).run(
+    name,
+    email || null,
+    String(info.phone ?? '').trim() || null,
+    String(info.city ?? '').trim() || null,
+    String(info.country ?? '').trim() || null,
+    String(info.address ?? '').trim() || null,
+    String(info.document ?? '').trim().slice(0, 40) || null,
+  )
+  return Number(result.lastInsertRowid)
+}
+
+/** Actualiza los contadores de historial del cliente tras un pedido. */
+function touchCustomerAfterOrder(customerId, orderCreatedAt) {
+  if (!customerId) return
+  const row = db.prepare("SELECT COUNT(*) AS n, MIN(created_at) AS first_at, MAX(created_at) AS last_at, COALESCE(SUM(total_usd),0) AS total FROM orders WHERE customer_id = ? AND status != 'cancelled'").get(customerId)
+  const hasColumnFirst = db.prepare('PRAGMA table_info(customers)').all().some((c) => c.name === 'first_order_at')
+  if (!hasColumnFirst) return
+  db.prepare('UPDATE customers SET first_order_at = ?, last_order_at = ?, total_spent = ? WHERE id = ?')
+    .run(row.first_at ?? orderCreatedAt, row.last_at ?? orderCreatedAt, Math.round(row.total), customerId)
+}
+
+app.post('/api/orders', rateLimit('orders', 20), (req, res) => {
   const items = Array.isArray(req.body.items) ? req.body.items : []
   const info = req.body.customer ?? {}
   if (items.length === 0) return res.status(422).json({ error: 'El carrito está vacío' })
@@ -253,10 +448,11 @@ app.post('/api/orders', (req, res) => {
   const prepared = []
   for (const it of items) {
     const qty = Math.max(1, Math.floor(toNum(it.quantity, 1)))
+    if (qty > 50) return res.status(422).json({ error: 'Cantidad no permitida' })
     const row = db.prepare('SELECT * FROM products WHERE (slug = ? OR id = ?) AND active = 1').get(it.id, it.id)
     if (!row) return res.status(422).json({ error: `Producto no disponible: ${it.id}` })
     if (row.stock < qty) return res.status(409).json({ error: `Stock insuficiente para ${row.name}` })
-    prepared.push({ row, qty, size: String(it.size ?? 'M'), color: String(it.color ?? 'Black') })
+    prepared.push({ row, qty, size: String(it.size ?? 'M').slice(0, 8), color: String(it.color ?? 'Black').slice(0, 40) })
   }
 
   const subtotal = prepared.reduce((s, p) => s + p.row.price * p.qty, 0)
@@ -264,7 +460,7 @@ app.post('/api/orders', (req, res) => {
   const flat = toNum(getSetting('flat_shipping', '15'))
   const shipping = subtotal >= threshold ? 0 : flat
 
-  const code = String(req.body.promoCode ?? '').trim().toUpperCase()
+  const code = String(req.body.promoCode ?? '').trim().toUpperCase().slice(0, 20)
   let discount = 0
   let couponCode = null
   if (code) {
@@ -276,43 +472,46 @@ app.post('/api/orders', (req, res) => {
   }
   const total = Math.round(subtotal + shipping - discount)
 
-  const upsert = db.prepare(`
-    INSERT INTO customers (name, email, phone, city, country)
-    VALUES (?,?,?,?,?)
-    ON CONFLICT(email) DO UPDATE SET
-      name = excluded.name, phone = excluded.phone, city = excluded.city, country = excluded.country
-  `).run(
-    String(info.name).trim(), String(info.email).trim().toLowerCase(),
-    String(info.phone ?? '').trim(), String(info.city ?? '').trim(), String(info.country ?? '').trim(),
-  )
-
+  db.exec('BEGIN')
+  let customerId = null
   let number = ''
-  do {
-    number = `S-${String(Math.floor(100000 + Math.random() * 899999))}`
-  } while (db.prepare('SELECT id FROM orders WHERE number = ?').get(number))
+  let orderId = null
+  try {
+    customerId = resolveCustomer(info)
+    do {
+      number = `S-${String(Math.floor(100000 + Math.random() * 899999))}`
+    } while (db.prepare('SELECT id FROM orders WHERE number = ?').get(number))
 
-  const orderRes = db.prepare(`INSERT INTO orders (
-    number, customer_name, customer_email, customer_phone, ship_city, ship_country,
-    ship_address, ship_zip, subtotal_usd, shipping_usd, discount_usd, total_usd, currency,
-    coupon_code, status, created_at
-  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
-    number, String(info.name).trim(), String(info.email).trim().toLowerCase(),
-    String(info.phone ?? '').trim(), String(info.city ?? '').trim(), String(info.country ?? '').trim(),
-    String(info.address ?? '').trim(), String(info.zip ?? '').trim(),
-    Math.round(subtotal), shipping, discount, total, 'USD', couponCode, 'pending', nowIso(),
-  )
-  const orderId = Number(orderRes.lastInsertRowid)
+    const orderRes = db.prepare(`INSERT INTO orders (
+      number, customer_id, customer_name, customer_email, customer_phone, ship_city, ship_country,
+      ship_address, ship_zip, subtotal_usd, shipping_usd, discount_usd, total_usd, currency,
+      coupon_code, status, created_at
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+      number, customerId, String(info.name).trim(), String(info.email).trim().toLowerCase(),
+      String(info.phone ?? '').trim(), String(info.city ?? '').trim(), String(info.country ?? '').trim(),
+      String(info.address ?? '').trim(), String(info.zip ?? '').trim(),
+      Math.round(subtotal), shipping, discount, total, 'USD', couponCode, 'pending', nowIso(),
+    )
+    orderId = Number(orderRes.lastInsertRowid)
 
-  const itemIns = db.prepare(
-    'INSERT INTO order_items (order_id, product_id, name, size, color, quantity, price_usd, image) VALUES (?,?,?,?,?,?,?,?)',
-  )
-  const stockUpd = db.prepare('UPDATE products SET stock = stock - ?, updated_at = ? WHERE id = ?')
-  for (const p of prepared) {
-    itemIns.run(orderId, p.row.id, p.row.name, p.size, p.color, p.qty, p.row.price, null)
-    stockUpd.run(p.qty, nowIso(), p.row.id)
+    const itemIns = db.prepare(
+      'INSERT INTO order_items (order_id, product_id, name, size, color, quantity, price_usd, image) VALUES (?,?,?,?,?,?,?,?)',
+    )
+    const stockUpd = db.prepare('UPDATE products SET stock = stock - ?, updated_at = ? WHERE id = ?')
+    for (const p of prepared) {
+      itemIns.run(orderId, p.row.id, p.row.name, p.size, p.color, p.qty, p.row.price, null)
+      stockUpd.run(p.qty, nowIso(), p.row.id)
+    }
+    touchCustomerAfterOrder(customerId, nowIso())
+    db.exec('COMMIT')
+  } catch (err) {
+    try { db.exec('ROLLBACK') } catch { /* ignorar */ }
+    console.error('[pedido] error de transacción:', err.message)
+    return res.status(500).json({ error: 'No se pudo registrar el pedido' })
   }
 
   audit('cliente', 'order.create', 'orders', number, `Pedido ${number} por ${subtotal} USD`)
+  if (customerId) audit('cliente', 'customer.auto', 'customers', String(customerId), `Cliente vinculado al pedido ${number}`)
 
   res.status(201).json({
     ok: true,
@@ -379,9 +578,215 @@ app.post('/api/reviews', (req, res) => {
   res.status(201).json({ ok: true })
 })
 
+/* ---------------- admin: imágenes del catálogo ---------------- */
+
+app.get('/api/admin/images', requireAuth, (req, res) => {
+  const q = String(req.query.q ?? '').trim().toLowerCase()
+  const rows = q
+    ? db.prepare(`SELECT pi.*, p.name AS product_name FROM product_images pi JOIN products p ON p.id = pi.product_id
+                  WHERE LOWER(p.name) LIKE ? ORDER BY pi.product_id, pi.is_primary DESC, pi.position ASC`).all(`%${q}%`)
+    : db.prepare(`SELECT pi.*, p.name AS product_name FROM product_images pi JOIN products p ON p.id = pi.product_id
+                  ORDER BY pi.product_id, pi.is_primary DESC, pi.position ASC`).all()
+  res.json({ items: rows })
+})
+
+app.get('/api/admin/products/:id/images', requireAuth, (req, res) => {
+  const rows = db.prepare('SELECT * FROM product_images WHERE product_id = ? ORDER BY is_primary DESC, position ASC, id ASC').all(req.params.id)
+  res.json({ items: rows })
+})
+
+app.post('/api/admin/products/:id/images', requireAuth, rateLimit('upload', 60), (req, res) => {
+  const product = db.prepare('SELECT id, name FROM products WHERE id = ?').get(req.params.id)
+  if (!product) return res.status(404).json({ error: 'Producto no encontrado' })
+
+  const incoming = Array.isArray(req.body.images) ? req.body.images : [req.body]
+  if (incoming.length === 0) return res.status(422).json({ error: 'No se recibieron imágenes' })
+  if (incoming.length > 10) return res.status(422).json({ error: 'Máximo 10 imágenes por solicitud' })
+
+  const dir = join(UPLOADS_DIR, 'products', product.id)
+  mkdirSync(dir, { recursive: true })
+
+  const countRow = db.prepare('SELECT COUNT(*) AS n FROM product_images WHERE product_id = ?').get(product.id)
+  let position = countRow.n
+  let primaryTaken = !!db.prepare('SELECT id FROM product_images WHERE product_id = ? AND is_primary = 1').get(product.id)
+  const saved = []
+
+  try {
+    db.exec('BEGIN')
+    for (const item of incoming) {
+      const decoded = decodeBase64Image(item?.data)
+      if (!decoded || decoded.error) {
+        throw Object.assign(new Error(decoded?.error ?? 'Imagen inválida'), { status: 422 })
+      }
+      const filename = `${randomUUID()}.${decoded.ext}`
+      const relPath = `/uploads/products/${product.id}/${filename}`
+      writeFileSync(join(dir, filename), decoded.buf)
+
+      const isPrimary = !primaryTaken
+      primaryTaken = true
+      const alt = String(item?.alt ?? '').trim().slice(0, 160)
+      const status = IMAGE_STATUSES.includes(item?.status) ? item.status : 'published'
+
+      const result = db.prepare(
+        'INSERT INTO product_images (product_id, path, alt, position, is_primary, status) VALUES (?,?,?,?,?,?)',
+      ).run(product.id, relPath, alt, position++, isPrimary ? 1 : 0, status)
+      saved.push({
+        id: Number(result.lastInsertRowid),
+        productId: product.id,
+        path: relPath,
+        alt,
+        position: position - 1,
+        isPrimary,
+        status,
+      })
+    }
+    db.exec('COMMIT')
+  } catch (err) {
+    try { db.exec('ROLLBACK') } catch { /* ya estaba en rollback */ }
+    for (const im of saved) {
+      const file = join(UPLOADS_DIR, im.path.replace('/uploads/', ''))
+      try { if (existsSync(file)) unlinkSync(file) } catch { /* ignorar */ }
+    }
+    if (err.status === 422) return res.status(422).json({ error: err.message })
+    console.error('[upload imagen]', err)
+    return res.status(500).json({ error: 'No se pudo guardar la imagen' })
+  }
+
+  audit(req.auth.username, 'image.upload', 'product_images', product.id, `Subió ${saved.length} imagen(es) para ${product.name}`)
+  res.status(201).json({ items: saved })
+})
+
+app.patch('/api/admin/images/:id', requireAuth, (req, res) => {
+  const image = db.prepare('SELECT * FROM product_images WHERE id = ?').get(req.params.id)
+  if (!image) return res.status(404).json({ error: 'Imagen no encontrada' })
+  const sets = []
+  const params = []
+  if (req.body.alt !== undefined) { sets.push('alt = ?'); params.push(String(req.body.alt).trim().slice(0, 160)) }
+  if (req.body.status !== undefined) {
+    if (!IMAGE_STATUSES.includes(req.body.status)) return res.status(422).json({ error: 'Estado no válido' })
+    sets.push('status = ?'); params.push(req.body.status)
+  }
+  if (req.body.isPrimary === true) {
+    db.exec('BEGIN')
+    try {
+      db.prepare('UPDATE product_images SET is_primary = 0 WHERE product_id = ?').run(image.product_id)
+      db.prepare('UPDATE product_images SET is_primary = 1 WHERE id = ?').run(image.id)
+      db.exec('COMMIT')
+    } catch (err) {
+      try { db.exec('ROLLBACK') } catch { /* ignorar */ }
+      throw err
+    }
+    audit(req.auth.username, 'image.setPrimary', 'product_images', image.id)
+    return res.json({ ok: true })
+  }
+  if (sets.length === 0) return res.json({ ok: true })
+  sets.push('updated_at = ?')
+  params.push(nowIso(), image.id)
+  db.prepare(`UPDATE product_images SET ${sets.join(', ')} WHERE id = ?`).run(...params)
+  audit(req.auth.username, 'image.update', 'product_images', image.id)
+  res.json({ ok: true })
+})
+
+app.post('/api/admin/images/reorder', requireAuth, (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(Number).filter((n) => Number.isFinite(n)) : []
+  if (ids.length === 0) return res.status(422).json({ error: 'Lista de imágenes vacía' })
+  db.exec('BEGIN')
+  try {
+    ids.forEach((id, index) => {
+      db.prepare('UPDATE product_images SET position = ?, updated_at = ? WHERE id = ?').run(index, nowIso(), id)
+    })
+    db.exec('COMMIT')
+  } catch (err) {
+    try { db.exec('ROLLBACK') } catch { /* ignorar */ }
+    throw err
+  }
+  audit(req.auth.username, 'image.reorder', 'product_images', null, `${ids.length} imágenes reordenadas`)
+  res.json({ ok: true })
+})
+
+app.delete('/api/admin/images/:id', requireAuth, (req, res) => {
+  const image = db.prepare('SELECT * FROM product_images WHERE id = ?').get(req.params.id)
+  if (!image) return res.status(404).json({ error: 'Imagen no encontrada' })
+  db.prepare('DELETE FROM product_images WHERE id = ?').run(image.id)
+  if (image.is_primary) {
+    const next = db.prepare("SELECT id FROM product_images WHERE product_id = ? AND status = 'published' ORDER BY position ASC, id ASC LIMIT 1").get(image.product_id)
+    if (next) db.prepare('UPDATE product_images SET is_primary = 1 WHERE id = ?').run(next.id)
+  }
+  const file = join(UPLOADS_DIR, image.path.replace('/uploads/', ''))
+  try { if (existsSync(file)) unlinkSync(file) } catch { /* ignorar */ }
+  audit(req.auth.username, 'image.delete', 'product_images', image.id)
+  res.json({ ok: true })
+})
+
+/* ---------------- admin: proveedores ---------------- */
+
+function supplierBody(body) {
+  return {
+    company: String(body.company ?? '').trim().slice(0, 160),
+    taxId: String(body.taxId ?? '').trim().slice(0, 40) || null,
+    phone: String(body.phone ?? '').trim().slice(0, 40) || null,
+    email: String(body.email ?? '').trim().slice(0, 160) || null,
+    address: String(body.address ?? '').trim().slice(0, 300) || null,
+    category: String(body.category ?? '').trim().slice(0, 80) || null,
+    notes: String(body.notes ?? '').trim().slice(0, 2000) || null,
+    active: body.active === undefined ? true : toBool(body.active),
+  }
+}
+
+app.get('/api/admin/suppliers', requireAuth, (req, res) => {
+  const q = String(req.query.q ?? '').trim().toLowerCase()
+  const rows = q
+    ? db.prepare(`SELECT * FROM suppliers WHERE LOWER(company) LIKE ? OR LOWER(COALESCE(tax_id,'')) LIKE ?
+                  OR LOWER(COALESCE(email,'')) LIKE ? ORDER BY company ASC`).all(`%${q}%`, `%${q}%`, `%${q}%`)
+    : db.prepare('SELECT * FROM suppliers ORDER BY company ASC').all()
+  res.json({ items: rows })
+})
+
+app.post('/api/admin/suppliers', requireAuth, (req, res) => {
+  const b = supplierBody(req.body)
+  if (b.company.length < 2) return res.status(422).json({ error: 'El nombre de la empresa es obligatorio' })
+  if (b.email && !/^\S+@\S+\.\S+$/.test(b.email)) return res.status(422).json({ error: 'Correo no válido' })
+  const result = db.prepare(
+    'INSERT INTO suppliers (company, tax_id, phone, email, address, category, notes, active) VALUES (?,?,?,?,?,?,?,?)',
+  ).run(b.company, b.taxId, b.phone, b.email, b.address, b.category, b.notes, b.active ? 1 : 0)
+  audit(req.auth.username, 'supplier.create', 'suppliers', String(result.lastInsertRowid), `Creó proveedor ${b.company}`)
+  res.status(201).json({ supplier: db.prepare('SELECT * FROM suppliers WHERE id = ?').get(result.lastInsertRowid) })
+})
+
+app.put('/api/admin/suppliers/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Proveedor no encontrado' })
+  const b = supplierBody(req.body)
+  if (b.company.length < 2) return res.status(422).json({ error: 'El nombre de la empresa es obligatorio' })
+  if (b.email && !/^\S+@\S+\.\S+$/.test(b.email)) return res.status(422).json({ error: 'Correo no válido' })
+  db.prepare(`UPDATE suppliers SET company=?, tax_id=?, phone=?, email=?, address=?, category=?, notes=?, active=?, updated_at=?
+              WHERE id=?`)
+    .run(b.company, b.taxId, b.phone, b.email, b.address, b.category, b.notes, b.active ? 1 : 0, nowIso(), row.id)
+  audit(req.auth.username, 'supplier.update', 'suppliers', row.id, `Actualizó proveedor ${b.company}`)
+  res.json({ supplier: db.prepare('SELECT * FROM suppliers WHERE id = ?').get(row.id) })
+})
+
+app.patch('/api/admin/suppliers/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Proveedor no encontrado' })
+  if (req.body.active !== undefined) {
+    db.prepare('UPDATE suppliers SET active = ?, updated_at = ? WHERE id = ?').run(toBool(req.body.active) ? 1 : 0, nowIso(), row.id)
+  }
+  audit(req.auth.username, 'supplier.status', 'suppliers', row.id, `${row.company}: activo=${req.body.active}`)
+  res.json({ ok: true })
+})
+
+app.delete('/api/admin/suppliers/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Proveedor no encontrado' })
+  db.prepare('DELETE FROM suppliers WHERE id = ?').run(row.id)
+  audit(req.auth.username, 'supplier.delete', 'suppliers', row.id, `Eliminó proveedor ${row.company}`)
+  res.json({ ok: true })
+})
+
 /* ---------------- admin: auth ---------------- */
 
-app.post('/api/admin/auth/login', (req, res) => {
+app.post('/api/admin/auth/login', rateLimit('login', 10), (req, res) => {
   const username = String(req.body.username ?? '').trim()
   const password = String(req.body.password ?? '')
   const user = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(username)
@@ -680,7 +1085,7 @@ app.post('/api/admin/orders', requireAuth, (req, res) => {
       ON CONFLICT(email) DO UPDATE SET
         name = excluded.name, phone = excluded.phone, city = excluded.city, country = excluded.country
     `).run(
-      String(info.name).trim(), String(info.email).trim().toLowerCase(),
+      String(info.name).trim(), String(info.email ?? '').trim().toLowerCase(),
       String(info.phone ?? '').trim(), String(info.city ?? '').trim(), String(info.country ?? '').trim(),
     )
   }
@@ -701,6 +1106,9 @@ app.post('/api/admin/orders', requireAuth, (req, res) => {
     Math.round(subtotal), shipping, discount, total, 'USD', couponCode, 'pending', nowIso(),
   )
   const orderId = Number(orderRes.lastInsertRowid)
+  const adminCustomerId = resolveCustomer(info)
+  db.prepare('UPDATE orders SET customer_id = ? WHERE id = ?').run(adminCustomerId, orderId)
+  touchCustomerAfterOrder(adminCustomerId, nowIso())
 
   const itemIns = db.prepare(
     'INSERT INTO order_items (order_id, product_id, name, size, color, quantity, price_usd, image) VALUES (?,?,?,?,?,?,?,?)',
@@ -839,11 +1247,20 @@ app.delete('/api/admin/contacts/:id', requireAuth, (req, res) => {
 
 app.get('/api/admin/customers', requireAuth, (_req, res) => {
   const rows = db.prepare(`
-    SELECT c.*, COUNT(DISTINCT o.id) AS order_count, COALESCE(SUM(o.total_usd),0) AS total_spent
-    FROM customers c LEFT JOIN orders o ON o.customer_email = c.email
-    GROUP BY c.id ORDER BY total_spent DESC
+    SELECT c.*,
+      (
+        SELECT COUNT(DISTINCT o.id) FROM orders o
+        WHERE o.customer_id = c.id OR (o.customer_id IS NULL AND o.customer_email = c.email)
+      ) AS order_count,
+      (
+        SELECT COALESCE(SUM(o.total_usd), 0) FROM orders o
+        WHERE (o.customer_id = c.id OR (o.customer_id IS NULL AND o.customer_email = c.email))
+          AND o.status != 'cancelled'
+      ) AS total_spent_calc
+    FROM customers c ORDER BY total_spent_calc DESC
   `).all()
-  res.json({ items: rows })
+  const items = rows.map((r) => ({ ...r, total_spent: r.total_spent_calc }))
+  res.json({ items })
 })
 
 app.get('/api/admin/reviews', requireAuth, (_req, res) => {
@@ -871,12 +1288,15 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Error interno del servidor' })
 })
 
-/* ---------------- static frontend (production) ---------------- */
+/* ---------------- static frontend + uploads (production) ---------------- */
+
+mkdirSync(UPLOADS_DIR, { recursive: true })
+app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '7d', index: false, fallthrough: false }))
 
 const distDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 if (existsSync(distDir)) {
   app.use(express.static(distDir))
-  app.get(/^\/(?!api\/).*/, (_req, res) => {
+  app.get(/^\/(?!api\/|uploads\/).*/, (_req, res) => {
     res.sendFile(join(distDir, 'index.html'))
   })
 } else {

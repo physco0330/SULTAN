@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite'
-import { mkdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -162,10 +162,153 @@ CREATE TABLE IF NOT EXISTS audit_log (
   detail TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  id TEXT PRIMARY KEY,
+  applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS product_images (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  path TEXT NOT NULL,
+  alt TEXT NOT NULL DEFAULT '',
+  position INTEGER NOT NULL DEFAULT 0,
+  is_primary INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'published',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_product_images_product ON product_images(product_id, position);
+
+CREATE TABLE IF NOT EXISTS suppliers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  company TEXT NOT NULL,
+  tax_id TEXT,
+  phone TEXT,
+  email TEXT,
+  address TEXT,
+  category TEXT,
+  notes TEXT,
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_suppliers_company ON suppliers(company);
 `
 
 export function initDb() {
   db.exec(SCHEMA)
+}
+
+/* ---------------- migraciones seguras ----------------
+ * Cada migración es idempotente (se salta si ya se aplicó).
+ * Antes de aplicar migraciones pendientes se crea una copia de
+ * seguridad del archivo .db. No se eliminan datos ni columnas. */
+
+function appliedMigrations() {
+  db.exec('CREATE TABLE IF NOT EXISTS schema_migrations (id TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime(\'now\')) )')
+  return new Set(db.prepare('SELECT id FROM schema_migrations').all().map((r) => r.id))
+}
+
+function hasTable(name) {
+  return !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?").get(name)
+}
+
+function hasColumn(table, column) {
+  return db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column)
+}
+
+function backupDatabase(tag) {
+  if (!existsSync(DB_PATH)) return null
+  const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19)
+  const backupPath = `${DB_PATH}.bak-${stamp}-${tag}`
+  try {
+    copyFileSync(DB_PATH, backupPath)
+    return backupPath
+  } catch {
+    return null
+  }
+}
+
+const MIGRATIONS = [
+  {
+    id: 'm001_orders_customer_id',
+    run: () => {
+      if (!hasColumn('orders', 'customer_id')) {
+        db.exec('ALTER TABLE orders ADD COLUMN customer_id INTEGER REFERENCES customers(id)')
+        db.exec('CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id)')
+      }
+    },
+  },
+  {
+    id: 'm002_customers_tracking',
+    run: () => {
+      if (!hasColumn('customers', 'document')) db.exec('ALTER TABLE customers ADD COLUMN document TEXT')
+      if (!hasColumn('customers', 'address')) db.exec('ALTER TABLE customers ADD COLUMN address TEXT')
+      if (!hasColumn('customers', 'first_order_at')) db.exec('ALTER TABLE customers ADD COLUMN first_order_at TEXT')
+      if (!hasColumn('customers', 'last_order_at')) db.exec('ALTER TABLE customers ADD COLUMN last_order_at TEXT')
+      if (!hasColumn('customers', 'total_spent')) db.exec('ALTER TABLE customers ADD COLUMN total_spent REAL NOT NULL DEFAULT 0')
+    },
+  },
+  {
+    id: 'm003_product_images',
+    run: () => {
+      db.exec(`CREATE TABLE IF NOT EXISTS product_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        path TEXT NOT NULL,
+        alt TEXT NOT NULL DEFAULT '',
+        position INTEGER NOT NULL DEFAULT 0,
+        is_primary INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'published',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`)
+      db.exec('CREATE INDEX IF NOT EXISTS idx_product_images_product ON product_images(product_id, position)')
+    },
+  },
+  {
+    id: 'm004_suppliers',
+    run: () => {
+      db.exec(`CREATE TABLE IF NOT EXISTS suppliers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company TEXT NOT NULL,
+        tax_id TEXT,
+        phone TEXT,
+        email TEXT,
+        address TEXT,
+        category TEXT,
+        notes TEXT,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`)
+      db.exec('CREATE INDEX IF NOT EXISTS idx_suppliers_company ON suppliers(company)')
+    },
+  },
+]
+
+export function runMigrations() {
+  const applied = appliedMigrations()
+  const pending = MIGRATIONS.filter((m) => !applied.has(m.id))
+  let backup = null
+  if (pending.length > 0) {
+    backup = backupDatabase(pending[0].id)
+    for (const m of pending) {
+      try {
+        db.exec('BEGIN')
+        m.run()
+        db.prepare('INSERT INTO schema_migrations (id) VALUES (?)').run(m.id)
+        db.exec('COMMIT')
+      } catch (err) {
+        try { db.exec('ROLLBACK') } catch { /* ya estaba en rollback */ }
+        console.error(`[migración ${m.id}] falló:`, err.message)
+        break
+      }
+    }
+  }
+  return { applied: pending.map((m) => m.id), backup }
 }
 
 export function nowIso() {

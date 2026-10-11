@@ -10,6 +10,7 @@ import { Price } from '@/components/Price'
 import { Rating } from '@/components/Rating'
 import { AccordionItem } from '@/components/Accordion'
 import { Modal } from '@/components/Modal'
+import { isFeatureEnabled } from '@/config/features'
 import { ProductGrid } from '@/components/ProductGrid'
 import { Reveal } from '@/components/Reveal'
 import { useCart } from '@/store/cart'
@@ -132,8 +133,8 @@ export default function Product() {
     <div className="mx-auto max-w-[1600px] px-4 pb-24 lg:px-8">
       <nav aria-label="Breadcrumb" className="py-6 text-xs uppercase tracking-widest text-bone">
         <Link to="/" className="hover:text-gold">{t('nav.home')}</Link> <span className="mx-2 text-gold/50">/</span>
-        <Link to={product.gender === 'men' ? '/hombre' : '/mujer'} className="hover:text-gold">
-          {product.gender === 'men' ? t('nav.men') : t('nav.women')}
+        <Link to={product.gender === 'men' || !isFeatureEnabled('women') ? '/hombre' : '/mujer'} className="hover:text-gold">
+          {product.gender === 'men' || !isFeatureEnabled('women') ? t('nav.men') : t('nav.women')}
         </Link> <span className="mx-2 text-gold/50">/</span>
         <span className="text-gold">{product.name}</span>
       </nav>

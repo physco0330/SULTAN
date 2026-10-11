@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Package, ShoppingBag, LogOut, Wifi, ServerOff, Mail, Users, ClipboardList, Banknote, ShieldCheck, PencilRuler, MessageSquare } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, LogOut, Mail, Users, Banknote, ShieldCheck, PencilRuler, MessageSquare, Image, Truck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getAdminToken, setAdminToken } from '@/services/api'
 import { adminService } from '@/services/adminService'
@@ -7,24 +7,27 @@ import { AdminLogin } from '@/admin/AdminLogin'
 import { AdminDashboard } from '@/admin/AdminDashboard'
 import { AdminProducts } from '@/admin/AdminProducts'
 import { AdminOrders } from '@/admin/AdminOrders'
+import { AdminImages } from '@/admin/AdminImages'
+import { AdminSuppliers } from '@/admin/AdminSuppliers'
 import { AdminSettings, type AdminSettingsSection } from '@/admin/AdminSettings'
 import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
 import type { AdminUser } from '@/services/adminService'
 
-type Section = 'dashboard' | 'products' | 'orders' | AdminSettingsSection
+type Section = 'dashboard' | 'products' | 'orders' | 'images' | 'suppliers' | AdminSettingsSection
 
-const NAV: { key: Section; label: string; icon: typeof LayoutDashboard; group: 'general' | 'ventas' }[] = [
+const NAV: { key: Section; label: string; icon: typeof LayoutDashboard; group: 'general' | 'ventas' | 'catalogo' }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'general' },
   { key: 'products', label: 'Productos', icon: Package, group: 'ventas' },
   { key: 'orders', label: 'Pedidos', icon: ShoppingBag, group: 'ventas' },
+  { key: 'images', label: 'Imágenes del catálogo', icon: Image, group: 'catalogo' },
 ]
 
-const CONFIG_NAV: { key: AdminSettingsSection; label: string; icon: typeof PencilRuler }[] = [
+const CONFIG_NAV: { key: Section; label: string; icon: typeof PencilRuler }[] = [
   { key: 'Empresa', label: 'Empresa', icon: PencilRuler },
   { key: 'Cupones', label: 'Cupones', icon: Banknote },
   { key: 'Suscriptores', label: 'Suscriptores', icon: Mail },
-  { key: 'Contactos', label: 'Contactos', icon: ClipboardList },
+  { key: 'suppliers', label: 'Proveedores', icon: Truck },
   { key: 'Clientes', label: 'Clientes', icon: Users },
   { key: 'Reseñas', label: 'Reseñas', icon: MessageSquare },
   { key: 'Auditoría', label: 'Auditoría', icon: ShieldCheck },
@@ -34,10 +37,11 @@ const SECTION_TITLE: Record<string, string> = {
   dashboard: 'Dashboard',
   products: 'Productos',
   orders: 'Pedidos',
+  images: 'Imágenes del catálogo',
+  suppliers: 'Proveedores',
   Empresa: 'Configuración · Empresa',
   Cupones: 'Configuración · Cupones',
   Suscriptores: 'Configuración · Suscriptores',
-  Contactos: 'Configuración · Contactos',
   Clientes: 'Configuración · Clientes',
   Reseñas: 'Configuración · Reseñas',
   Auditoría: 'Configuración · Auditoría',
@@ -50,7 +54,6 @@ export default function Admin() {
   const [user, setUser] = useState<AdminUser | null>(null)
   const [authorized, setAuthorized] = useState(!getAdminToken() ? false : true)
   const [section, setSection] = useState<Section>('dashboard')
-  const [online, setOnline] = useState(true)
 
   useEffect(() => {
     const token = getAdminToken()
@@ -64,13 +67,9 @@ export default function Admin() {
         setUser(r.user)
         setAuthorized(true)
       })
-      .catch((err) => {
+      .catch(() => {
         if (dead) return
-        if (err instanceof Error && (err as unknown as { status?: number }).status !== 401) {
-          setOnline(false)
-        } else {
-          setAdminToken(null)
-        }
+        setAdminToken(null)
         setAuthorized(false)
       })
       .finally(() => {
@@ -96,12 +95,13 @@ export default function Admin() {
           onSuccess={(u) => {
             setUser(u)
             setAuthorized(true)
-            setOnline(true)
           }}
         />
       </div>
     )
   }
+
+  const isSettings = !['dashboard', 'products', 'orders', 'images', 'suppliers'].includes(section)
 
   return (
     <div className="flex min-h-screen bg-night text-ivory">
@@ -144,16 +144,13 @@ export default function Admin() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm text-ivory">{user.name}</p>
-              <p className={cn('flex items-center gap-1 text-[0.58rem] uppercase tracking-[0.2em]', online ? 'text-emerald-400' : 'text-bone/70')}>
-                {online ? <Wifi size={10} /> : <ServerOff size={10} />}
-                {online ? 'Conectado' : 'Sin servidor'}
-              </p>
+              <p className="truncate text-[0.58rem] uppercase tracking-[0.2em] text-bone">{user.username}</p>
             </div>
             <button onClick={logout} title="Cerrar sesión" aria-label="Cerrar sesión" className="flex h-9 w-9 items-center justify-center border border-gold/30 text-gold hover:bg-gold hover:text-night">
               <LogOut size={14} />
             </button>
           </div>
-          <p className="mt-3 text-[0.58rem] uppercase tracking-[0.2em] text-bone">{user.role} · {user.username}</p>
+          <p className="mt-3 text-[0.58rem] uppercase tracking-[0.2em] text-bone">{user.role}</p>
         </div>
       </aside>
 
@@ -168,10 +165,6 @@ export default function Admin() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={cn('flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.24em]', online ? 'text-emerald-400' : 'text-bone/70')}>
-                {online ? <Wifi size={11} /> : <ServerOff size={11} />}
-                {online ? 'API conectada' : 'Servidor no disponible'}
-              </span>
               <button
                 onClick={logout}
                 aria-label="Cerrar sesión"
@@ -203,8 +196,10 @@ export default function Admin() {
           {section === 'dashboard' && <AdminDashboard onNavigate={setSection} />}
           {section === 'products' && <AdminProducts />}
           {section === 'orders' && <AdminOrders />}
-          {section !== 'dashboard' && section !== 'products' && section !== 'orders' && (
-            <AdminSettings section={section} onSectionChange={setSection} />
+          {section === 'images' && <AdminImages />}
+          {section === 'suppliers' && <AdminSuppliers />}
+          {isSettings && (
+            <AdminSettings section={section as AdminSettingsSection} onSectionChange={setSection} />
           )}
         </main>
 

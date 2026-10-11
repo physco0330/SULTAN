@@ -91,9 +91,42 @@ export interface CustomerRow {
   phone: string | null
   city: string | null
   country: string | null
+  document: string | null
+  address: string | null
   created_at: string
-  order_count: number
+  first_order_at: string | null
+  last_order_at: string | null
   total_spent: number
+  order_count: number
+}
+
+export interface ProductImageRow {
+  id: number
+  product_id: string
+  path: string
+  alt: string
+  position: number
+  is_primary: number | boolean
+  status: 'published' | 'pending' | 'disabled'
+  created_at: string
+  updated_at: string
+  product_name?: string
+}
+
+export type ImageStatus = 'published' | 'pending' | 'disabled'
+
+export interface SupplierRow {
+  id: number
+  company: string
+  tax_id: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  category: string | null
+  notes: string | null
+  active: number | boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface AuditRow {
@@ -170,4 +203,29 @@ export const adminService = {
   reviews: () => api.get<{ items: ReviewRow[] }>('/admin/reviews'),
   deleteReview: (id: number) => api.del<{ ok: boolean }>(`/admin/reviews/${id}`),
   audit: () => api.get<{ items: AuditRow[] }>('/admin/audit'),
+
+  /* ---------- imágenes del catálogo ---------- */
+  images: (q?: string) =>
+    api.get<{ items: ProductImageRow[] }>(`/admin/images${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  productImages: (productId: string) =>
+    api.get<{ items: ProductImageRow[] }>(`/admin/products/${encodeURIComponent(productId)}/images`),
+  uploadImages: (
+    productId: string,
+    images: { data: string; alt?: string; status?: ImageStatus }[],
+  ) => api.post<{ items: ProductImageRow[] }>(`/admin/products/${encodeURIComponent(productId)}/images`, { images }),
+  updateImage: (id: number, patch: { alt?: string; status?: ImageStatus; isPrimary?: boolean }) =>
+    api.patch<{ ok: boolean }>(`/admin/images/${id}`, patch),
+  reorderImages: (ids: number[]) => api.post<{ ok: boolean }>('/admin/images/reorder', { ids }),
+  deleteImage: (id: number) => api.del<{ ok: boolean }>(`/admin/images/${id}`),
+
+  /* ---------- proveedores ---------- */
+  suppliers: (q?: string) =>
+    api.get<{ items: SupplierRow[] }>(`/admin/suppliers${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  createSupplier: (body: Partial<SupplierRow>) =>
+    api.post<{ supplier: SupplierRow }>('/admin/suppliers', body),
+  updateSupplier: (id: number, body: Partial<SupplierRow>) =>
+    api.put<{ supplier: SupplierRow }>(`/admin/suppliers/${id}`, body),
+  patchSupplier: (id: number, body: { active: boolean }) =>
+    api.patch<{ ok: boolean }>(`/admin/suppliers/${id}`, body),
+  deleteSupplier: (id: number) => api.del<{ ok: boolean }>(`/admin/suppliers/${id}`),
 }

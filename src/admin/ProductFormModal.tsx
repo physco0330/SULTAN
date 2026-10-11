@@ -6,10 +6,11 @@ import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { CATEGORIES, SIZES, FABRIC_COLORS } from '@/data/categories'
 import { Spinner } from '@/admin/ui'
 import { cn } from '@/utils/cn'
+import { isFeatureEnabled } from '@/config/features'
 import type { Gender, CollectionId, CategoryId } from '@/types'
 import type { AdminProduct } from '@/services/adminService'
 
-const GENDERS: Gender[] = ['men', 'women', 'unisex']
+const GENDERS: Gender[] = isFeatureEnabled('women') ? ['men', 'women', 'unisex'] : ['men', 'unisex']
 const COLLECTIONS: CollectionId[] = ['new', 'premium', 'limited', 'bestsellers', 'offers']
 
 export function ProductFormModal({

@@ -7,6 +7,12 @@ dist/
 # Base de datos local (se recrea y siembra sola al arrancar)
 server/data/
 
+# Backups automáticos de migraciones
+server/data/*.bak-*
+
+# Imágenes subidas (se regeneran desde el panel)
+server/uploads/
+
 # Logs
 *.log
 

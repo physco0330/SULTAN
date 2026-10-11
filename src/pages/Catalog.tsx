@@ -9,6 +9,7 @@ import { FilterPanel } from '@/components/Filters/FilterPanel'
 import { Drawer } from '@/components/Drawer'
 import { EmptyState } from '@/components/EmptyState'
 import { parseCatalogoParams, DEFAULT_FILTERS } from '@/components/Filters/filterState'
+import { isFeatureEnabled } from '@/config/features'
 import type { CollectionId } from '@/types'
 
 interface CatalogPageProps {
@@ -40,7 +41,10 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
   const { products, online } = useCatalog()
 
   const base = useMemo(
-    () => (gender ? products.filter((p) => p.gender === gender) : products),
+    () =>
+      isFeatureEnabled('women')
+        ? (gender ? products.filter((p) => p.gender === gender) : products)
+        : products.filter((p) => p.gender !== 'women'),
     [products, gender],
   )
   const bounds = useMemo(() => minMaxPrice(products), [products])

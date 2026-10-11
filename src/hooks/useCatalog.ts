@@ -3,9 +3,15 @@ import { PRODUCTS } from '@/data/products'
 import type { Product } from '@/types'
 import { fetchCatalog } from '@/services/productService'
 import { subscribeDataVersion } from '@/utils/liveSync'
+import { isFeatureEnabled } from '@/config/features'
 
 let cache: Product[] | null = null
 let inflight: Promise<Product[]> | null = null
+
+/** Filtra módulos desactivados (p. ej. Mujer) de cualquier lista de productos. */
+function applyFeatureVisibility(list: Product[]): Product[] {
+  return isFeatureEnabled('women') ? list : list.filter((p) => p.gender !== 'women')
+}
 
 export function invalidateCatalogCache() {
   cache = null
@@ -21,7 +27,7 @@ export interface CatalogState {
 }
 
 export function useCatalog(): CatalogState {
-  const [products, setProducts] = useState<Product[]>(cache ?? PRODUCTS)
+  const [products, setProducts] = useState<Product[]>(() => applyFeatureVisibility(cache ?? PRODUCTS))
   const [loading, setLoading] = useState<boolean>(!cache)
   const [online, setOnline] = useState<boolean>(!!cache)
   const [error, setError] = useState<string | null>(null)
@@ -31,13 +37,13 @@ export function useCatalog(): CatalogState {
     inflight = null
     setLoading(true)
     try {
-      const list = await fetchCatalog()
+      const list = applyFeatureVisibility(await fetchCatalog())
       cache = list
       setProducts(list)
       setOnline(true)
       setError(null)
     } catch (err) {
-      setProducts(PRODUCTS)
+      setProducts(applyFeatureVisibility(PRODUCTS))
       setOnline(false)
       setError(err instanceof Error ? err.message : 'error')
     } finally {
@@ -47,7 +53,7 @@ export function useCatalog(): CatalogState {
 
   useEffect(() => {
     if (cache) {
-      setProducts(cache)
+      setProducts(applyFeatureVisibility(cache))
       setOnline(true)
       setLoading(false)
       return
@@ -59,13 +65,13 @@ export function useCatalog(): CatalogState {
       .then((list) => {
         if (dead) return
         cache = list
-        setProducts(list)
+        setProducts(applyFeatureVisibility(list))
         setOnline(true)
         setError(null)
       })
       .catch((err) => {
         if (dead) return
-        setProducts(PRODUCTS)
+        setProducts(applyFeatureVisibility(PRODUCTS))
         setOnline(false)
         setError(err instanceof Error ? err.message : 'error')
       })
@@ -86,7 +92,7 @@ export function useCatalog(): CatalogState {
         inflight = null
         fetchCatalog().then((list) => {
           cache = list
-          setProducts(list)
+          setProducts(applyFeatureVisibility(list))
           setOnline(true)
           setError(null)
         }).catch(() => {

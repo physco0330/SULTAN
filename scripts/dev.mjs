@@ -1,10 +1,16 @@
 import { spawn } from 'node:child_process'
-import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 
-const cwd = resolve(import.meta.url, '..')
+const cwd = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const isWindows = process.platform === 'win32'
 
 const server = spawn(process.execPath, ['server/index.mjs'], { stdio: 'inherit', cwd })
-const vite = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['vite', '--host'], { stdio: 'inherit', cwd })
+const vite = spawn(process.execPath, [resolve(cwd, 'node_modules/vite/bin/vite.js'), '--host'], {
+  stdio: 'inherit',
+  cwd,
+  ...(isWindows ? { shell: false } : {}),
+})
 
 const stop = (signal) => {
   ;[server, vite].forEach((p) => p.kill(signal))

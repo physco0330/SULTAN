@@ -3,6 +3,7 @@ import { CATEGORIES, SIZES, FABRIC_COLORS } from '@/data/categories'
 import { cn } from '@/utils/cn'
 import type { FilterState, SortKey } from './filterState'
 import type { Availability, CollectionId, Gender } from '@/types'
+import { isFeatureEnabled } from '@/config/features'
 
 type FilterCallbacks = Partial<FilterState>
 
@@ -79,7 +80,7 @@ export function FilterPanel({
 
   const genders: { id: Gender; label: string }[] = [
     { id: 'men', label: t('catalog.men') },
-    { id: 'women', label: t('catalog.women') },
+    ...(isFeatureEnabled('women') ? [{ id: 'women' as Gender, label: t('catalog.women') }] : []),
   ]
 
   const collections: { id: CollectionId; label: string }[] = [

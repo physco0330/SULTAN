@@ -8,6 +8,7 @@ import { SectionTitle } from '@/components/SectionTitle'
 import { ProductGrid } from '@/components/ProductGrid'
 import { NewsletterForm } from '@/components/NewsletterForm'
 import { ReviewsSection } from '@/components/Reviews'
+import { isFeatureEnabled } from '@/config/features'
 
 function Hero() {
   const { t } = useTranslation()
@@ -77,7 +78,9 @@ function Hero() {
 
 const CATEGORY_CARDS = [
   { to: '/hombre', titleKey: 'nav.men', label: 'Men', image: categoryImage('SULTAN MEN') },
-  { to: '/mujer', titleKey: 'nav.women', label: 'Women', image: categoryImage('SULTAN WOMEN') },
+  ...(isFeatureEnabled('women')
+    ? [{ to: '/mujer', titleKey: 'nav.women', label: 'Women', image: categoryImage('SULTAN WOMEN') }]
+    : []),
   { to: '/nueva-coleccion', titleKey: 'nav.newCollection', label: 'New Collection', image: categoryImage('NEW COLLECTION') },
   { to: '/catalogo?collection=limited', titleKey: 'badges.limited', label: 'Premium Edition', image: categoryImage('PREMIUM EDITION') },
 ]

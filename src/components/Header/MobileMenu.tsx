@@ -8,11 +8,12 @@ import { LanguageSelector } from '@/components/LanguageSelector'
 import { CurrencySelector } from '@/components/CurrencySelector'
 import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
+import { isFeatureEnabled } from '@/config/features'
 
 const LINKS = [
   { to: '/', key: 'home' },
   { to: '/hombre', key: 'men' },
-  { to: '/mujer', key: 'women' },
+  ...(isFeatureEnabled('women') ? [{ to: '/mujer', key: 'women' }] : []),
   { to: '/nueva-coleccion', key: 'newCollection' },
   { to: '/catalogo', key: 'catalog' },
   { to: '/ofertas', key: 'offers' },
