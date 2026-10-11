@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Search, Plus, Pencil, Trash2, Eye, EyeOff, Star, ImageIcon } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Eye, EyeOff, Star } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { useUi } from '@/store/ui'
 import { ProductFormModal } from '@/admin/ProductFormModal'
 import { Modal } from '@/components/Modal'
 import { usd, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
+import { useCategories, useCollections } from '@/hooks/useTaxonomies'
 import { cn } from '@/utils/cn'
 import type { AdminProduct } from '@/services/adminService'
 
-export function AdminProducts({ onManageImages }: { onManageImages?: (productId: string) => void }) {
+export function AdminProducts() {
+  const categories = useCategories()
+  const collections = useCollections()
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -109,11 +112,12 @@ export function AdminProducts({ onManageImages }: { onManageImages?: (productId:
 
       <div className="overflow-hidden border border-gold/15 bg-carbon/40">
         <TableScroller>
-          <table className="w-full min-w-[860px]">
+          <table className="w-full min-w-[940px]">
             <thead className="border-b border-gold/15">
               <tr>
                 <Th>Producto</Th>
                 <Th>Precio</Th>
+                <Th>Categoría</Th>
                 <Th>Oferta</Th>
                 <Th>Stock</Th>
                 <Th>Colección</Th>
@@ -122,7 +126,7 @@ export function AdminProducts({ onManageImages }: { onManageImages?: (productId:
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {loading && products.length === 0 && <EmptyRow colSpan={7} message="Cargando…" />}
+              {loading && products.length === 0 && <EmptyRow colSpan={8} message="Cargando…" />}
               {!loading && products.length === 0 && <EmptyRow colSpan={7} message="No hay productos que coincidan con la búsqueda" />}
               {products.map((p) => (
                 <tr key={p.id} className="hover:bg-carbon/60">
@@ -136,13 +140,14 @@ export function AdminProducts({ onManageImages }: { onManageImages?: (productId:
                     </div>
                   </Td>
                   <Td>{usd(p.price)}</Td>
+                  <Td className="text-bone">{categories.find((c) => c.id === p.category)?.label ?? p.category}</Td>
                   <Td>{p.compareAtPrice ? <span className="text-gold">{usd(p.compareAtPrice)}</span> : <span className="text-bone">—</span>}</Td>
                   <Td>
                     <span className={cn('font-medium', p.stock === 0 ? 'text-red-400' : p.stock <= 8 ? 'text-gold' : 'text-ivory')}>
                       {p.stock}
                     </span>
                   </Td>
-                  <Td className="text-bone">{p.collection}</Td>
+                  <Td className="text-bone">{collections.find((c) => c.id === p.collection)?.label_es ?? p.collection}</Td>
                   <Td>
                     <StatusBadge value={p.active ? 'active' : 'inactive'} label={p.active ? 'Activo' : 'Inactivo'} />
                   </Td>
@@ -174,14 +179,6 @@ export function AdminProducts({ onManageImages }: { onManageImages?: (productId:
                         className="flex h-8 w-8 items-center justify-center border border-gold/20 text-bone transition-colors hover:text-gold"
                       >
                         <Pencil size={13} />
-                      </button>
-                      <button
-                        onClick={() => onManageImages?.(p.id)}
-                        aria-label="Gestionar imágenes"
-                        title="Gestionar imágenes de este producto"
-                        className="flex h-8 items-center gap-1.5 border border-gold/20 px-2 text-[0.6rem] uppercase tracking-wider text-bone transition-colors hover:border-gold/50 hover:text-gold"
-                      >
-                        <ImageIcon size={13} /> Imágenes
                       </button>
                       <button
                         onClick={() => setDeleting(p)}

@@ -306,7 +306,7 @@ app.get('/api/config', (_req, res) => res.json(publicConfig()))
 
 app.get('/api/categories', (_req, res) => {
   const rows = db.prepare('SELECT id, label_en, label_es, label_tr, sort FROM categories ORDER BY sort').all()
-  res.json(rows)
+  res.json({ items: rows })
 })
 
 app.get('/api/coupons/validate', (req, res) => {
@@ -781,6 +781,142 @@ app.delete('/api/admin/suppliers/:id', requireAuth, (req, res) => {
   if (!row) return res.status(404).json({ error: 'Proveedor no encontrado' })
   db.prepare('DELETE FROM suppliers WHERE id = ?').run(row.id)
   audit(req.auth.username, 'supplier.delete', 'suppliers', row.id, `Eliminó proveedor ${row.company}`)
+  res.json({ ok: true })
+})
+
+/* ---------------- taxonomía pública: categorías y colecciones ---------------- */
+
+const slugId = (v) =>
+  String(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+app.get('/api/collections', (_req, res) => {
+  const rows = db.prepare("SELECT id, label_es, label_en, sort FROM collections WHERE active = 1 ORDER BY sort ASC, id ASC").all()
+  res.json({ items: rows })
+})
+
+/* ---------------- admin: colecciones ---------------- */
+
+app.get('/api/admin/collections', requireAuth, (_req, res) => {
+  res.json({ items: db.prepare('SELECT * FROM collections ORDER BY sort ASC, id ASC').all() })
+})
+
+app.post('/api/admin/collections', requireAuth, (req, res) => {
+  const labelEs = String(req.body.labelEs ?? '').trim()
+  const labelEn = String(req.body.labelEn ?? '').trim() || labelEs
+  if (labelEs.length < 2) return res.status(422).json({ error: 'El nombre de la colección es obligatorio' })
+  const id = req.body.id ? slugId(req.body.id) : slugId(labelEs)
+  if (!id) return res.status(422).json({ error: 'Identificador no válido' })
+  if (db.prepare('SELECT id FROM collections WHERE id = ?').get(id)) return res.status(409).json({ error: 'Ya existe una colección con ese identificador' })
+  const maxSort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS m FROM collections').get().m
+  db.prepare('INSERT INTO collections (id, label_es, label_en, sort, active) VALUES (?,?,?,?,?)')
+    .run(id, labelEs.slice(0, 80), labelEn.slice(0, 80), maxSort + 1, req.body.active === false ? 0 : 1)
+  audit(req.auth.username, 'collection.create', 'collections', id, `Creó colección ${labelEs}`)
+  res.status(201).json({ collection: db.prepare('SELECT * FROM collections WHERE id = ?').get(id) })
+})
+
+app.put('/api/admin/collections/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM collections WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Colección no encontrada' })
+  const labelEs = String(req.body.labelEs ?? row.label_es).trim()
+  const labelEn = String(req.body.labelEn ?? row.label_en).trim() || labelEs
+  if (labelEs.length < 2) return res.status(422).json({ error: 'El nombre de la colección es obligatorio' })
+  db.prepare('UPDATE collections SET label_es = ?, label_en = ?, sort = ?, active = ?, updated_at = ? WHERE id = ?')
+    .run(
+      labelEs.slice(0, 80), labelEn.slice(0, 80),
+      Number.isFinite(Number(req.body.sort)) ? Math.floor(Number(req.body.sort)) : row.sort,
+      req.body.active === undefined ? row.active : (toBool(req.body.active) ? 1 : 0),
+      nowIso(), row.id,
+    )
+  audit(req.auth.username, 'collection.update', 'collections', row.id, `Actualizó colección ${labelEs}`)
+  res.json({ collection: db.prepare('SELECT * FROM collections WHERE id = ?').get(row.id) })
+})
+
+app.delete('/api/admin/collections/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM collections WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Colección no encontrada' })
+  const used = db.prepare('SELECT COUNT(*) AS n FROM products WHERE collection = ?').get(row.id).n
+  if (used > 0) return res.status(409).json({ error: `No se puede eliminar: ${used} producto(s) usan esta colección` })
+  db.prepare('DELETE FROM collections WHERE id = ?').run(row.id)
+  audit(req.auth.username, 'collection.delete', 'collections', row.id, `Eliminó colección ${row.label_es}`)
+  res.json({ ok: true })
+})
+
+/* ---------------- admin: categorías ---------------- */
+
+app.get('/api/admin/categories', requireAuth, (_req, res) => {
+  res.json({ items: db.prepare('SELECT * FROM categories ORDER BY sort ASC, id ASC').all() })
+})
+
+app.post('/api/admin/categories', requireAuth, (req, res) => {
+  const id = slugId(req.body.id ?? req.body.labelEs ?? '')
+  const labelEs = String(req.body.labelEs ?? '').trim()
+  const labelEn = String(req.body.labelEn ?? '').trim() || labelEs
+  if (!id) return res.status(422).json({ error: 'Identificador no válido' })
+  if (labelEs.length < 2) return res.status(422).json({ error: 'El nombre de la categoría es obligatorio' })
+  if (db.prepare('SELECT id FROM categories WHERE id = ?').get(id)) return res.status(409).json({ error: 'Ya existe una categoría con ese identificador' })
+  const maxSort = db.prepare('SELECT COALESCE(MAX(sort), 0) AS m FROM categories').get().m
+  db.prepare('INSERT INTO categories (id, label_en, label_es, label_tr, sort) VALUES (?,?,?,?,?)')
+    .run(id, labelEn.slice(0, 60), labelEs.slice(0, 60), labelEs.slice(0, 60), maxSort + 1)
+  audit(req.auth.username, 'category.create', 'categories', id, `Creó categoría ${labelEs}`)
+  res.status(201).json({ category: db.prepare('SELECT * FROM categories WHERE id = ?').get(id) })
+})
+
+app.put('/api/admin/categories/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Categoría no encontrada' })
+  const labelEs = String(req.body.labelEs ?? row.label_es).trim()
+  const labelEn = String(req.body.labelEn ?? row.label_en).trim() || labelEs
+  if (labelEs.length < 2) return res.status(422).json({ error: 'El nombre de la categoría es obligatorio' })
+  db.prepare('UPDATE categories SET label_es = ?, label_en = ?, label_tr = ?, sort = ? WHERE id = ?')
+    .run(
+      labelEs.slice(0, 60), labelEn.slice(0, 60), labelEs.slice(0, 60),
+      Number.isFinite(Number(req.body.sort)) ? Math.floor(Number(req.body.sort)) : row.sort, row.id,
+    )
+  audit(req.auth.username, 'category.update', 'categories', row.id, `Actualizó categoría ${labelEs}`)
+  res.json({ category: db.prepare('SELECT * FROM categories WHERE id = ?').get(row.id) })
+})
+
+app.delete('/api/admin/categories/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Categoría no encontrada' })
+  const used = db.prepare('SELECT COUNT(*) AS n FROM products WHERE category = ?').get(row.id).n
+  if (used > 0) return res.status(409).json({ error: `No se puede eliminar: ${used} producto(s) usan esta categoría` })
+  db.prepare('DELETE FROM categories WHERE id = ?').run(row.id)
+  audit(req.auth.username, 'category.delete', 'categories', row.id, `Eliminó categoría ${row.label_es}`)
+  res.json({ ok: true })
+})
+
+app.post('/api/admin/collections/reorder', requireAuth, (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(String) : []
+  if (ids.length === 0) return res.status(422).json({ error: 'Lista vacía' })
+  db.exec('BEGIN')
+  try {
+    ids.forEach((id, index) => {
+      db.prepare('UPDATE collections SET sort = ?, updated_at = ? WHERE id = ?').run(index, nowIso(), id)
+    })
+    db.exec('COMMIT')
+  } catch (err) {
+    try { db.exec('ROLLBACK') } catch { /* ignorar */ }
+    throw err
+  }
+  audit(req.auth.username, 'collection.reorder', 'collections', null, `${ids.length} colecciones reordenadas`)
+  res.json({ ok: true })
+})
+
+app.post('/api/admin/categories/reorder', requireAuth, (req, res) => {
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(String) : []
+  if (ids.length === 0) return res.status(422).json({ error: 'Lista vacía' })
+  db.exec('BEGIN')
+  try {
+    ids.forEach((id, index) => {
+      db.prepare('UPDATE categories SET sort = ? WHERE id = ?').run(index, id)
+    })
+    db.exec('COMMIT')
+  } catch (err) {
+    try { db.exec('ROLLBACK') } catch { /* ignorar */ }
+    throw err
+  }
+  audit(req.auth.username, 'category.reorder', 'categories', null, `${ids.length} categorías reordenadas`)
   res.json({ ok: true })
 })
 

@@ -269,6 +269,20 @@ const MIGRATIONS = [
     },
   },
   {
+    id: 'm005_collections',
+    run: () => {
+      db.exec(`CREATE TABLE IF NOT EXISTS collections (
+        id TEXT PRIMARY KEY,
+        label_es TEXT NOT NULL,
+        label_en TEXT NOT NULL DEFAULT '',
+        sort INTEGER NOT NULL DEFAULT 0,
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`)
+    },
+  },
+  {
     id: 'm004_suppliers',
     run: () => {
       db.exec(`CREATE TABLE IF NOT EXISTS suppliers (

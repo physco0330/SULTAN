@@ -156,6 +156,18 @@ function seedCategories() {
   categories.forEach(([id, en, es, tr], i) => insert.run(id, en, es, tr, i))
 }
 
+function seedCollections() {
+  const collections = [
+    ['new', 'Nueva colección', 'New collection'],
+    ['premium', 'Premium', 'Premium'],
+    ['limited', 'Edición limitada', 'Limited edition'],
+    ['bestsellers', 'Más vendidos', 'Best sellers'],
+    ['offers', 'Ofertas', 'Offers'],
+  ]
+  const insert = db.prepare('INSERT OR IGNORE INTO collections (id, label_es, label_en, sort) VALUES (?,?,?,?)')
+  collections.forEach(([id, es, en], i) => insert.run(id, es, en, i))
+}
+
 function seedSettings() {
   const values = {
     company_name: 'SULTAN BLACK',
@@ -280,6 +292,7 @@ function seedDemoOrders() {
 
 export function seedAll() {
   seedProducts()
+  seedCollections()
   seedCategories()
   seedSettings()
   seedCoupons()

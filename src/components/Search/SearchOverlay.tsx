@@ -4,7 +4,7 @@ import { Clock, Search, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { PRODUCTS } from '@/data/products'
-import { CATEGORIES } from '@/data/categories'
+import { useCategories } from '@/hooks/useTaxonomies'
 import { Price } from '@/components/Price'
 import { useUi } from '@/store/ui'
 
@@ -23,6 +23,7 @@ function writeRecent(q: string) {
 }
 
 export function SearchOverlay() {
+  const allCategories = useCategories()
   const { t } = useTranslation()
   const open = useUi((s) => s.searchOpen)
   const close = useUi((s) => s.closeSearch)
@@ -57,7 +58,7 @@ export function SearchOverlay() {
         p.category.toLowerCase().includes(q) ||
         p.collection.toLowerCase().includes(q),
     )
-    const categories = CATEGORIES.filter((c) => t(`catalog.types.${c.id}`).toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+    const categories = allCategories.filter((c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
     return { products, categories }
   }, [query, t])
 
@@ -125,7 +126,7 @@ export function SearchOverlay() {
                   {t('search.categoriesTitle')}
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {CATEGORIES.map((c) => (
+                  {results.categories.map((c) => (
                     <Link
                       key={c.id}
                       to={`/catalogo?type=${c.id}`}

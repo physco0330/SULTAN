@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/Modal'
+import { useCategories, useCollections, createCategory, createCollection } from '@/hooks/useTaxonomies'
+import { convertPrice } from '@/data/currencies'
 import { useUi } from '@/store/ui'
 import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
-import { CATEGORIES, SIZES, FABRIC_COLORS } from '@/data/categories'
+import { SIZES, FABRIC_COLORS } from '@/data/categories'
 import { Spinner } from '@/admin/ui'
 import { cn } from '@/utils/cn'
 import { isFeatureEnabled } from '@/config/features'
@@ -11,7 +13,6 @@ import type { Gender, CollectionId, CategoryId } from '@/types'
 import type { AdminProduct, ProductImageRow } from '@/services/adminService'
 
 const GENDERS: Gender[] = isFeatureEnabled('women') ? ['men', 'women', 'unisex'] : ['men', 'unisex']
-const COLLECTIONS: CollectionId[] = ['new', 'premium', 'limited', 'bestsellers', 'offers']
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
@@ -61,6 +62,11 @@ export function ProductFormModal({
   const [loadingImages, setLoadingImages] = useState(false)
   const [imageBusy, setImageBusy] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [creating, setCreating] = useState<null | 'category' | 'collection'>(null)
+  const [creatingLabel, setCreatingLabel] = useState('')
+  const [creatingBusy, setCreatingBusy] = useState(false)
+  const categories = useCategories()
+  const collections = useCollections()
 
   useEffect(() => {
     if (!open) return
@@ -78,8 +84,8 @@ export function ProductFormModal({
         gender: product.gender,
         category: product.category,
         collection: product.collection,
-        price: String(product.price),
-        compareAtPrice: product.compareAtPrice ? String(product.compareAtPrice) : '',
+        price: String(Math.round(convertPrice(product.price, 'USD', 'COP'))),
+        compareAtPrice: product.compareAtPrice ? String(Math.round(convertPrice(product.compareAtPrice, 'USD', 'COP'))) : '',
         stock: String(product.stock),
         material: product.material,
         sku: product.sku,
@@ -182,8 +188,8 @@ export function ProductFormModal({
       gender: form.gender,
       category: form.category,
       collection: form.collection,
-      price: Number(form.price),
-      compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : undefined,
+      price: Math.round(convertPrice(Number(form.price), 'COP', 'USD')),
+      compareAtPrice: form.compareAtPrice ? Math.round(convertPrice(Number(form.compareAtPrice), 'COP', 'USD')) : undefined,
       stock: Math.max(0, Number(form.stock)),
       material: form.material.trim() || 'Premium cotton blend',
       sku: form.sku.trim(),
@@ -276,29 +282,51 @@ export function ProductFormModal({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={label}>Categoría</label>
-            <select value={form.category} onChange={(e) => set('category', e.target.value as CategoryId)} className={select}>
-              {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
-            </select>
+            <div className="flex gap-1.5">
+              <select value={form.category} onChange={(e) => set('category', e.target.value as CategoryId)} className={select}>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => { setCreating('category'); setCreatingLabel('') }}
+                title="Nueva categoría"
+                aria-label="Nueva categoría"
+                className="flex w-10 shrink-0 items-center justify-center border border-gold/25 text-lg text-bone transition-colors hover:border-gold/60 hover:text-gold"
+              >
+                +
+              </button>
+            </div>
           </div>
           <div>
             <label className={label}>Colección</label>
-            <select value={form.collection} onChange={(e) => set('collection', e.target.value as CollectionId)} className={select}>
-              {COLLECTIONS.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+            <div className="flex gap-1.5">
+              <select value={form.collection} onChange={(e) => set('collection', e.target.value as CollectionId)} className={select}>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>{c.label_es}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => { setCreating('collection'); setCreatingLabel('') }}
+                title="Nueva colección"
+                aria-label="Nueva colección"
+                className="flex w-10 shrink-0 items-center justify-center border border-gold/25 text-lg text-bone transition-colors hover:border-gold/60 hover:text-gold"
+              >
+                +
+              </button>
+            </div>
           </div>
         </div>
 
         <div>
-          <label className={label}>Precio (USD) *</label>
+          <label className={label}>Precio (COP) *</label>
           {input('price', 'Ej. 890')}
           {errors.price && <p className="mt-1 text-xs text-red-400">{errors.price}</p>}
         </div>
         <div>
-          <label className={label}>Precio de oferta (USD)</label>
+          <label className={label}>Precio de oferta (COP)</label>
           {input('compareAtPrice', 'Opcional')}
         </div>
         <div>
@@ -484,6 +512,54 @@ export function ProductFormModal({
           </button>
         </div>
       </div>
+
+      {creating && (
+        <Modal open onClose={() => setCreating(null)} title={creating === 'category' ? 'Nueva categoría' : 'Nueva colección'} maxWidth="max-w-sm">
+          <div className="space-y-4 p-6">
+            <label className="block">
+              <span className="mb-1.5 block text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-bone">
+                Nombre en español
+              </span>
+              <input
+                value={creatingLabel}
+                onChange={(e) => setCreatingLabel(e.target.value)}
+                placeholder={creating === 'category' ? 'Ej. Blusas' : 'Ej. Temporada navideña'}
+                className="w-full border border-gold/25 bg-night px-3 py-2.5 text-sm text-ivory placeholder:text-bone/60 focus:border-gold focus:outline-none"
+                onKeyDown={(e) => { if (e.key === 'Enter') void submitCreating() }}
+              />
+            </label>
+            <p className="text-[0.62rem] leading-relaxed text-bone">
+              Se crea al instante y queda disponible en el catálogo y los filtros de la tienda.
+            </p>
+            <div className="flex justify-end gap-2 border-t border-gold/15 pt-4">
+              <button onClick={() => setCreating(null)} className="border border-gold/40 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-gold hover:bg-gold/10">
+                Cancelar
+              </button>
+              <button onClick={() => void submitCreating()} disabled={creatingBusy || creatingLabel.trim().length < 2} className="flex items-center gap-2 bg-gold px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-night hover:bg-gold-soft disabled:opacity-50">
+                {creatingBusy && <Spinner className="border-night/30 border-t-night" />} Crear
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </Modal>
   )
+
+  async function submitCreating() {
+    if (creatingLabel.trim().length < 2 || creatingBusy) return
+    setCreatingBusy(true)
+    try {
+      const id = creating === 'category'
+        ? await createCategory(creatingLabel.trim())
+        : await createCollection(creatingLabel.trim())
+      if (creating === 'category') set('category', id as CategoryId)
+      else set('collection', id as CollectionId)
+      setCreating(null)
+      pushToast(creating === 'category' ? 'Categoría creada y seleccionada' : 'Colección creada y seleccionada')
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'No se pudo crear', 'error')
+    } finally {
+      setCreatingBusy(false)
+    }
+  }
 }

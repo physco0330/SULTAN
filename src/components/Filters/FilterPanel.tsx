@@ -1,9 +1,11 @@
 import { useTranslation } from 'react-i18next'
-import { CATEGORIES, SIZES, FABRIC_COLORS } from '@/data/categories'
+import { SIZES, FABRIC_COLORS } from '@/data/categories'
 import { cn } from '@/utils/cn'
 import type { FilterState, SortKey } from './filterState'
 import type { Availability, CollectionId, Gender } from '@/types'
 import { isFeatureEnabled } from '@/config/features'
+import { useCategories } from '@/hooks/useTaxonomies'
+
 
 type FilterCallbacks = Partial<FilterState>
 
@@ -98,6 +100,8 @@ export function FilterPanel({
   ]
 
   const colorOptions = FABRIC_COLORS.map((c) => ({ id: c.id, label: c.id.charAt(0).toUpperCase() + c.id.slice(1), swatch: c.hex }))
+  
+  const categories = useCategories()
 
   const sortOpts: SortKey[] = ['relevance', 'newest', 'price-asc', 'price-desc', 'bestsellers', 'rated']
 
@@ -120,7 +124,7 @@ export function FilterPanel({
 
       <CheckGroup options={genders} value={state.genders} onToggle={toggle('genders')} label={t('catalog.category')} />
       <CheckGroup
-        options={CATEGORIES.map((c) => ({ id: c.id, label: t(`catalog.types.${c.id}`) }))}
+        options={categories.map((c) => ({ id: c.id, label: c.label }))}
         value={state.categories}
         onToggle={toggle('categories')}
         label={t('catalog.type')}

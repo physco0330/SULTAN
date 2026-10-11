@@ -224,6 +224,29 @@ export const adminService = {
   reorderImages: (ids: number[]) => api.post<{ ok: boolean }>('/admin/images/reorder', { ids }),
   deleteImage: (id: number) => api.del<{ ok: boolean }>(`/admin/images/${id}`),
 
+  /* ---------- categorías y colecciones ---------- */
+  categories: () =>
+    api.get<{ items: { id: string; label_es: string; label_en: string; label_tr: string; sort: number }[] }>('/admin/categories'),
+  createCategory: (body: { labelEs: string; id?: string }) =>
+    api.post<{ category: { id: string } }>('/admin/categories', body),
+  updateCategory: (id: string, body: { labelEs?: string; labelEn?: string; sort?: number }) =>
+    api.put<{ ok: boolean }>(`/admin/categories/${encodeURIComponent(id)}`, body),
+  reorderCategories: (ids: string[]) =>
+    api.post<{ ok: boolean }>('/admin/categories/reorder', { ids }),
+  deleteCategory: (id: string) =>
+    api.del<{ ok: boolean }>(`/admin/categories/${encodeURIComponent(id)}`),
+
+  collections: () =>
+    api.get<{ items: { id: string; label_es: string; label_en: string; sort: number; active: number }[] }>('/admin/collections'),
+  createCollection: (body: { labelEs: string; id?: string; active?: boolean }) =>
+    api.post<{ collection: { id: string } }>('/admin/collections', body),
+  updateCollection: (id: string, body: { labelEs?: string; labelEn?: string; sort?: number; active?: boolean }) =>
+    api.put<{ ok: boolean }>(`/admin/collections/${encodeURIComponent(id)}`, body),
+  reorderCollections: (ids: string[]) =>
+    api.post<{ ok: boolean }>('/admin/collections/reorder', { ids }),
+  deleteCollection: (id: string) =>
+    api.del<{ ok: boolean }>(`/admin/collections/${encodeURIComponent(id)}`),
+
   /* ---------- proveedores ---------- */
   suppliers: (q?: string) =>
     api.get<{ items: SupplierRow[] }>(`/admin/suppliers${q ? `?q=${encodeURIComponent(q)}` : ''}`),
