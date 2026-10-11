@@ -4,7 +4,7 @@ import { cn } from '@/utils/cn'
 import type { FilterState, SortKey } from './filterState'
 import type { Availability, CollectionId, Gender } from '@/types'
 import { isFeatureEnabled } from '@/config/features'
-import { useCategories } from '@/hooks/useTaxonomies'
+import { useCategories, useCollections } from '@/hooks/useTaxonomies'
 
 
 type FilterCallbacks = Partial<FilterState>
@@ -73,7 +73,7 @@ export function FilterPanel({
 }) {
   const { t } = useTranslation()
 
-  const toggle = (field: 'genders' | 'categories' | 'sizes' | 'colors' | 'collections' | 'availability') => (id: string) => {
+  const toggle = (field: 'genders' | 'categories' | 'sizes' | 'colors' | 'collections' | 'availability' | 'quality') => (id: string) => {
     const current = state[field] as string[]
     onChange({
       [field]: current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
@@ -85,14 +85,6 @@ export function FilterPanel({
     ...(isFeatureEnabled('women') ? [{ id: 'women' as Gender, label: t('catalog.women') }] : []),
   ]
 
-  const collections: { id: CollectionId; label: string }[] = [
-    { id: 'new', label: t('catalog.collection') + ' · New' },
-    { id: 'premium', label: 'Premium' },
-    { id: 'limited', label: 'Limited Edition' },
-    { id: 'bestsellers', label: 'Best Sellers' },
-    { id: 'offers', label: t('nav.offers') },
-  ]
-
   const availabilityOptions: { id: Availability; label: string }[] = [
     { id: 'in-stock', label: t('catalog.available') },
     { id: 'low-stock', label: t('catalog.lowStock') },
@@ -100,8 +92,15 @@ export function FilterPanel({
   ]
 
   const colorOptions = FABRIC_COLORS.map((c) => ({ id: c.id, label: c.id.charAt(0).toUpperCase() + c.id.slice(1), swatch: c.hex }))
-  
+
   const categories = useCategories()
+  const allCollections = useCollections()
+
+  const collections: { id: CollectionId; label: string }[] = allCollections.map((c) => ({
+    id: c.id as CollectionId,
+    label: c.label_es,
+  }))
+
 
   const sortOpts: SortKey[] = ['relevance', 'newest', 'price-asc', 'price-desc', 'bestsellers', 'rated']
 
@@ -122,7 +121,7 @@ export function FilterPanel({
         </select>
       </label>
 
-      <CheckGroup options={genders} value={state.genders} onToggle={toggle('genders')} label={t('catalog.category')} />
+      <CheckGroup options={genders} value={state.genders} onToggle={toggle('genders')} label={t('catalog.gender')} />
       <CheckGroup
         options={categories.map((c) => ({ id: c.id, label: c.label }))}
         value={state.categories}
@@ -167,6 +166,15 @@ export function FilterPanel({
       </fieldset>
 
       <CheckGroup options={collections} value={state.collections} onToggle={toggle('collections')} label={t('catalog.collection')} />
+      <CheckGroup
+        options={[
+          { id: 'original', label: t('catalog.qualityOptions.original') },
+          { id: 'turkish', label: t('catalog.qualityOptions.turkish') },
+        ]}
+        value={state.quality}
+        onToggle={toggle('quality')}
+        label={t('catalog.quality')}
+      />
       <CheckGroup options={availabilityOptions} value={state.availability} onToggle={toggle('availability')} label={t('catalog.availability')} />
     </div>
   )

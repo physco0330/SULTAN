@@ -112,6 +112,12 @@
       "skirts": "स्कर्ट",
       "sets": "सेट",
       "accessories": "एक्सेसरीज़"
+    },
+    "gender": "लिंग",
+    "quality": "गुणवत्ता",
+    "qualityOptions": {
+      "original": "ओरिजिनल",
+      "turkish": "तुर्की"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "होम पर लौटें",
     "required": "यह फ़ील्ड आवश्यक है",
     "emailInvalid": "मान्य ईमेल दर्ज करें",
-    "paymentGateway": "भुगतान सुरक्षित प्रदाता द्वारा संसाधित होता है।"
+    "paymentGateway": "भुगतान सुरक्षित प्रदाता द्वारा संसाधित होता है।",
+    "neighborhood": "मोहल्ला / क्षेत्र"
   },
   "favorites": {
     "title": "पसंदीदा",

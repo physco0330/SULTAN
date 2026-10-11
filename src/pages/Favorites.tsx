@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Heart, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { PRODUCTS } from '@/data/products'
+
 import { useWishlist } from '@/store/wishlist'
 import { useCart } from '@/store/cart'
 import { useUi } from '@/store/ui'
 import { Price } from '@/components/Price'
 import { Rating } from '@/components/Rating'
 import { EmptyState } from '@/components/EmptyState'
+import { useCatalog } from '@/hooks/useCatalog'
 
 export default function Favorites() {
   const { t } = useTranslation()
@@ -15,8 +16,9 @@ export default function Favorites() {
   const toggle = useWishlist((s) => s.toggle)
   const addItem = useCart((s) => s.addItem)
   const pushToast = useUi((s) => s.pushToast)
+  const { products } = useCatalog()
 
-  const favorites = PRODUCTS.filter((p) => ids.includes(p.id))
+  const favorites = products.filter((p) => ids.includes(p.id))
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 pb-24 lg:px-8">

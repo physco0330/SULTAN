@@ -20,6 +20,12 @@ export const LANGUAGES: Language[] = [
 
 export const DEFAULT_LANGUAGE = 'es'
 
+/** Normaliza "es-CO" / "es" a "es" */
+export function baseLanguageCode(code: string): string {
+  return (code || '').toLowerCase().split(/[-_]/)[0]
+}
+
 export function getLanguage(code: string): Language {
-  return LANGUAGES.find((l) => l.code === code) ?? LANGUAGES[3]
+  const base = baseLanguageCode(code)
+  return LANGUAGES.find((l) => l.code === base) ?? LANGUAGES.find((l) => l.code === DEFAULT_LANGUAGE)!
 }

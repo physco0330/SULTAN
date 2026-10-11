@@ -269,6 +269,16 @@ const MIGRATIONS = [
     },
   },
   {
+    id: 'm006_product_quality',
+    run: () => {
+      if (!hasColumn('products', 'quality')) {
+        db.exec("ALTER TABLE products ADD COLUMN quality TEXT NOT NULL DEFAULT 'turkish'")
+      }
+      db.exec("UPDATE products SET quality = 'turkish' WHERE quality IS NULL OR quality = ''")
+      db.exec('CREATE INDEX IF NOT EXISTS idx_products_quality ON products(quality)')
+    },
+  },
+  {
     id: 'm005_collections',
     run: () => {
       db.exec(`CREATE TABLE IF NOT EXISTS collections (

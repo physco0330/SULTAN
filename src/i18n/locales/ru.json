@@ -112,6 +112,12 @@
       "skirts": "Юбки",
       "sets": "Комплекты",
       "accessories": "Аксессуары"
+    },
+    "gender": "Пол",
+    "quality": "Качество",
+    "qualityOptions": {
+      "original": "Оригинал",
+      "turkish": "Турецкое"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "На главную",
     "required": "Обязательное поле",
     "emailInvalid": "Неверный e-mail",
-    "paymentGateway": "Оплата через безопасного провайдера."
+    "paymentGateway": "Оплата через безопасного провайдера.",
+    "neighborhood": "Район / зона"
   },
   "favorites": {
     "title": "Избранное",

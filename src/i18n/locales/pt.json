@@ -112,6 +112,12 @@
       "skirts": "Saias",
       "sets": "Conjuntos",
       "accessories": "Acessórios"
+    },
+    "gender": "Gênero",
+    "quality": "Qualidade",
+    "qualityOptions": {
+      "original": "Original",
+      "turkish": "Turca"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "Voltar ao início",
     "required": "Campo obrigatório",
     "emailInvalid": "E-mail inválido",
-    "paymentGateway": "Pagamento processado por provedor seguro."
+    "paymentGateway": "Pagamento processado por provedor seguro.",
+    "neighborhood": "Bairro / zona"
   },
   "favorites": {
     "title": "Favoritos",

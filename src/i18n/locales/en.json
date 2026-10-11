@@ -126,6 +126,12 @@
       "skirts": "Skirts",
       "sets": "Sets",
       "accessories": "Accessories"
+    },
+    "gender": "Gender",
+    "quality": "Quality",
+    "qualityOptions": {
+      "original": "Original",
+      "turkish": "Turkish"
     }
   },
   "product": {
@@ -237,7 +243,8 @@
     "thankYou": "Thank you for your order",
     "orderNumber": "Order number",
     "confirmationSent": "A confirmation has been sent to your email. You will receive tracking details as soon as your order ships.",
-    "offlineNote": "Demo mode: the server was not reachable, so this order was not stored. The totals below are an estimate."
+    "offlineNote": "Demo mode: the server was not reachable, so this order was not stored. The totals below are an estimate.",
+    "neighborhood": "Neighborhood / area"
   },
   "favorites": {
     "title": "Favorites",

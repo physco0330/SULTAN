@@ -59,7 +59,7 @@ export default function Checkout() {
       `${t('checkout.email')}: ${form.email}`,
       `${t('checkout.address')}: ${form.address}`,
       `${t('checkout.city')}: ${form.city}`,
-      `${t('checkout.zip')}: ${form.zip}`,
+      form.neighborhood.trim() ? `${t('checkout.neighborhood')}: ${form.neighborhood}` : null,
       `${t('checkout.country')}: ${form.country}`,
       '',
       `*${t('wa.waItems')}*`,
@@ -82,7 +82,7 @@ export default function Checkout() {
 
   const [placed, setPlaced] = useState<{ number: string; offline: boolean; waUrl: string } | null>(null)
   const [form, setForm] = useState({
-    email: '', name: '', city: '', address: '', zip: '', country: '', phone: '',
+    email: '', name: '', city: '', address: '', neighborhood: '', country: '', phone: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -97,7 +97,6 @@ export default function Checkout() {
     if (form.name.trim().length < 3) er.name = t('checkout.errName')
     if (form.address.trim().length < 5) er.address = t('checkout.errAddress')
     if (form.city.trim().length < 2) er.city = t('checkout.errCity')
-    if (form.zip.trim().length < 3) er.zip = t('checkout.errZip')
     if (form.country.trim().length < 2) er.country = t('checkout.errCountry')
     setErrors(er)
     return Object.keys(er).length === 0
@@ -123,7 +122,7 @@ export default function Checkout() {
           city: form.city,
           country: form.country,
           address: form.address,
-          zip: form.zip,
+          neighborhood: form.neighborhood,
         },
         promoCode,
       })
@@ -214,8 +213,8 @@ export default function Checkout() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>{input('country', t('checkout.country'))}</div>
               <div>{input('city', t('checkout.city'))}</div>
+              <div>{input('neighborhood', t('checkout.neighborhood'))}</div>
               <div className="sm:col-span-2">{input('address', t('checkout.address'))}</div>
-              <div>{input('zip', t('checkout.zip'))}</div>
             </div>
             <div className="mt-5 flex items-center gap-2 text-xs text-bone">
               <ShieldCheck size={14} className="text-gold" /> {t('checkout.paymentHandled')}

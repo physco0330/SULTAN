@@ -191,10 +191,6 @@ export default function Product() {
           </div>
           <p className="mt-4 text-sm font-light leading-relaxed text-bone">{product.description}</p>
 
-          <p className={cn('mt-4 text-xs font-medium uppercase tracking-widest', availabilityColor(product.stock))}>
-            {availabilityLabel(product.stock, t)}
-          </p>
-
           {/* Color */}
           <div className="mt-6">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bone">{t('product.selectColor')}</p>
@@ -328,18 +324,6 @@ export default function Product() {
       <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuide(false)} />
     </div>
   )
-}
-
-function availabilityColor(stock: number) {
-  if (stock === 0) return 'text-red-400'
-  if (stock <= 8) return 'text-gold'
-  return 'text-silver'
-}
-
-function availabilityLabel(stock: number, t: (k: string) => string) {
-  if (stock === 0) return t('product.outOfStock')
-  if (stock <= 8) return `${t('product.lowStock')} — ${stock}`
-  return t('product.inStock')
 }
 
 function SizeGuideModal({ open, onClose }: { open: boolean; onClose: () => void }) {

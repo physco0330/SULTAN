@@ -112,6 +112,12 @@
       "skirts": "Jupes",
       "sets": "Ensembles",
       "accessories": "Accessoires"
+    },
+    "gender": "Genre",
+    "quality": "Qualité",
+    "qualityOptions": {
+      "original": "Original",
+      "turkish": "Turque"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "Retour à l'accueil",
     "required": "Champ obligatoire",
     "emailInvalid": "E-mail invalide",
-    "paymentGateway": "Le paiement est traité par un fournisseur sécurisé."
+    "paymentGateway": "Le paiement est traité par un fournisseur sécurisé.",
+    "neighborhood": "Quartier / secteur"
   },
   "favorites": {
     "title": "Favoris",

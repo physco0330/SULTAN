@@ -1,4 +1,4 @@
-import type { Product, Gender, CategoryId, CollectionId } from '@/types'
+import type { Product, Gender, CategoryId, CollectionId, ProductQuality } from '@/types'
 import { productImage } from '@/utils/placeholder'
 
 let seq = 0
@@ -25,6 +25,7 @@ function make(
     price,
     compareAtPrice,
     currency: 'USD',
+    quality: (opts.quality ?? 'turkish') as ProductQuality,
 images: [
       { src: productImage(name, 0), alt: `${name} — front view` },
       { src: productImage(name, 1), alt: `${name} — detail view` },

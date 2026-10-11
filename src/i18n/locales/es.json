@@ -126,6 +126,12 @@
       "skirts": "Faldas",
       "sets": "Conjuntos",
       "accessories": "Accesorios"
+    },
+    "gender": "Género",
+    "quality": "Calidad",
+    "qualityOptions": {
+      "original": "Original",
+      "turkish": "Turca"
     }
   },
   "product": {
@@ -237,7 +243,8 @@
     "thankYou": "Gracias por tu pedido",
     "orderNumber": "Número de pedido",
     "confirmationSent": "Hemos enviado una confirmación a tu correo. Recibirás los detalles de seguimiento en cuanto tu pedido sea enviado.",
-    "offlineNote": "Modo demostración: el servidor no estaba disponible, así que el pedido no fue guardado. Los totales a continuación son una estimación."
+    "offlineNote": "Modo demostración: el servidor no estaba disponible, así que el pedido no fue guardado. Los totales a continuación son una estimación.",
+    "neighborhood": "Barrio / zona"
   },
   "favorites": {
     "title": "Favoritos",

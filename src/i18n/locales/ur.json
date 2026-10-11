@@ -112,6 +112,12 @@
       "skirts": "اسکرٹس",
       "sets": "سیٹس",
       "accessories": "لوازمات"
+    },
+    "gender": "جنس",
+    "quality": "معیار",
+    "qualityOptions": {
+      "original": "اصل",
+      "turkish": "ترکی"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "ہوم واپس",
     "required": "یہ فیلڈ ضروری ہے",
     "emailInvalid": "درست ای میل درج کریں",
-    "paymentGateway": "ادائیگی محفوظ فراہم کنندہ کے ذریعے ہوتی ہے۔"
+    "paymentGateway": "ادائیگی محفوظ فراہم کنندہ کے ذریعے ہوتی ہے۔",
+    "neighborhood": "علاقہ / زون"
   },
   "favorites": {
     "title": "پسندیدہ",

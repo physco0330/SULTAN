@@ -126,6 +126,12 @@
       "skirts": "Etek",
       "sets": "Takım",
       "accessories": "Aksesuar"
+    },
+    "gender": "Cinsiyet",
+    "quality": "Kalite",
+    "qualityOptions": {
+      "original": "Orijinal",
+      "turkish": "Türk"
     }
   },
   "product": {
@@ -237,7 +243,8 @@
     "thankYou": "Siparişiniz için teşekkürler",
     "orderNumber": "Sipariş numarası",
     "confirmationSent": "E-postanıza bir onay gönderildi. Siparişiniz kargolandığında takip ayrıntılarını alacaksınız.",
-    "offlineNote": "Demo modu: sunucuya ulaşılamadı, bu sipariş kaydedilmedi. Aşağıdaki tutarlar tahminidir."
+    "offlineNote": "Demo modu: sunucuya ulaşılamadı, bu sipariş kaydedilmedi. Aşağıdaki tutarlar tahminidir.",
+    "neighborhood": "Mahalle / bölge"
   },
   "favorites": {
     "title": "Favoriler",

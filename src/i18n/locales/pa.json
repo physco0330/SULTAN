@@ -112,6 +112,12 @@
       "skirts": "ਸਕਰਟਾਂ",
       "sets": "ਸੈੱਟ",
       "accessories": "ਐਕਸੈਸਰੀਜ਼"
+    },
+    "gender": "ਲਿੰਗ",
+    "quality": "ਗੁਣਵੱਤਾ",
+    "qualityOptions": {
+      "original": "ਓਰਿਜ਼ਿਨਲ",
+      "turkish": "ਤੁਰਕੀ"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "ਹੋਮ ਵਾਪਸ",
     "required": "ਇਹ ਫੀਲਡ ਲਾਜ਼ਮੀ ਹੈ",
     "emailInvalid": "ਸਹੀ ਈਮੇਲ ਦਰਜ ਕਰੋ",
-    "paymentGateway": "ਭੁਗਤਾਨ ਸੁਰੱਖਿਅਤ ਪ੍ਰਦਾਤਾ ਦੁਆਰਾ ਹੁੰਦਾ ਹੈ।"
+    "paymentGateway": "ਭੁਗਤਾਨ ਸੁਰੱਖਿਅਤ ਪ੍ਰਦਾਤਾ ਦੁਆਰਾ ਹੁੰਦਾ ਹੈ।",
+    "neighborhood": "ਇਲਾਕਾ / ਖੇਤਰ"
   },
   "favorites": {
     "title": "ਪਸੰਦੀਦਾ",

@@ -27,6 +27,7 @@ function toState(params: URLSearchParams) {
     sizes: input.sizes ?? [],
     colors: input.colors ?? [],
     collections: input.collections ?? [],
+    quality: input.quality ?? [],
     availability: input.availability ?? [],
     minPrice: input.minPrice ?? DEFAULT_FILTERS.minPrice,
     maxPrice: input.maxPrice ?? DEFAULT_FILTERS.maxPrice,
@@ -74,6 +75,7 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
       if (state.sizes.length && !state.sizes.some((s) => p.sizes.includes(s))) return false
       if (state.colors.length && !state.colors.some((c) => p.colors.some((pc) => pc.id === c))) return false
       if (state.collections.length && !state.collections.includes(p.collection)) return false
+      if (state.quality.length && !state.quality.includes(p.quality)) return false
       if (state.availability.length) {
         const a =
           p.stock === 0 ? 'out-of-stock' : p.stock <= 8 ? 'low-stock' : 'in-stock'
@@ -160,8 +162,8 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
 
       <div className="mt-6 grid gap-10 lg:mt-10 lg:grid-cols-[260px_1fr]">
         <aside className="hidden lg:block">
-          <div className="sticky top-28 border border-gold/15 bg-carbon/60 p-6">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="sticky top-28 max-h-[calc(100vh-9rem)] overflow-hidden border border-gold/15 bg-carbon/60">
+            <div className="flex items-center justify-between border-b border-gold/15 px-6 py-4">
               <h2 className="text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-gold">{t('catalog.filters')}</h2>
               {activeCount > 0 && (
                 <button onClick={reset} className="text-xs text-bone underline-offset-2 hover:text-gold hover:underline">
@@ -169,7 +171,9 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
                 </button>
               )}
             </div>
-            <FilterPanel state={state} onChange={(p) => patch(p as Record<string, unknown>)} bounds={bounds} />
+            <div className="max-h-[calc(100vh-13rem)] overflow-y-auto overscroll-contain px-6 py-5">
+              <FilterPanel state={state} onChange={(p) => patch(p as Record<string, unknown>)} bounds={bounds} />
+            </div>
           </div>
         </aside>
 

@@ -198,6 +198,7 @@ function toProduct(row) {
     material: row.material,
     sku: row.sku,
     description: row.description,
+    quality: row.quality === 'original' ? 'original' : 'turkish',
     colors: JSON.parse(row.colors_json || '[]'),
     sizes: JSON.parse(row.sizes_json || '[]'),
     images: images.length > 0
@@ -287,6 +288,7 @@ function productBody(body) {
     material: String(body.material ?? '').trim() || 'Premium cotton blend',
     sku: String(body.sku ?? '').trim(),
     description: String(body.description ?? '').trim(),
+    quality: body.quality === 'original' ? 'original' : 'turkish',
     colors: Array.isArray(body.colors) ? body.colors : [],
     sizes: Array.isArray(body.sizes) ? body.sizes : [],
     active: body.active === undefined ? true : toBool(body.active),
@@ -331,6 +333,7 @@ app.get('/api/products', (req, res) => {
   const size = asArray(req.query.size)
   const color = asArray(req.query.color)
   const availability = asArray(req.query.availability)
+  const quality = asArray(req.query.quality)
   const q = String(req.query.q ?? '').trim().toLowerCase()
   const min = req.query.min !== undefined ? toNum(req.query.min) : null
   const max = req.query.max !== undefined ? toNum(req.query.max) : null
@@ -348,6 +351,13 @@ app.get('/api/products', (req, res) => {
   if (color.length) {
     where.push(`EXISTS (SELECT 1 FROM json_each(products.colors_json) WHERE json_extract(json_each.value, '$.id') IN (${color.map(() => '?').join(',')}))`)
     params.push(...color)
+  }
+  if (quality.length) {
+    const valid = quality.filter((v) => v === 'original' || v === 'turkish')
+    if (valid.length) {
+      where.push('quality IN (' + valid.map(() => '?').join(',') + ')')
+      params.push(...valid)
+    }
   }
   if (q) {
     where.push('(LOWER(name) LIKE ? OR LOWER(sku) LIKE ? OR LOWER(material) LIKE ? OR category = ?)')
@@ -1089,13 +1099,13 @@ app.post('/api/admin/products', requireAuth, (req, res) => {
   db.prepare(`INSERT INTO products (
     id, name, slug, category, gender, collection, price, compare_at_price, currency, stock,
     rating, reviews, featured, is_new, is_limited, is_best_seller, is_on_sale, material, sku,
-    description, colors_json, sizes_json, images_json, active, created_at, updated_at
-  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+    description, quality, colors_json, sizes_json, images_json, active, created_at, updated_at
+  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     id, body.name, slug, body.category, body.gender, body.collection, body.price,
     body.compareAtPrice, 'USD', body.stock,
     body.rating ?? 4.5, body.reviews ?? 0,
     body.featured ? 1 : 0, body.isNew ? 1 : 0, body.isLimited ? 1 : 0,
-    body.isBestSeller ? 1 : 0, body.isOnSale ? 1 : 0, body.material, sku, body.description,
+    body.isBestSeller ? 1 : 0, body.isOnSale ? 1 : 0, body.material, sku, body.description, body.quality,
     JSON.stringify(body.colors), JSON.stringify(body.sizes), JSON.stringify([]),
     body.active ? 1 : 0, nowIso(), nowIso(),
   )
@@ -1114,12 +1124,12 @@ app.put('/api/admin/products/:id', requireAuth, (req, res) => {
   db.prepare(`UPDATE products SET
     name = ?, slug = ?, category = ?, gender = ?, collection = ?, price = ?, compare_at_price = ?,
     stock = ?, rating = ?, reviews = ?, featured = ?, is_new = ?, is_limited = ?, is_best_seller = ?,
-    is_on_sale = ?, material = ?, sku = ?, description = ?, colors_json = ?, sizes_json = ?, active = ?, updated_at = ?
+    is_on_sale = ?, material = ?, sku = ?, description = ?, quality = ?, colors_json = ?, sizes_json = ?, active = ?, updated_at = ?
     WHERE id = ?`).run(
     body.name, slug, body.category, body.gender, body.collection, body.price,
     body.compareAtPrice, body.stock, body.rating ?? row.rating, body.reviews ?? row.reviews,
     body.featured ? 1 : 0, body.isNew ? 1 : 0, body.isLimited ? 1 : 0,
-    body.isBestSeller ? 1 : 0, body.isOnSale ? 1 : 0, body.material, sku, body.description,
+    body.isBestSeller ? 1 : 0, body.isOnSale ? 1 : 0, body.material, sku, body.description, body.quality,
     JSON.stringify(body.colors), JSON.stringify(body.sizes), body.active ? 1 : 0, nowIso(), row.id,
   )
   audit(req.auth.username, 'product.update', 'products', row.id, `Actualizó ${body.name}`)
@@ -1137,6 +1147,10 @@ app.patch('/api/admin/products/:id', requireAuth, (req, res) => {
   if (req.body.price !== undefined) { fields.push('price = ?'); params.push(toNum(req.body.price)) }
   if (req.body.compareAtPrice !== undefined) { fields.push('compare_at_price = ?'); params.push(req.body.compareAtPrice === '' ? null : toNum(req.body.compareAtPrice)) }
   if (req.body.featured !== undefined) { fields.push('featured = ?'); params.push(toBool(req.body.featured) ? 1 : 0) }
+  if (req.body.quality !== undefined) {
+    if (!['original', 'turkish'].includes(req.body.quality)) return res.status(422).json({ error: 'Calidad no válida' })
+    fields.push('quality = ?'); params.push(req.body.quality)
+  }
   if (fields.length === 0) return res.status(422).json({ error: 'Sin cambios' })
   fields.push('updated_at = ?')
   params.push(nowIso(), row.id)

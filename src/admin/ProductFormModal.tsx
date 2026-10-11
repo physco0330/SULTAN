@@ -9,7 +9,7 @@ import { SIZES, FABRIC_COLORS } from '@/data/categories'
 import { Spinner } from '@/admin/ui'
 import { cn } from '@/utils/cn'
 import { isFeatureEnabled } from '@/config/features'
-import type { Gender, CollectionId, CategoryId } from '@/types'
+import type { Gender, CollectionId, CategoryId, ProductQuality } from '@/types'
 import type { AdminProduct, ProductImageRow } from '@/services/adminService'
 
 const GENDERS: Gender[] = isFeatureEnabled('women') ? ['men', 'women', 'unisex'] : ['men', 'unisex']
@@ -48,6 +48,7 @@ export function ProductFormModal({
     description: '',
     sizes: [] as string[],
     colors: ['black'] as string[],
+    quality: 'turkish' as ProductQuality,
     active: true,
     featured: false,
     isNew: false,
@@ -92,6 +93,7 @@ export function ProductFormModal({
         description: product.description,
         sizes: product.sizes,
         colors: product.colors.map((c) => c.id),
+        quality: (product.quality ?? 'turkish') as ProductQuality,
         active: true,
         featured: product.featured,
         isNew: product.isNew,
@@ -205,6 +207,7 @@ export function ProductFormModal({
       isLimited: form.isLimited,
       isBestSeller: form.isBestSeller,
       isOnSale: form.isOnSale || !!form.compareAtPrice,
+      quality: form.quality,
       active: form.active,
     }
     try {
@@ -274,6 +277,25 @@ export function ProductFormModal({
                 )}
               >
                 {g}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className={label}>Calidad</label>
+          <div className="flex gap-1">
+            {(['turkish', 'original'] as ProductQuality[]).map((qq) => (
+              <button
+                key={qq}
+                type="button"
+                onClick={() => set('quality', qq)}
+                className={cn(
+                  'flex-1 border px-3 py-2.5 text-xs font-semibold uppercase tracking-widest transition-colors',
+                  form.quality === qq ? 'border-gold bg-gold text-night' : 'border-gold/25 text-bone hover:border-gold/60 hover:text-gold',
+                )}
+              >
+                {qq === 'turkish' ? 'Turca' : 'Original'}
               </button>
             ))}
           </div>

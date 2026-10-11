@@ -33,6 +33,8 @@ export interface ProductColor {
   hex: string
 }
 
+export type ProductQuality = 'original' | 'turkish'
+
 export interface Product {
   id: string
   name: string
@@ -57,6 +59,7 @@ export interface Product {
   isLimited: boolean
   isBestSeller: boolean
   isOnSale: boolean
+  quality: ProductQuality
 }
 
 export interface Category {

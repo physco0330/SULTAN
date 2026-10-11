@@ -187,37 +187,6 @@ function Philosophy() {
   )
 }
 
-function TurkishExperience() {
-  const { t } = useTranslation()
-  return (
-    <section className="relative overflow-hidden border-y border-gold/10 py-24 md:py-32">
-      <div className="absolute inset-0">
-        <img src={editorialImage('ISTANBUL NIGHT')} alt="" loading="lazy" className="h-full w-full object-cover opacity-35" />
-        <div className="absolute inset-0 bg-gradient-to-r from-night via-night/85 to-night/40" />
-      </div>
-      <div className="relative mx-auto max-w-[1600px] px-4 lg:px-8">
-        <div className="max-w-xl">
-          <Reveal>
-            <p className="mb-3 text-[0.68rem] font-semibold uppercase tracking-[0.42em] text-gold">
-              — <MapPin size={12} className="inline" /> Bello Antioquia —
-            </p>
-            <h2 className="font-display text-3xl font-semibold text-ivory md:text-5xl">{t('sections.turkey.title')}</h2>
-            <p className="mt-5 text-sm font-light leading-relaxed text-silver md:text-base">{t('sections.turkey.subtitle')}</p>
-            <p className="mt-4 font-accent text-lg italic leading-relaxed text-bone md:text-xl">{t('sections.turkey.para')}</p>
-            <div className="mt-8 grid grid-cols-2 gap-4">
-              {['istanbul', 'ottoman', 'marble', 'night'].map((k) => (
-                <div key={k} className="border border-gold/20 px-4 py-3">
-                  <p className="text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-gold">{t(`sections.turkey.${k}`)}</p>
-                </div>
-              ))}
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  )
-}
-
 function NewsletterCta() {
   const { t } = useTranslation()
   return (
@@ -248,7 +217,6 @@ export default function Home() {
       <Categories />
       <Featured />
       <Philosophy />
-      <TurkishExperience />
       <ReviewsSection />
       <NewsletterCta />
     </>

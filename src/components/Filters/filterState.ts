@@ -1,4 +1,4 @@
-import type { Product, CategoryId, CollectionId, Gender, Availability } from '@/types'
+import type { Product, CategoryId, CollectionId, Gender, Availability, ProductQuality } from '@/types'
 import { minMaxPrice } from '@/data/products'
 
 export type SortKey =
@@ -15,6 +15,7 @@ export interface FilterState {
   sizes: string[]
   colors: string[]
   collections: CollectionId[]
+  quality: ProductQuality[]
   availability: Availability[]
   minPrice: number
   maxPrice: number
@@ -27,6 +28,7 @@ export const DEFAULT_FILTERS: FilterState = {
   sizes: [],
   colors: [],
   collections: [],
+  quality: [],
   availability: [],
   minPrice: 0,
   maxPrice: 5000,
@@ -63,6 +65,7 @@ export interface FilterInput {
   sizes?: string[]
   colors?: string[]
   collections?: CollectionId[]
+  quality?: ProductQuality[]
   availability?: Availability[]
   minPrice?: number
   maxPrice?: number
@@ -80,6 +83,7 @@ export function applyFilters(products: Product[], f: FilterInput): Product[] {
     if (f.sizes && f.sizes.length && !f.sizes.some((s) => p.sizes.includes(s))) return false
     if (f.colors && f.colors.length && !f.colors.some((c) => p.colors.some((pc) => pc.id === c))) return false
     if (f.collections && f.collections.length && !f.collections.includes(p.collection)) return false
+    if (f.quality && f.quality.length && !f.quality.includes(p.quality)) return false
     if (f.availability && f.availability.length && !f.availability.includes(availabilityOf(p))) return false
     if (p.price < min || p.price > max) return false
     return true
@@ -100,6 +104,7 @@ export function parseCatalogoParams(params: URLSearchParams): FilterInput {
     sizes: pick('size'),
     colors: pick('color'),
     collections: pick('collection') as CollectionId[] | undefined,
+    quality: pick('quality') as ProductQuality[] | undefined,
     availability: pick('availability') as Availability[] | undefined,
     minPrice: params.get('min') ? Number(params.get('min')) : undefined,
     maxPrice: params.get('max') ? Number(params.get('max')) : undefined,

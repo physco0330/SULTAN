@@ -112,6 +112,12 @@
       "skirts": "স্কার্ট",
       "sets": "সেট",
       "accessories": "আনুষাঙ্গিক"
+    },
+    "gender": "লিঙ্গ",
+    "quality": "মান",
+    "qualityOptions": {
+      "original": "অরিজিনাল",
+      "turkish": "তুর্কি"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "হোমে ফিরুন",
     "required": "এটি আবশ্যক",
     "emailInvalid": "সঠিক ইমেইল দিন",
-    "paymentGateway": "পেমেন্ট নিরাপদ প্রদানকারীর মাধ্যমে হয়।"
+    "paymentGateway": "পেমেন্ট নিরাপদ প্রদানকারীর মাধ্যমে হয়।",
+    "neighborhood": "এলাকা / অঞ্চল"
   },
   "favorites": {
     "title": "ফেভারিট",

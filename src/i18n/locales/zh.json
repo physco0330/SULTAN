@@ -112,6 +112,12 @@
       "skirts": "半身裙",
       "sets": "套装",
       "accessories": "配饰"
+    },
+    "gender": "性别",
+    "quality": "品质",
+    "qualityOptions": {
+      "original": "原创",
+      "turkish": "土耳其"
     }
   },
   "product": {
@@ -201,7 +207,8 @@
     "required": "此字段为必填",
     "emailInvalid": "请输入有效邮箱",
     "paymentGateway": "支付由安全服务商处理。您将被引导完成付款。",
-    "cardFields": "卡号 · 有效期 · CVC"
+    "cardFields": "卡号 · 有效期 · CVC",
+    "neighborhood": "社区 / 区域"
   },
   "favorites": {
     "title": "收藏",

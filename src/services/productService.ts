@@ -28,6 +28,7 @@ type ApiProduct = Record<string, unknown> & {
   isLimited: boolean
   isBestSeller: boolean
   isOnSale: boolean
+  quality: 'original' | 'turkish'
   material: string
   sku: string
   description: string
@@ -64,6 +65,7 @@ function toProduct(d: ApiProduct): Product {
     isLimited: d.isLimited,
     isBestSeller: d.isBestSeller,
     isOnSale: d.isOnSale,
+    quality: d.quality === 'original' ? 'original' : 'turkish',
   }
 }
 
@@ -231,7 +233,7 @@ export interface OrderCustomer {
   city?: string
   country?: string
   address?: string
-  zip?: string
+  neighborhood?: string
 }
 
 export interface OrderItemInput {

@@ -112,6 +112,12 @@
       "skirts": "تنانير",
       "sets": "أطقم",
       "accessories": "إكسسوارات"
+    },
+    "gender": "الجنس",
+    "quality": "الجودة",
+    "qualityOptions": {
+      "original": "أصلي",
+      "turkish": "تركي"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "العودة للرئيسية",
     "required": "هذا الحقل مطلوب",
     "emailInvalid": "أدخل بريداً صحيحاً",
-    "paymentGateway": "تتم معالجة الدفع عبر مزود آمن."
+    "paymentGateway": "تتم معالجة الدفع عبر مزود آمن.",
+    "neighborhood": "الحي / المنطقة"
   },
   "favorites": {
     "title": "المفضلة",

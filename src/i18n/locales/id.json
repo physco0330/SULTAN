@@ -112,6 +112,12 @@
       "skirts": "Rok",
       "sets": "Setelan",
       "accessories": "Aksesori"
+    },
+    "gender": "Jenis kelamin",
+    "quality": "Kualitas",
+    "qualityOptions": {
+      "original": "Original",
+      "turkish": "Turki"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "Kembali ke beranda",
     "required": "Kolom wajib diisi",
     "emailInvalid": "Email tidak valid",
-    "paymentGateway": "Pembayaran diproses oleh penyedia aman."
+    "paymentGateway": "Pembayaran diproses oleh penyedia aman.",
+    "neighborhood": "Kelurahan / area"
   },
   "favorites": {
     "title": "Favorit",

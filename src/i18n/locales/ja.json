@@ -112,6 +112,12 @@
       "skirts": "スカート",
       "sets": "セットアップ",
       "accessories": "アクセサリー"
+    },
+    "gender": "性別",
+    "quality": "品質",
+    "qualityOptions": {
+      "original": "オリジナル",
+      "turkish": "トルコ"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "ホームに戻る",
     "required": "必須項目です",
     "emailInvalid": "有効なメールを入力してください",
-    "paymentGateway": "決済は安全なプロバイダーが処理します。"
+    "paymentGateway": "決済は安全なプロバイダーが処理します。",
+    "neighborhood": "地域 / エリア"
   },
   "favorites": {
     "title": "お気に入り",

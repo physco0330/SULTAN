@@ -112,6 +112,12 @@
       "skirts": "Röcke",
       "sets": "Sets",
       "accessories": "Accessoires"
+    },
+    "gender": "Geschlecht",
+    "quality": "Qualität",
+    "qualityOptions": {
+      "original": "Original",
+      "turkish": "Türkisch"
     }
   },
   "product": {
@@ -199,7 +205,8 @@
     "backHome": "Zur Startseite",
     "required": "Pflichtfeld",
     "emailInvalid": "Ungültige E-Mail",
-    "paymentGateway": "Zahlung über einen sicheren Anbieter."
+    "paymentGateway": "Zahlung über einen sicheren Anbieter.",
+    "neighborhood": "Wohnort / Gebiet"
   },
   "favorites": {
     "title": "Favoriten",
