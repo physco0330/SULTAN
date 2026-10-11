@@ -91,9 +91,6 @@ export function AdminLogin({ onSuccess }: { onSuccess: (user: AdminUser) => void
           </button>
         </form>
 
-        <p className="mt-5 text-center text-[0.62rem] leading-relaxed text-bone">
-          Demo: <span className="text-gold">admin</span> / <span className="text-gold">sultan2026</span>
-        </p>
       </div>
     </div>
   )

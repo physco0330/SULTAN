@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Heart, Menu, Search, ShoppingBag, User } from 'lucide-react'
+import { Heart, Menu, Search, ShoppingBag } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Logo } from '@/components/Logo'
 import { LanguageSelector } from '@/components/LanguageSelector'
@@ -138,14 +138,6 @@ export function Header() {
                   {wishCount}
                 </span>
               )}
-            </Link>
-
-            <Link
-              to="/admin"
-              aria-label={t('nav.account')}
-              className="hidden h-10 w-10 items-center justify-center text-silver transition-colors hover:text-gold sm:flex"
-            >
-              <User size={18} />
             </Link>
 
             <button

@@ -44,7 +44,6 @@ export default function App() {
           <Route path="/sobre-nosotros" element={<About />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/legal/*" element={<Legal />} />
-          <Route path="/mi-cuenta" element={<Navigate to="/admin" replace />} />
           <Route path="*" element={<Home />} />
         </Route>
         <Route path="/admin/*" element={<Admin />} />

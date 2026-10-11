@@ -109,11 +109,6 @@ export function Footer() {
                 </Link>
               </li>
             ))}
-            <li>
-              <Link to="/admin" className="text-sm text-bone transition-colors hover:text-gold">
-                Admin
-              </Link>
-            </li>
           </Column>
 
           <div className="lg:col-span-2">
