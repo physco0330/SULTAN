@@ -129,6 +129,16 @@ export default function Admin() {
             </ul>
           </div>
           <div>
+            <p className="mb-2 px-2 text-[0.58rem] font-semibold uppercase tracking-[0.3em] text-bone">Catálogo</p>
+            <ul className="space-y-1">
+              {NAV.filter((n) => n.group === 'catalogo').map((n) => (
+                <li key={n.key}>
+                  <SidebarItem active={section === n.key} onClick={() => setSection(n.key)} icon={n.icon} label={n.label} />
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
             <p className="mb-2 px-2 text-[0.58rem] font-semibold uppercase tracking-[0.3em] text-bone">Configuración</p>
             <ul className="space-y-1">
               {CONFIG_NAV.map((n) => (
