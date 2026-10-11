@@ -206,7 +206,18 @@
     "required": "Pflichtfeld",
     "emailInvalid": "Ungültige E-Mail",
     "paymentGateway": "Zahlung über einen sicheren Anbieter.",
-    "neighborhood": "Wohnort / Gebiet"
+    "neighborhood": "Wohnort / Gebiet",
+    "nationalShipping": "Nationaler Versand in Kolumbien",
+    "payByTransfer": "Zahlung per Überweisung oder Nachnahme",
+    "payNote": "Sie bestätigen die Zahlung per WhatsApp mit unserem Team.",
+    "couponTitle": "Gutschein",
+    "couponPlaceholder": "Code eingeben",
+    "couponApply": "Anwenden",
+    "couponRemove": "Entfernen",
+    "couponInvalid": "Ungültiger Gutschein",
+    "couponApplied": "Gutschein angewendet",
+    "couponOneOnly": "Nur ein Gutschein pro Bestellung. Ein neuer ersetzt den vorherigen.",
+    "couponMin": "Ungültiger Gutschein"
   },
   "favorites": {
     "title": "Favoriten",
@@ -298,7 +309,11 @@
     "needHelp": "Brauchen Sie Hilfe?",
     "added": "Zum Warenkorb hinzugefügt",
     "outOfStockToast": "Dieses Stück ist ausverkauft",
-    "selectSizeToast": "Bitte Größe wählen"
+    "selectSizeToast": "Bitte Größe wählen",
+    "country": "Land",
+    "resetCurrency": "Landeswährung verwenden",
+    "ratesSource": "Kurse",
+    "ratesUnavailable": "Referenzkurse (keine Verbindung zur Quelle)"
   },
   "reviews": {
     "title": "Customer Reviews",

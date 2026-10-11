@@ -206,7 +206,18 @@
     "required": "یہ فیلڈ ضروری ہے",
     "emailInvalid": "درست ای میل درج کریں",
     "paymentGateway": "ادائیگی محفوظ فراہم کنندہ کے ذریعے ہوتی ہے۔",
-    "neighborhood": "علاقہ / زون"
+    "neighborhood": "علاقہ / زون",
+    "nationalShipping": "کولومبیا بھر میں داخلی ترسیل",
+    "payByTransfer": "ٹرانسفر یا ترسیل پر ادائیگی",
+    "payNote": "واٹس ایپ پر ہماری ٹیم سے ادائیگی کی تصدیق کریں۔",
+    "couponTitle": "ڈسکاؤنٹ کوپن",
+    "couponPlaceholder": "اپنا کوڈ درج کریں",
+    "couponApply": "لاگو کریں",
+    "couponRemove": "ہٹائیں",
+    "couponInvalid": "غیر واضح کوپن",
+    "couponApplied": "کوپن لاگو ہو گیا",
+    "couponOneOnly": "فی آرڈر صرف ایک کوپن۔ نیا کوپن پرانے کو بدل دیتا ہے۔",
+    "couponMin": "غیر واضح کوپن"
   },
   "favorites": {
     "title": "پسندیدہ",
@@ -298,7 +309,11 @@
     "needHelp": "مدد چاہیے؟",
     "added": "کارٹ میں شامل ہو گیا",
     "outOfStockToast": "یہ چیز فروخت ہو چکی",
-    "selectSizeToast": "براہ کرم سائز منتخب کریں"
+    "selectSizeToast": "براہ کرم سائز منتخب کریں",
+    "country": "ملک",
+    "resetCurrency": "ملک کی کرنسی استعمال کریں",
+    "ratesSource": "شرحیں",
+    "ratesUnavailable": "حوالہ شرحیں (ماخذ سے رابطہ نہیں)"
   },
   "reviews": {
     "title": "Customer Reviews",

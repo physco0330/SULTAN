@@ -34,7 +34,7 @@
   },
   "sections": {
     "categories": {
-      "title": "Explore the World",
+      "title": "Designed in Colombia",
       "subtitle": "Four universes, one standard of excellence."
     },
     "featured": {
@@ -77,11 +77,22 @@
     },
     "marquee": {
       "freeShipping": "Free shipping over $300",
-      "international": "International shipping",
+      "international": "Envíos a todo Colombia",
       "authentic": "100% authentic pieces",
       "returns": "Easy 30-day returns",
       "secure": "Secure checkout"
-    }
+    },
+    "shipping": {
+      "preparation": "Order preparation",
+      "preparationText": "We confirm the purchase via WhatsApp and agree on payment (transfer or cash on delivery).",
+      "delivery": "Delivery in Colombia",
+      "deliveryText": "We ship nationwide. The carrier contacts you to arrange delivery.",
+      "costs": "Shipping cost",
+      "costsText": "Calculated by weight and destination city. We confirm it before dispatch.",
+      "coverage": "Coverage",
+      "coverageText": "At the moment we only ship within Colombia."
+    },
+    "shippingNote": "Envíos a todo Colombia"
   },
   "catalog": {
     "title": "The Collection",
@@ -222,7 +233,7 @@
     "secure": "Secure purchase",
     "protected": "Data protected",
     "safePayment": "Secure payment",
-    "international": "International shipping",
+    "international": "National shipping",
     "orderSuccess": "Order placed",
     "orderSuccessMsg": "Thank you. Your order has been received and will be confirmed shortly.",
     "backHome": "Back to home",
@@ -236,15 +247,24 @@
     "errCountry": "Enter your country",
     "paymentGateway": "Payment is processed by a secure provider. Your browser will be redirected to complete the payment.",
     "cardFields": "Card number · Expiry · CVC",
-    "paymentHandled": "Payment is processed by a certified gateway. No card data is stored on this site.",
-    "mockNote": "Demo checkout — order totals are computed locally for preview. Final amounts, taxes and payment are validated and processed entirely by the backend.",
     "summary": "Order Summary",
     "terms": "By placing your order you agree to our terms and privacy policy.",
     "thankYou": "Thank you for your order",
     "orderNumber": "Order number",
     "confirmationSent": "A confirmation has been sent to your email. You will receive tracking details as soon as your order ships.",
     "offlineNote": "Demo mode: the server was not reachable, so this order was not stored. The totals below are an estimate.",
-    "neighborhood": "Neighborhood / area"
+    "neighborhood": "Neighborhood / area",
+    "nationalShipping": "National shipping across Colombia",
+    "payByTransfer": "Payment by transfer or cash on delivery",
+    "payNote": "You confirm payment by chatting with our team on WhatsApp.",
+    "couponTitle": "Discount coupon",
+    "couponPlaceholder": "Enter your code",
+    "couponApply": "Apply",
+    "couponRemove": "Remove",
+    "couponInvalid": "Invalid coupon",
+    "couponApplied": "Coupon applied",
+    "couponOneOnly": "Only one coupon per order. Applying a new one replaces the previous.",
+    "couponMin": "Invalid coupon"
   },
   "favorites": {
     "title": "Favorites",
@@ -385,15 +405,15 @@
     "cookiesH4": "Managing cookies",
     "cookiesP4": "You can disable cookies in your browser settings, but some store features may stop working.",
     "enviosIntroTitle": "Shipping Policy",
-    "enviosIntro": "We ship worldwide from Istanbul with tracked, insured delivery.",
+    "enviosIntro": "We ship nationwide across Colombia with tracked, insured delivery.",
     "enviosH1": "Processing time",
     "enviosP1": "Orders are prepared within 24–48 hours; limited editions may require up to 5 business days.",
     "enviosH2": "Delivery times",
-    "enviosP2": "Europe: 3–5 days · Rest of the world: 5–10 business days.",
+    "enviosP2": "Delivery across Colombia. Timing depends on the carrier and destination city.",
     "enviosH3": "Costs",
     "enviosP3": "Free shipping on orders over $300. Standard shipping $15, express $45 (USD, converted at checkout).",
     "enviosH4": "Customs",
-    "enviosP4": "International orders may be subject to customs duties levied by the destination country.",
+    "enviosP4": "We do not ship outside Colombia at this time.",
     "devolucionesIntroTitle": "Returns Policy",
     "devolucionesIntro": "You have 30 days from delivery to return any unworn piece with its original tags.",
     "devolucionesH1": "Conditions",
@@ -420,12 +440,12 @@
     "ordersA4": "Orders are confirmed as soon as payment is authorized and stock is reserved for you.",
     "shippingTitle": "Shipping",
     "shippingQ1": "Where do you ship?",
-    "shippingA1": "We ship worldwide from Istanbul with tracked, insured delivery.",
+    "shippingA1": "We ship nationwide across Colombia with tracked, insured delivery.",
     "shippingQ2": "How long does delivery take?",
-    "shippingA2": "Europe: 3–5 days. Rest of the world: 5–10 business days.",
+    "shippingA2": "Delivery across Colombia. Timing depends on the carrier and destination city.",
     "shippingQ3": "Do you offer free shipping?",
     "shippingA3": "Yes — free shipping on all orders over $300. Standard $15, express $45.",
-    "shippingQ4": "Are international orders subject to customs?",
+    "shippingQ4": "Do you ship outside Colombia?",
     "shippingA4": "Some countries apply customs duties on import. These are levied by the destination country and are not included in our prices.",
     "returnsTitle": "Returns",
     "returnsQ1": "What is your return policy?",
@@ -539,7 +559,11 @@
     "outOfStockToast": "This piece is sold out",
     "selectSizeToast": "Please select a size",
     "emptyStateTitle": "Nothing here yet",
-    "back": "Back"
+    "back": "Back",
+    "country": "Country",
+    "resetCurrency": "Use country currency",
+    "ratesSource": "Rates",
+    "ratesUnavailable": "Reference rates (no connection to the rate source)"
   },
   "wa": {
     "waOrder": "Order",

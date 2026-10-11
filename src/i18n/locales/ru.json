@@ -206,7 +206,18 @@
     "required": "Обязательное поле",
     "emailInvalid": "Неверный e-mail",
     "paymentGateway": "Оплата через безопасного провайдера.",
-    "neighborhood": "Район / зона"
+    "neighborhood": "Район / зона",
+    "nationalShipping": "Национальная доставка по Колумбии",
+    "payByTransfer": "Оплата переводом или при получении",
+    "payNote": "Оплата подтверждается в WhatsApp с нашей командой.",
+    "couponTitle": "Промокод",
+    "couponPlaceholder": "Введите код",
+    "couponApply": "Применить",
+    "couponRemove": "Убрать",
+    "couponInvalid": "Неверный промокод",
+    "couponApplied": "Промокод применён",
+    "couponOneOnly": "Только один промокод на заказ. Новый заменяет предыдущий.",
+    "couponMin": "Неверный промокод"
   },
   "favorites": {
     "title": "Избранное",
@@ -298,7 +309,11 @@
     "needHelp": "Нужна помощь?",
     "added": "Добавлено в корзину",
     "outOfStockToast": "Вещь раскуплена",
-    "selectSizeToast": "Выберите размер"
+    "selectSizeToast": "Выберите размер",
+    "country": "Страна",
+    "resetCurrency": "Валюта страны",
+    "ratesSource": "Курсы",
+    "ratesUnavailable": "Справочные курсы (нет связи с источником)"
   },
   "reviews": {
     "title": "Customer Reviews",

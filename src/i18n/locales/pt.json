@@ -206,7 +206,18 @@
     "required": "Campo obrigatório",
     "emailInvalid": "E-mail inválido",
     "paymentGateway": "Pagamento processado por provedor seguro.",
-    "neighborhood": "Bairro / zona"
+    "neighborhood": "Bairro / zona",
+    "nationalShipping": "Envio nacional na Colômbia",
+    "payByTransfer": "Pagamento por transferência ou na entrega",
+    "payNote": "Você confirma o pagamento conversando com nossa equipe pelo WhatsApp.",
+    "couponTitle": "Cupom de desconto",
+    "couponPlaceholder": "Digite seu código",
+    "couponApply": "Aplicar",
+    "couponRemove": "Remover",
+    "couponInvalid": "Cupom inválido",
+    "couponApplied": "Cupom aplicado",
+    "couponOneOnly": "Apenas um cupom por pedido. Aplicar um novo substitui o anterior.",
+    "couponMin": "Cupom inválido"
   },
   "favorites": {
     "title": "Favoritos",
@@ -298,7 +309,11 @@
     "needHelp": "Precisa de ajuda?",
     "added": "Adicionado ao carrinho",
     "outOfStockToast": "Peça esgotada",
-    "selectSizeToast": "Selecione um tamanho"
+    "selectSizeToast": "Selecione um tamanho",
+    "country": "País",
+    "resetCurrency": "Usar moeda do país",
+    "ratesSource": "Taxas",
+    "ratesUnavailable": "Taxas de referência (sem conexão à fonte)"
   },
   "reviews": {
     "title": "Customer Reviews",

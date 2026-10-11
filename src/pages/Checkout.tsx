@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Tag, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useCart } from '@/store/cart'
 import { useCurrency } from '@/store/currency'
@@ -46,6 +46,37 @@ export default function Checkout() {
   const shippingUsd = subtotalUsd - discountUsd >= cfg.freeShippingThreshold ? 0 : cfg.flatShipping
   const totalUsd = Math.max(subtotalUsd - discountUsd, 0) + shippingUsd
 
+  /** Aplica un cupón. Solo uno por pedido: si ya hay uno, se reemplaza
+   *  únicamente después de que el backend valide el nuevo. */
+  const applyCoupon = async () => {
+    const codeToApply = couponInput.trim().toUpperCase()
+    if (!codeToApply || couponBusy) return
+    if (promoCode && promoCode === codeToApply) { setCouponError(''); return }
+    setCouponBusy(true)
+    setCouponError('')
+    try {
+      const res = await validateCoupon(codeToApply, subtotalUsd)
+      if (!res.valid) {
+        setCouponError(res.reason === 'min_subtotal' ? t('checkout.couponMin') : t('checkout.couponInvalid'))
+        return
+      }
+      setPromo(codeToApply)
+      setCouponInput('')
+      pushToast(t('checkout.couponApplied'))
+    } catch {
+      setCouponError(t('checkout.couponInvalid'))
+    } finally {
+      setCouponBusy(false)
+    }
+  }
+
+  const removeCoupon = () => {
+    setPromo('')
+    setCouponInput('')
+    setCouponError('')
+    setDiscountUsd(0)
+  }
+
   const money = (usd: number) => formatPrice(convertPrice(usd, 'USD', code), code)
 
   const buildWaMessage = (orderNumber: string) => {
@@ -81,6 +112,10 @@ export default function Checkout() {
     `https://wa.me/${brandConfig.whatsappNumber}?text=${encodeURIComponent(buildWaMessage(orderNumber))}`
 
   const [placed, setPlaced] = useState<{ number: string; offline: boolean; waUrl: string } | null>(null)
+  const [couponInput, setCouponInput] = useState('')
+  const [couponBusy, setCouponBusy] = useState(false)
+  const [couponError, setCouponError] = useState('')
+  const setPromo = useCart((s) => s.setPromo)
   const [form, setForm] = useState({
     email: '', name: '', city: '', address: '', neighborhood: '', country: '', phone: '',
   })
@@ -211,7 +246,11 @@ export default function Checkout() {
           <section className="border border-gold/15 p-6 md:p-8">
             <h2 className="font-display mb-5 text-lg text-ivory">2 · {t('checkout.shippingAddress')}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>{input('country', t('checkout.country'))}</div>
+              <div>
+                <label className="block text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-bone">{t('checkout.country')}</label>
+                <p className="mt-2 border border-gold/15 bg-night px-3 py-2.5 text-sm text-ivory">Colombia</p>
+                <p className="mt-2 text-[0.62rem] leading-relaxed text-bone">{t('checkout.nationalShipping')}</p>
+              </div>
               <div>{input('city', t('checkout.city'))}</div>
               <div>{input('neighborhood', t('checkout.neighborhood'))}</div>
               <div className="sm:col-span-2">{input('address', t('checkout.address'))}</div>
@@ -223,14 +262,53 @@ export default function Checkout() {
 
           <section className="border border-gold/15 p-6 md:p-8">
             <h2 className="font-display mb-5 text-lg text-ivory">3 · {t('checkout.payment')}</h2>
-            <div className="flex flex-wrap gap-2 text-[0.62rem] uppercase tracking-widest text-bone">
-              {['VISA', 'MASTERCARD', 'AMEX', 'PAYPAL', 'APPLE PAY', 'GOOGLE PAY'].map((m) => (
-                <span key={m} className="border border-gold/25 px-3 py-2 text-gold">{m}</span>
-              ))}
+            <p className="text-sm font-medium text-ivory">{t('checkout.payByTransfer')}</p>
+            <p className="mt-2 text-sm font-light leading-relaxed text-bone">{t('checkout.payNote')}</p>
+
+            <div className="mt-6 border-t border-gold/15 pt-5">
+              <p className="mb-3 text-[0.62rem] font-semibold uppercase tracking-[0.24em] text-gold">{t('checkout.couponTitle')}</p>
+              {promoCode ? (
+                <div className="flex items-center justify-between gap-3 border border-gold/40 bg-gold/5 px-3 py-2.5">
+                  <span className="flex items-center gap-2 text-sm text-gold">
+                    <Tag size={14} /> {promoCode}
+                    <span className="text-xs text-bone">−{money(discountUsd)}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="flex items-center gap-1 text-[0.6rem] uppercase tracking-widest text-bone hover:text-red-400"
+                  >
+                    <X size={12} /> {t('checkout.couponRemove')}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(e) => { setCouponInput(e.target.value); setCouponError('') }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void applyCoupon() } }}
+                      placeholder={t('checkout.couponPlaceholder')}
+                      aria-invalid={!!couponError}
+                      className={cn(
+                        'flex-1 border bg-night px-3 py-2.5 text-xs uppercase text-ivory placeholder:normal-case placeholder:text-bone/60 focus:outline-none',
+                        couponError ? 'border-red-500/70' : 'border-gold/25 focus:border-gold',
+                      )}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void applyCoupon()}
+                      disabled={couponBusy || couponInput.trim().length < 3}
+                      className="border border-gold/50 px-4 py-2.5 text-[0.6rem] font-semibold uppercase tracking-widest text-gold transition-colors hover:bg-gold hover:text-night disabled:opacity-40"
+                    >
+                      {couponBusy ? '···' : t('checkout.couponApply')}
+                    </button>
+                  </div>
+                  {couponError && <p className="mt-2 text-xs text-red-400">{couponError}</p>}
+                  <p className="mt-2 text-[0.62rem] text-bone">{t('checkout.couponOneOnly')}</p>
+                </>
+              )}
             </div>
-            <p className="mt-4 text-sm font-light leading-relaxed text-bone">
-              {t('checkout.mockNote')}
-            </p>
           </section>
         </div>
 

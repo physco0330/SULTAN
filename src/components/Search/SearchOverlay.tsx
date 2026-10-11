@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Clock, Search, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
-import { PRODUCTS } from '@/data/products'
+
 import { useCategories } from '@/hooks/useTaxonomies'
+import { useCatalog } from '@/hooks/useCatalog'
 import { Price } from '@/components/Price'
 import { useUi } from '@/store/ui'
 
@@ -24,6 +25,7 @@ function writeRecent(q: string) {
 
 export function SearchOverlay() {
   const allCategories = useCategories()
+  const { products: catalogProducts } = useCatalog()
   const { t } = useTranslation()
   const open = useUi((s) => s.searchOpen)
   const close = useUi((s) => s.closeSearch)
@@ -50,7 +52,7 @@ export function SearchOverlay() {
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (q.length < 2) return { products: [], categories: [] }
-    const products = PRODUCTS.filter(
+    const products = catalogProducts.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q) ||
@@ -60,7 +62,7 @@ export function SearchOverlay() {
     )
     const categories = allCategories.filter((c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
     return { products, categories }
-  }, [query, t])
+  }, [query, t, catalogProducts, allCategories])
 
   if (!open) return null
 
@@ -129,7 +131,7 @@ export function SearchOverlay() {
                   {results.categories.map((c) => (
                     <Link
                       key={c.id}
-                      to={`/catalogo?type=${c.id}`}
+                      to={`/catalogo?category=${c.id}`}
                       onClick={close}
                       className="border border-gold/15 px-4 py-3 text-sm text-ivory transition-all hover:border-gold/60 hover:text-gold"
                     >
@@ -176,7 +178,7 @@ export function SearchOverlay() {
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {results.categories.map((c) => (
-                          <Link key={c.id} to={`/catalogo?type=${c.id}`} onClick={close} className="border border-gold/25 px-3 py-1.5 text-sm text-silver hover:border-gold hover:text-gold">
+                          <Link key={c.id} to={`/catalogo?category=${c.id}`} onClick={close} className="border border-gold/25 px-3 py-1.5 text-sm text-silver hover:border-gold hover:text-gold">
                             {t(`catalog.types.${c.id}`)}
                           </Link>
                         ))}

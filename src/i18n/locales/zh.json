@@ -208,7 +208,18 @@
     "emailInvalid": "请输入有效邮箱",
     "paymentGateway": "支付由安全服务商处理。您将被引导完成付款。",
     "cardFields": "卡号 · 有效期 · CVC",
-    "neighborhood": "社区 / 区域"
+    "neighborhood": "社区 / 区域",
+    "nationalShipping": "哥伦比亚全国配送",
+    "payByTransfer": "转账或货到付款",
+    "payNote": "您通过 WhatsApp 与我们的团队确认付款。",
+    "couponTitle": "折扣优惠券",
+    "couponPlaceholder": "输入优惠码",
+    "couponApply": "应用",
+    "couponRemove": "移除",
+    "couponInvalid": "优惠券无效",
+    "couponApplied": "优惠券已应用",
+    "couponOneOnly": "每笔订单仅限一张优惠券，应用新券将替换旧券。",
+    "couponMin": "优惠券无效"
   },
   "favorites": {
     "title": "收藏",
@@ -301,7 +312,11 @@
     "needHelp": "需要帮助？",
     "added": "已加入购物袋",
     "outOfStockToast": "该单品已售罄",
-    "selectSizeToast": "请选择尺码"
+    "selectSizeToast": "请选择尺码",
+    "country": "国家/地区",
+    "resetCurrency": "使用该国货币",
+    "ratesSource": "汇率",
+    "ratesUnavailable": "参考汇率（未连接到汇率来源）"
   },
   "reviews": {
     "title": "Customer Reviews",

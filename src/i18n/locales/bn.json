@@ -206,7 +206,18 @@
     "required": "এটি আবশ্যক",
     "emailInvalid": "সঠিক ইমেইল দিন",
     "paymentGateway": "পেমেন্ট নিরাপদ প্রদানকারীর মাধ্যমে হয়।",
-    "neighborhood": "এলাকা / অঞ্চল"
+    "neighborhood": "এলাকা / অঞ্চল",
+    "nationalShipping": "কলম্বিয়া জুড়ে জাতীয় শিপিং",
+    "payByTransfer": "ট্রান্সফার বা ডেলিভারিতে পেমেন্ট",
+    "payNote": "হোয়াটসঅ্যাপে আমাদের দলের সাথে পেমেন্ট নিশ্চিত করুন।",
+    "couponTitle": "ডিসকাউন্ট কুপন",
+    "couponPlaceholder": "কোড লিখুন",
+    "couponApply": "প্রয়োগ",
+    "couponRemove": "সরান",
+    "couponInvalid": "অবৈধ কুপন",
+    "couponApplied": "কুপন প্রয়োগ হয়েছে",
+    "couponOneOnly": "প্রতি অর্ডারে একটি কুপন। নতুন কুপন পুরোনোটি প্রতিস্নাপন করে।",
+    "couponMin": "অবৈধ কুপন"
   },
   "favorites": {
     "title": "ফেভারিট",
@@ -298,7 +309,11 @@
     "needHelp": "সাহায্য দরকার?",
     "added": "কার্টে যোগ হয়েছে",
     "outOfStockToast": "এই পণ্যটি শেষ",
-    "selectSizeToast": "সাইজ নির্বাচন করুন"
+    "selectSizeToast": "সাইজ নির্বাচন করুন",
+    "country": "দেশ",
+    "resetCurrency": "দেশের মুদ্রা ব্যবহার করুন",
+    "ratesSource": "হার",
+    "ratesUnavailable": "রেফারেন্স হার (উৎসের সাথে সংযোগ নেই)"
   },
   "reviews": {
     "title": "Customer Reviews",

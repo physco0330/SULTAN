@@ -206,7 +206,18 @@
     "required": "ਇਹ ਫੀਲਡ ਲਾਜ਼ਮੀ ਹੈ",
     "emailInvalid": "ਸਹੀ ਈਮੇਲ ਦਰਜ ਕਰੋ",
     "paymentGateway": "ਭੁਗਤਾਨ ਸੁਰੱਖਿਅਤ ਪ੍ਰਦਾਤਾ ਦੁਆਰਾ ਹੁੰਦਾ ਹੈ।",
-    "neighborhood": "ਇਲਾਕਾ / ਖੇਤਰ"
+    "neighborhood": "ਇਲਾਕਾ / ਖੇਤਰ",
+    "nationalShipping": "ਕੋਲੰਬੀਆ ਵਿੱਚ ਰਾਸ਼ਨਲ ਸ਼ਿਪਿੰਗ",
+    "payByTransfer": "ਟ੍ਰਾਂਸਫਰ ਜਾਂ ਡਿਲੀਵਰੀ ਉੱਤੇ ਭੁਗਤਾਨ",
+    "payNote": "ਵਾਟਸ ਐਪ ਤੇ ਸਾਡੀ ਟੀਮ ਨਾਲ ਭੁਗਤਾਨ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ।",
+    "couponTitle": "ਡਿਸਕਾਊਂਟ ਕੂਪਨ",
+    "couponPlaceholder": "ਆਪਣਾ ਕੋਡ ਦਰਜ ਕਰੋ",
+    "couponApply": "ਲਾਗੂ ਕਰੋ",
+    "couponRemove": "ਹਟਾਓ",
+    "couponInvalid": "ਅਵੈਧ ਕੂਪਨ",
+    "couponApplied": "ਕੂਪਨ ਲਾਗੂ ਹੋ ਗਿਆ",
+    "couponOneOnly": "ਹਰ ਆਰਡਰ ਲਈ ਸਿਰਫ਼ ਇੱਕ ਕੂਪਨ। ਨਵਾਂ ਕੂਪਨ ਪਹਿਲਾਂ ਵਾਲਾ ਬਦਲ ਦਿੰਦਾ ਹੈ।",
+    "couponMin": "ਅਵੈਧ ਕੂਪਨ"
   },
   "favorites": {
     "title": "ਪਸੰਦੀਦਾ",
@@ -298,7 +309,11 @@
     "needHelp": "ਮਦਦ ਚਾਹੀਦੀ ਹੈ?",
     "added": "ਕਾਰਟ ਵਿੱਚ ਜੋੜਿਆ",
     "outOfStockToast": "ਇਹ ਵਸਤੂ ਵਿਕ ਗਈ",
-    "selectSizeToast": "ਕਿਰਪਾ ਕਰਕੇ ਸਾਈਜ਼ ਚੁਣੋ"
+    "selectSizeToast": "ਕਿਰਪਾ ਕਰਕੇ ਸਾਈਜ਼ ਚੁਣੋ",
+    "country": "ਦੇਸ਼",
+    "resetCurrency": "ਦੇਸ਼ ਦੀ ਮੁਦਰਾ ਵਰਤੋ",
+    "ratesSource": "ਦਰਾਂ",
+    "ratesUnavailable": "ਹਵਾਲਕ ਦਰਾਂ (ਸਰੋਤ ਨਾਲ ਸੰਪਰਕ ਨਹੀਂ)"
   },
   "reviews": {
     "title": "Customer Reviews",

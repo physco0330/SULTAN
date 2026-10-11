@@ -206,7 +206,18 @@
     "required": "यह फ़ील्ड आवश्यक है",
     "emailInvalid": "मान्य ईमेल दर्ज करें",
     "paymentGateway": "भुगतान सुरक्षित प्रदाता द्वारा संसाधित होता है।",
-    "neighborhood": "मोहल्ला / क्षेत्र"
+    "neighborhood": "मोहल्ला / क्षेत्र",
+    "nationalShipping": "कोलंबिया में राष्ट्रीय शिपिंग",
+    "payByTransfer": "स्थानांतरण या डिलीवरी पर भुगतान",
+    "payNote": "हमारी टीम से WhatsApp पर भुगतान की पुष्टि करें।",
+    "couponTitle": "छूट कूपन",
+    "couponPlaceholder": "अपना कोड दर्ज करें",
+    "couponApply": "लागू करें",
+    "couponRemove": "हटाएँ",
+    "couponInvalid": "अमान्य कूपन",
+    "couponApplied": "कूपन लागू हुआ",
+    "couponOneOnly": "प्रति ऑर्डर केवल एक कूपन। नया कूपन पुराने को बदल देता है।",
+    "couponMin": "अमान्य कूपन"
   },
   "favorites": {
     "title": "पसंदीदा",
@@ -298,7 +309,11 @@
     "needHelp": "मदद चाहिए?",
     "added": "कार्ट में जोड़ा गया",
     "outOfStockToast": "यह वस्तु बिक चुकी है",
-    "selectSizeToast": "कृपया साइज़ चुनें"
+    "selectSizeToast": "कृपया साइज़ चुनें",
+    "country": "देश",
+    "resetCurrency": "देश की मुद्रा उपयोग करें",
+    "ratesSource": "दरें",
+    "ratesUnavailable": "संदर्भ दरें (स्रोत से संपर्क नहीं)"
   },
   "reviews": {
     "title": "Customer Reviews",

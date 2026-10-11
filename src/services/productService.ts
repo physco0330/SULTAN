@@ -211,6 +211,8 @@ export interface CouponResult {
   code: string
   percent: number
   valid: boolean
+  /** motivo del rechazo: missing | invalid | inactive | min_subtotal */
+  reason?: string
   discount: number
   minSubtotal?: number
 }

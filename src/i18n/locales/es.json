@@ -34,7 +34,7 @@
   },
   "sections": {
     "categories": {
-      "title": "Explora el Mundo",
+      "title": "Diseñado en Colombia",
       "subtitle": "Cuatro universos, un solo estándar de excelencia."
     },
     "featured": {
@@ -77,11 +77,22 @@
     },
     "marquee": {
       "freeShipping": "Envío gratis desde $300",
-      "international": "Envíos internacionales",
+      "international": "Envíos a todo Colombia",
       "authentic": "Prendas 100% originales",
       "returns": "Devoluciones fáciles en 30 días",
       "secure": "Compra segura"
-    }
+    },
+    "shipping": {
+      "preparation": "Preparación del pedido",
+      "preparationText": "Confirmamos la compra por WhatsApp y acordamos la forma de pago (transferencia o contraentrega).",
+      "delivery": "Entrega en Colombia",
+      "deliveryText": "Enviamos a todo el territorio nacional. El transportador te contacta para coordinar la entrega.",
+      "costs": "Valor del envío",
+      "costsText": "El valor se calcula según el peso y la ciudad de destino. Te lo confirmamos antes de despachar.",
+      "coverage": "Coberturas",
+      "coverageText": "Por ahora solo hacemos envíos dentro de Colombia."
+    },
+    "shippingNote": "Envíos a todo Colombia"
   },
   "catalog": {
     "title": "La Colección",
@@ -222,7 +233,7 @@
     "secure": "Compra segura",
     "protected": "Datos protegidos",
     "safePayment": "Pago seguro",
-    "international": "Envíos internacionales",
+    "international": "Envíos nacionales",
     "orderSuccess": "Pedido realizado",
     "orderSuccessMsg": "Gracias. Hemos recibido tu pedido y lo confirmaremos en breve.",
     "backHome": "Volver al inicio",
@@ -236,15 +247,24 @@
     "errCountry": "Ingresa tu país",
     "paymentGateway": "El pago se procesa mediante un proveedor seguro. Tu navegador será redirigido para completar el pago.",
     "cardFields": "Número de tarjeta · Caducidad · CVC",
-    "paymentHandled": "El pago se procesa mediante una pasarela certificada. Ningún dato de tarjeta se almacena en este sitio.",
-    "mockNote": "Checkout de demostración — los totales se calculan localmente como vista previa. Los montos finales, impuestos y pagos se validan y procesan por completo en el backend.",
     "summary": "Resumen del pedido",
     "terms": "Al realizar tu pedido aceptas nuestros términos y política de privacidad.",
     "thankYou": "Gracias por tu pedido",
     "orderNumber": "Número de pedido",
     "confirmationSent": "Hemos enviado una confirmación a tu correo. Recibirás los detalles de seguimiento en cuanto tu pedido sea enviado.",
     "offlineNote": "Modo demostración: el servidor no estaba disponible, así que el pedido no fue guardado. Los totales a continuación son una estimación.",
-    "neighborhood": "Barrio / zona"
+    "neighborhood": "Barrio / zona",
+    "nationalShipping": "Envíos nacionales a todo Colombia",
+    "payByTransfer": "Pago por transferencia o contraentrega",
+    "payNote": "Confirmas el pago conversando con nuestro equipo por WhatsApp.",
+    "couponTitle": "Cupón de descuento",
+    "couponPlaceholder": "Ingresa tu código",
+    "couponApply": "Aplicar",
+    "couponRemove": "Quitar",
+    "couponInvalid": "Cupón no válido",
+    "couponApplied": "Cupón aplicado",
+    "couponOneOnly": "Solo se puede usar un cupón por pedido. Aplicar uno nuevo reemplaza al anterior.",
+    "couponMin": "Cupón no válido"
   },
   "favorites": {
     "title": "Favoritos",
@@ -385,15 +405,15 @@
     "cookiesH4": "Gestión de cookies",
     "cookiesP4": "Puedes deshabilitar las cookies en la configuración de tu navegador, pero algunas funciones de la tienda podrían dejar de funcionar.",
     "enviosIntroTitle": "Política de envíos",
-    "enviosIntro": "Enviamos a todo el mundo desde Estambul con entrega rastreada y asegurada.",
+    "enviosIntro": "Envíos a todo Colombia con entrega rastreada y asegurada.",
     "enviosH1": "Tiempo de preparación",
     "enviosP1": "Los pedidos se preparan en 24–48 horas; las ediciones limitadas pueden requerir hasta 5 días hábiles.",
     "enviosH2": "Tiempos de entrega",
-    "enviosP2": "Europa: 3–5 días · Resto del mundo: 5–10 días hábiles.",
+    "enviosP2": "Entrega en todo el territorio nacional. El tiempo depende del transportador y la ciudad de destino.",
     "enviosH3": "Costos",
     "enviosP3": "Envío gratis en pedidos superiores a $300. Envío estándar $15, express $45 (USD, convertidos al pagar).",
     "enviosH4": "Aduanas",
-    "enviosP4": "Los pedidos internacionales pueden estar sujetos a aranceles aduaneros aplicados por el país de destino.",
+    "enviosP4": "Por ahora no hacemos envíos fuera de Colombia.",
     "devolucionesIntroTitle": "Política de devoluciones",
     "devolucionesIntro": "Tienes 30 días desde la entrega para devolver cualquier prenda sin uso y con sus etiquetas originales.",
     "devolucionesH1": "Condiciones",
@@ -420,12 +440,12 @@
     "ordersA4": "Los pedidos se confirman en cuanto se autoriza el pago y se reserva el stock.",
     "shippingTitle": "Envíos",
     "shippingQ1": "¿A dónde envían?",
-    "shippingA1": "Enviamos a todo el mundo desde Estambul con entrega rastreada y asegurada.",
+    "shippingA1": "Envíos a todo Colombia con entrega rastreada y asegurada.",
     "shippingQ2": "¿Cuánto tarda la entrega?",
-    "shippingA2": "Europa: 3–5 días. Resto del mundo: 5–10 días hábiles.",
+    "shippingA2": "Entrega en todo el territorio nacional. El tiempo depende del transportador y la ciudad de destino.",
     "shippingQ3": "¿Ofrecen envío gratis?",
     "shippingA3": "Sí — envío gratis en pedidos superiores a $300. Estándar $15, express $45.",
-    "shippingQ4": "¿Los pedidos internacionales pagan aduana?",
+    "shippingQ4": "¿Hacen envíos fuera de Colombia?",
     "shippingA4": "Algunos países aplican aranceles de importación. Estos los cobra el país de destino y no están incluidos en nuestros precios.",
     "returnsTitle": "Devoluciones",
     "returnsQ1": "¿Cuál es la política de devoluciones?",
@@ -539,7 +559,11 @@
     "outOfStockToast": "Esta prenda está agotada",
     "selectSizeToast": "Selecciona una talla",
     "emptyStateTitle": "Nada aquí todavía",
-    "back": "Volver"
+    "back": "Volver",
+    "country": "País",
+    "resetCurrency": "Usar moneda del país",
+    "ratesSource": "Tasas",
+    "ratesUnavailable": "Tasas de referencia (sin conexión con la fuente de cambio)"
   },
   "wa": {
     "waOrder": "Pedido",

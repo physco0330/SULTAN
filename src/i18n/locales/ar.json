@@ -206,7 +206,18 @@
     "required": "هذا الحقل مطلوب",
     "emailInvalid": "أدخل بريداً صحيحاً",
     "paymentGateway": "تتم معالجة الدفع عبر مزود آمن.",
-    "neighborhood": "الحي / المنطقة"
+    "neighborhood": "الحي / المنطقة",
+    "nationalShipping": "شحن داخلي في كل كولومبيا",
+    "payByTransfer": "الدفع بتحويل أو عند الاستلام",
+    "payNote": "تؤكد الدفع عبر واتساب مع فريقنا.",
+    "couponTitle": "قسيمة خصم",
+    "couponPlaceholder": "أدخل الرمز",
+    "couponApply": "تطبيق",
+    "couponRemove": "إزالة",
+    "couponInvalid": "قسيمة غير صالحة",
+    "couponApplied": "تم تطبيق القسيمة",
+    "couponOneOnly": "قسيمة واحدة فقط لكل طلب. تطبيق قسيمة جديدة يستبدل السابقة.",
+    "couponMin": "قسيمة غير صالحة"
   },
   "favorites": {
     "title": "المفضلة",
@@ -298,7 +309,11 @@
     "needHelp": "هل تحتاج مساعدة؟",
     "added": "أُضيف إلى السلة",
     "outOfStockToast": "نفدت هذه القطعة",
-    "selectSizeToast": "اختر مقاساً"
+    "selectSizeToast": "اختر مقاساً",
+    "country": "الدولة",
+    "resetCurrency": "استعمل عملة الدولة",
+    "ratesSource": "الأسعار",
+    "ratesUnavailable": "أسعار مرجعية (لا يوجد اتصال بالمصدر)"
   },
   "reviews": {
     "title": "Customer Reviews",

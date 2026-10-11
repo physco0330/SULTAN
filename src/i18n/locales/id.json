@@ -206,7 +206,18 @@
     "required": "Kolom wajib diisi",
     "emailInvalid": "Email tidak valid",
     "paymentGateway": "Pembayaran diproses oleh penyedia aman.",
-    "neighborhood": "Kelurahan / area"
+    "neighborhood": "Kelurahan / area",
+    "nationalShipping": "Pengiriman nasional ke seluruh Kolombia",
+    "payByTransfer": "Pembayaran transfer atau di tempat",
+    "payNote": "Konfirmasi pembayaran lewat WhatsApp dengan tim kami.",
+    "couponTitle": "Kupon diskon",
+    "couponPlaceholder": "Masukkan kode",
+    "couponApply": "Terapkan",
+    "couponRemove": "Hapus",
+    "couponInvalid": "Kupon tidak valid",
+    "couponApplied": "Kupon diterapkan",
+    "couponOneOnly": "Hanya satu kupon per pesanan. Kupon baru menggantikan yang lama.",
+    "couponMin": "Kupon tidak valid"
   },
   "favorites": {
     "title": "Favorit",
@@ -298,7 +309,11 @@
     "needHelp": "Butuh bantuan?",
     "added": "Ditambahkan ke keranjang",
     "outOfStockToast": "Karya ini habis",
-    "selectSizeToast": "Pilih ukuran"
+    "selectSizeToast": "Pilih ukuran",
+    "country": "Negara",
+    "resetCurrency": "Pakai mata uang negara",
+    "ratesSource": "Kurs",
+    "ratesUnavailable": "Kurs referensi (tanpa koneksi ke sumber kurs)"
   },
   "reviews": {
     "title": "Customer Reviews",

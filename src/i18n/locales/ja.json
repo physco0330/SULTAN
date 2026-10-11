@@ -206,7 +206,18 @@
     "required": "必須項目です",
     "emailInvalid": "有効なメールを入力してください",
     "paymentGateway": "決済は安全なプロバイダーが処理します。",
-    "neighborhood": "地域 / エリア"
+    "neighborhood": "地域 / エリア",
+    "nationalShipping": "コロンビア国内配送",
+    "payByTransfer": "振込または着払い",
+    "payNote": "WhatsAppでチームに支払いを確認します。",
+    "couponTitle": "割引クーポン",
+    "couponPlaceholder": "コードを入力",
+    "couponApply": "適用",
+    "couponRemove": "削除",
+    "couponInvalid": "無効なクーポン",
+    "couponApplied": "クーポンを適用しました",
+    "couponOneOnly": "1订单につき1freedom Gregory characterizing measures 1 predominantly 1 1",
+    "couponMin": "無効なクーポン"
   },
   "favorites": {
     "title": "お気に入り",
@@ -298,7 +309,11 @@
     "needHelp": "お手伝いしましょうか？",
     "added": "カートに追加しました",
     "outOfStockToast": "この一点は売り切れです",
-    "selectSizeToast": "サイズを選択してください"
+    "selectSizeToast": "サイズを選択してください",
+    "country": "国",
+    "resetCurrency": "その国の通貨を使う",
+    "ratesSource": "レート",
+    "ratesUnavailable": "参考レート（レート情報源に接続できません）"
   },
   "reviews": {
     "title": "Customer Reviews",

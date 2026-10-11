@@ -269,6 +269,14 @@ const MIGRATIONS = [
     },
   },
   {
+    id: 'm007_coupon_limits',
+    run: () => {
+      if (!hasColumn('coupons', 'expires_at')) db.exec('ALTER TABLE coupons ADD COLUMN expires_at TEXT')
+      if (!hasColumn('coupons', 'max_uses')) db.exec('ALTER TABLE coupons ADD COLUMN max_uses INTEGER')
+      if (!hasColumn('coupons', 'used_count')) db.exec('ALTER TABLE coupons ADD COLUMN used_count INTEGER NOT NULL DEFAULT 0')
+    },
+  },
+  {
     id: 'm006_product_quality',
     run: () => {
       if (!hasColumn('products', 'quality')) {

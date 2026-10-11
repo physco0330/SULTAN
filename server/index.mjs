@@ -312,14 +312,20 @@ app.get('/api/categories', (_req, res) => {
 })
 
 app.get('/api/coupons/validate', (req, res) => {
-  const code = String(req.query.code ?? '').trim().toUpperCase()
+  const code = String(req.query.code ?? '').trim().toUpperCase().slice(0, 20)
   const subtotal = toNum(req.query.subtotal)
   if (!code) return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'missing' })
-  const row = db.prepare('SELECT code, percent, min_subtotal, active FROM coupons WHERE code = ?').get(code)
+  const row = db.prepare('SELECT * FROM coupons WHERE code = ?').get(code)
   if (!row) return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'invalid' })
   if (!row.active) return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'inactive' })
+  /* Cupón vencido: no puede aplicarse */
+  if (row.expires_at && new Date(row.expires_at + 'T23:59:59Z').getTime() < Date.now())
+    return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'expired' })
+  /* Límite de usos alcanzado */
+  if (row.max_uses != null && row.used_count >= row.max_uses)
+    return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'max_uses' })
   if (subtotal < row.min_subtotal)
-    return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'min-subtotal', minSubtotal: row.min_subtotal })
+    return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'min_subtotal', minSubtotal: row.min_subtotal })
   const discount = Math.round((subtotal * row.percent) / 100)
   res.json({ valid: true, code, percent: row.percent, discount, minSubtotal: row.min_subtotal })
 })
@@ -470,12 +476,17 @@ app.post('/api/orders', rateLimit('orders', 20), (req, res) => {
   const flat = toNum(getSetting('flat_shipping', '15'))
   const shipping = subtotal >= threshold ? 0 : flat
 
+  /* Un solo cupón por pedido: si el cliente envía una lista, se rechaza. */
+  if (Array.isArray(req.body.promoCode) || Array.isArray(req.body.promoCodes))
+    return res.status(422).json({ error: 'Solo se permite un cupón por pedido' })
   const code = String(req.body.promoCode ?? '').trim().toUpperCase().slice(0, 20)
   let discount = 0
   let couponCode = null
   if (code) {
     const c = db.prepare('SELECT * FROM coupons WHERE code = ? AND active = 1').get(code)
-    if (c && subtotal >= c.min_subtotal) {
+    const vigente = c && (!c.expires_at || new Date(c.expires_at + 'T23:59:59Z').getTime() >= Date.now())
+    const disponible = c && (c.max_uses == null || c.used_count < c.max_uses)
+    if (c && vigente && disponible && subtotal >= c.min_subtotal) {
       discount = Math.round((subtotal * c.percent) / 100)
       couponCode = code
     }
@@ -1247,7 +1258,9 @@ app.post('/api/admin/orders', requireAuth, (req, res) => {
   let couponCode = null
   if (code) {
     const c = db.prepare('SELECT * FROM coupons WHERE code = ? AND active = 1').get(code)
-    if (c && subtotal >= c.min_subtotal) {
+    const vigente = c && (!c.expires_at || new Date(c.expires_at + 'T23:59:59Z').getTime() >= Date.now())
+    const disponible = c && (c.max_uses == null || c.used_count < c.max_uses)
+    if (c && vigente && disponible && subtotal >= c.min_subtotal) {
       discount = Math.round((subtotal * c.percent) / 100)
       couponCode = code
     }
