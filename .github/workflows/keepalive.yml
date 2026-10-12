@@ -1,0 +1,14 @@
+name: Keep-alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping SULTAN BLACK (Render)
+        run: |
+          curl -fsS --max-time 90 https://sultan-xtsc.onrender.com/api/health || true
