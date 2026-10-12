@@ -22,6 +22,9 @@ const copToNumber = (v: string) => Number(v.replace(/\D/g, ''))
 /** Guarda en USD con decimales: redondear a dólares enteros cambiaba el precio al volver a COP. */
 const usdFromCop = (cop: number) => Math.round(convertPrice(cop, 'COP', 'USD') * 1e6) / 1e6
 
+/** Un precio guardado solo se reutiliza si es finito y razonable (evita datos corruptos o 0). */
+const saneUsd = (n?: number | null) => (typeof n === 'number' && Number.isFinite(n) && n > 0 && n < 1e7 ? n : 0)
+
 /** Valores iniciales de un producto nuevo. Se generan de cero cada vez: nada se hereda del anterior. */
 const emptyForm = () => ({
   name: '',
@@ -105,8 +108,11 @@ export function ProductFormModal({
         gender: product.gender,
         category: product.category,
         collection: product.collection,
-        price: String(Math.round(convertPrice(product.compareAtPrice || product.price, 'USD', 'COP'))),
-        compareAtPrice: product.compareAtPrice ? String(Math.round(convertPrice(product.price, 'USD', 'COP'))) : '',
+        /* Si el precio normal guardado está corrupto (o es 0) se ignora y solo se usa el cobrado. */
+        price: String(Math.round(convertPrice(saneUsd(product.compareAtPrice) || saneUsd(product.price), 'USD', 'COP'))),
+        compareAtPrice: saneUsd(product.compareAtPrice)
+          ? String(Math.round(convertPrice(saneUsd(product.price), 'USD', 'COP')))
+          : '',
         stock: String(product.stock),
         material: product.material,
         description: product.description,

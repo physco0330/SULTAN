@@ -13,7 +13,15 @@ interface PriceProps {
 export function Price({ price, compareAtPrice, currency = 'USD', className, large }: PriceProps) {
   const code = useCurrency((s) => s.code)
   const shown = formatPrice(convertPrice(price, currency, code), code)
-  const was = compareAtPrice ? formatPrice(convertPrice(compareAtPrice, currency, code), code) : null
+  /* Solo se tacha el precio normal si es un valor sensato y mayor que el precio
+   * cobrado: así nunca se muestra un precio antiguo corrupto (p. ej. 1e19). */
+  const valid =
+    typeof compareAtPrice === 'number' &&
+    Number.isFinite(compareAtPrice) &&
+    compareAtPrice > price &&
+    price > 0 &&
+    compareAtPrice / price <= 50
+  const was = valid ? formatPrice(convertPrice(compareAtPrice, currency, code), code) : null
 
   return (
     <span className={cn('flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5', className)}>
