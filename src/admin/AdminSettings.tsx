@@ -7,6 +7,7 @@ import { useUi } from '@/store/ui'
 import { usd, shortDate, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { cn } from '@/utils/cn'
 import { AdminReviews } from '@/admin/AdminReviews'
+import { DEFAULT_PHILOSOPHY_ITEMS, parsePhilosophyItems, type PhilosophyItem } from '@/data/philosophy'
 import type { CouponRow, SubscriberRow, CustomerRow, AuditRow, AdminOrderStatus } from '@/services/adminService'
 
 export type AdminSettingsSection = 'Empresa' | 'Cupones' | 'Suscriptores' | 'Clientes' | 'Reseñas' | 'Auditoría'
@@ -204,6 +205,13 @@ function PhilosophyEditor({
     }
   }
 
+  /* Elementos de la filosofía: se guardan como JSON en un único ajuste. */
+  const items = parsePhilosophyItems(form.philosophy_items)
+  const shown = items.length ? items : DEFAULT_PHILOSOPHY_ITEMS
+  const setItems = (next: PhilosophyItem[]) => onChange('philosophy_items', next.length ? JSON.stringify(next) : '')
+  const updateItem = (i: number, patch: Partial<PhilosophyItem>) =>
+    setItems(shown.map((x, j) => (j === i ? { ...x, ...patch } : x)))
+
   return (
     <div className="border border-gold/15 bg-carbon/40 p-6">
       <h3 className="font-display mb-3 text-sm tracking-[0.2em] text-ivory">FILOSOFÍA SULTÁN</h3>
@@ -264,6 +272,53 @@ function PhilosophyEditor({
               </div>
             )
           })}
+        </div>
+
+        <div className="border-t border-gold/15 pt-4">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <label className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-bone">
+              Elementos (icono · título · texto)
+            </label>
+            <button
+              type="button"
+              onClick={() => setItems([...shown, { icon: '✦', title: '', desc: '' }])}
+              className="flex items-center gap-1 border border-gold/40 px-3 py-1.5 text-[0.6rem] font-semibold uppercase tracking-widest text-gold hover:bg-gold/10"
+            >
+              <Plus size={12} /> Añadir
+            </button>
+          </div>
+          <div className="space-y-2.5">
+            {shown.map((it, i) => (
+              <div key={i} className="grid grid-cols-[56px_1fr_auto] gap-2 border border-gold/15 bg-night/40 p-2.5">
+                <input
+                  value={it.icon}
+                  onChange={(e) => updateItem(i, { icon: e.target.value })}
+                  placeholder="✦"
+                  aria-label={`Icono ${i + 1}`}
+                  className={`${input} text-center`}
+                />
+                <div className="space-y-2">
+                  <input value={it.title} onChange={(e) => updateItem(i, { title: e.target.value })} placeholder="Título" aria-label={`Título ${i + 1}`} className={input} />
+                  <input value={it.desc} onChange={(e) => updateItem(i, { desc: e.target.value })} placeholder="Descripción" aria-label={`Descripción ${i + 1}`} className={input} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setItems(shown.filter((_, j) => j !== i))}
+                  aria-label="Quitar elemento"
+                  className="flex h-9 w-9 items-center justify-center self-start border border-gold/20 text-bone hover:border-red-400/40 hover:text-red-400"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setItems(DEFAULT_PHILOSOPHY_ITEMS)}
+            className="mt-3 text-[0.6rem] font-semibold uppercase tracking-widest text-bone underline-offset-4 hover:text-gold hover:underline"
+          >
+            Restaurar los 6 por defecto
+          </button>
         </div>
       </div>
       <button

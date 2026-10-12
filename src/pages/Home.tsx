@@ -156,6 +156,15 @@ const PILLARS = [
 function Philosophy() {
   const { t } = useTranslation()
   const cfg = useStoreConfig()
+  /* Los elementos se editan desde Admin › Empresa › Filosofía. Si aún no hay
+   * nada guardado, se usan los textos traducidos por defecto. */
+  const items = cfg.philosophyItems.length
+    ? cfg.philosophyItems
+    : PILLARS.map((p) => ({
+        icon: p.icon,
+        title: t(`sections.philosophy.${p.key}`),
+        desc: t(`sections.philosophy.${p.key}Desc`),
+      }))
   return (
     <section className="mx-auto max-w-[1600px] px-4 py-20 md:py-28 lg:px-8">
       <div className="grid items-center gap-12 lg:grid-cols-2">
@@ -173,15 +182,15 @@ function Philosophy() {
             subtitle={cfg.philosophyText || t('sections.philosophy.subtitle')}
           />
           <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2">
-            {PILLARS.map((p, i) => (
-              <Reveal key={p.key} delay={i * 70}>
+            {items.map((p, i) => (
+              <Reveal key={i} delay={i * 70}>
                 <div className="group border border-gold/15 p-5 transition-colors hover:border-gold/50">
                   <span className="text-lg text-gold">{p.icon}</span>
                   <h3 className="mt-2 font-display text-lg text-ivory transition-colors group-hover:text-gold-soft">
-                    {t(`sections.philosophy.${p.key}`)}
+                    {p.title}
                   </h3>
                   <p className="mt-1 text-sm font-light leading-relaxed text-bone">
-                    {t(`sections.philosophy.${p.key}Desc`)}
+                    {p.desc}
                   </p>
                 </div>
               </Reveal>

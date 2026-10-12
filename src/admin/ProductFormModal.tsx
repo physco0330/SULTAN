@@ -119,7 +119,7 @@ export function ProductFormModal({
         sizes: product.sizes,
         colors: product.colors.map((c) => c.id),
         quality: (product.quality ?? 'turkish') as ProductQuality,
-        active: true,
+        active: product.active ?? true,
         featured: product.featured,
         isNew: product.isNew,
         isLimited: product.isLimited,

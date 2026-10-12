@@ -232,8 +232,34 @@ export async function createProduct(b) {
 export async function updateProduct(id, b) {
   const row = await getOne('products', id)
   if (!row) return null
-  const slug = uniqueSlug(await listAll('products'), b.name, row.id)
-  const doc = productDoc(row.id, slug, b.sku || `${slug}-${row.id}`, b, row.created_at)
+  /* `b` puede venir parcial: se combina con lo guardado para no borrar campos
+   * (precio, descripción, material…) cuando solo se cambia alguna cosa. */
+  const merged = {
+    name: row.name,
+    category: row.category,
+    gender: row.gender,
+    collection: row.collection,
+    price: row.price,
+    compareAtPrice: row.compare_at_price,
+    stock: row.stock,
+    featured: row.featured,
+    isNew: row.is_new,
+    isLimited: row.is_limited,
+    isBestSeller: row.is_best_seller,
+    isOnSale: row.is_on_sale,
+    isCombo: row.is_combo,
+    comboItems: row.combo_items,
+    material: row.material,
+    sku: row.sku,
+    description: row.description,
+    quality: row.quality,
+    colors: row.colors,
+    sizes: row.sizes,
+    active: row.active,
+    ...b,
+  }
+  const slug = uniqueSlug(await listAll('products'), merged.name, row.id)
+  const doc = productDoc(row.id, slug, merged.sku || `${slug}-${row.id}`, merged, row.created_at)
   await col('products').doc(row.id).set(doc)
   invalidateCatalog()
   return doc

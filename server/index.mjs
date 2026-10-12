@@ -220,22 +220,31 @@ function requireAuth(req, res, next) {
   next()
 }
 
-function productBody(body) {
-  return {
-    name: String(body.name ?? '').trim(),
-    category: String(body.category ?? 'tshirts').trim(),
-    gender: ['men', 'women', 'unisex'].includes(body.gender) ? body.gender : 'unisex',
-    collection: String(body.collection ?? 'new').trim(),
-    price: toNum(body.price),
-    compareAtPrice: body.compareAtPrice === undefined || body.compareAtPrice === '' ? null : toNum(body.compareAtPrice),
-    stock: Math.max(0, Math.floor(toNum(body.stock))),
-    featured: toBool(body.featured),
-    isNew: toBool(body.isNew),
-    isLimited: toBool(body.isLimited),
-    isBestSeller: toBool(body.isBestSeller),
-    isOnSale: toBool(body.isOnSale),
-    isCombo: toBool(body.isCombo),
-    comboItems: Array.isArray(body.comboItems)
+/**
+ * Normaliza el cuerpo de un producto.
+ * - `partial: false` (crear): todas las claves, con valores por defecto.
+ * - `partial: true` (actualizar): SOLO las claves enviadas; el resto se conserva
+ *   en la base de datos. Así un PUT parcial nunca pone en 0 el precio ni borra
+ *   la descripción o el material.
+ */
+function productBody(body, { partial = false } = {}) {
+  const has = (k) => !partial || Object.prototype.hasOwnProperty.call(body, k)
+  const out = {}
+  if (has('name')) out.name = String(body.name ?? '').trim()
+  if (has('category')) out.category = String(body.category ?? 'tshirts').trim()
+  if (has('gender')) out.gender = ['men', 'women', 'unisex'].includes(body.gender) ? body.gender : 'unisex'
+  if (has('collection')) out.collection = String(body.collection ?? 'new').trim()
+  if (has('price')) out.price = toNum(body.price)
+  if (has('compareAtPrice')) out.compareAtPrice = body.compareAtPrice === undefined || body.compareAtPrice === '' ? null : toNum(body.compareAtPrice)
+  if (has('stock')) out.stock = Math.max(0, Math.floor(toNum(body.stock)))
+  if (has('featured')) out.featured = toBool(body.featured)
+  if (has('isNew')) out.isNew = toBool(body.isNew)
+  if (has('isLimited')) out.isLimited = toBool(body.isLimited)
+  if (has('isBestSeller')) out.isBestSeller = toBool(body.isBestSeller)
+  if (has('isOnSale')) out.isOnSale = toBool(body.isOnSale)
+  if (has('isCombo')) out.isCombo = toBool(body.isCombo)
+  if (has('comboItems')) {
+    out.comboItems = Array.isArray(body.comboItems)
       ? body.comboItems
           .map((it) => ({
             productId: String(it?.productId ?? '').trim(),
@@ -244,15 +253,16 @@ function productBody(body) {
           }))
           .filter((it) => it.productId || it.name)
           .slice(0, 20)
-      : [],
-    material: String(body.material ?? '').trim() || 'Premium cotton blend',
-    sku: String(body.sku ?? '').trim(),
-    description: String(body.description ?? '').trim(),
-    quality: body.quality === 'original' ? 'original' : 'turkish',
-    colors: Array.isArray(body.colors) ? body.colors : [],
-    sizes: Array.isArray(body.sizes) ? body.sizes : [],
-    active: body.active === undefined ? true : toBool(body.active),
+      : []
   }
+  if (has('material')) out.material = String(body.material ?? '').trim() || 'Premium cotton blend'
+  if (has('sku')) out.sku = String(body.sku ?? '').trim()
+  if (has('description')) out.description = String(body.description ?? '').trim()
+  if (has('quality')) out.quality = body.quality === 'original' ? 'original' : 'turkish'
+  if (has('colors')) out.colors = Array.isArray(body.colors) ? body.colors : []
+  if (has('sizes')) out.sizes = Array.isArray(body.sizes) ? body.sizes : []
+  if (has('active')) out.active = body.active === undefined ? true : toBool(body.active)
+  return out
 }
 
 /* Mismo cálculo que el tracking público: solo quien recibe el token puede consultar. */
@@ -299,6 +309,17 @@ app.get('/api/config', async (_req, res) => {
     philosophyText: get('philosophy_text'),
     philosophyImage1: get('philosophy_image_1'),
     philosophyImage2: get('philosophy_image_2'),
+    philosophyItems: (() => {
+      try {
+        const arr = JSON.parse(get('philosophy_items') || '[]')
+        if (!Array.isArray(arr)) return []
+        return arr
+          .map((x) => ({ icon: String(x?.icon ?? ''), title: String(x?.title ?? ''), desc: String(x?.desc ?? '') }))
+          .filter((x) => x.title || x.desc)
+      } catch {
+        return []
+      }
+    })(),
   })
 })
 
@@ -823,10 +844,10 @@ app.post('/api/admin/products', requireAuth, async (req, res) => {
 app.put('/api/admin/products/:id', requireAuth, async (req, res) => {
   const existing = await products.getProductRow(req.params.id)
   if (!existing) return res.status(404).json({ error: 'Producto no encontrado' })
-  const body = productBody(req.body)
-  if (!body.name) return res.status(422).json({ error: 'El nombre es obligatorio' })
+  const body = productBody(req.body, { partial: true })
+  if (body.name !== undefined && !body.name) return res.status(422).json({ error: 'El nombre es obligatorio' })
   const row = await products.updateProduct(existing.id, body)
-  await audit(req.auth.username, 'product.update', 'products', row.id, `Actualizó ${body.name}`)
+  await audit(req.auth.username, 'product.update', 'products', row.id, `Actualizó ${row.name}`)
   res.json({ product: await products.shapeProduct(row, { admin: true }) })
 })
 
@@ -958,7 +979,7 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
     'company_name', 'company_tagline', 'company_email', 'company_phone',
     'company_whatsapp', 'company_address', 'default_currency', 'free_shipping_threshold',
     'flat_shipping', 'express_shipping', 'instagram_url', 'announcement_bar',
-    'philosophy_title', 'philosophy_text', 'philosophy_image_1', 'philosophy_image_2',
+    'philosophy_title', 'philosophy_text', 'philosophy_image_1', 'philosophy_image_2', 'philosophy_items',
   ]
   const entries = {}
   for (const k of allowed) {
