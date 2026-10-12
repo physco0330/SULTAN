@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { Logo } from '@/components/Logo'
 import { config, brandConfig } from '@/config/brand'
 import { NewsletterForm } from '@/components/NewsletterForm'
-import { isFeatureEnabled } from '@/config/features'
 
 function Column({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -16,9 +15,7 @@ function Column({ title, children }: { title: string; children: React.ReactNode 
 }
 
 const shopLinks = [
-  { to: '/hombre', key: 'nav.men' },
-  ...(isFeatureEnabled('women') ? [{ to: '/mujer', key: 'nav.women' }] : []),
-  { to: '/nueva-coleccion', key: 'nav.newCollection' },
+  { to: '/catalogo', key: 'nav.catalog' },
   { to: '/ofertas', key: 'nav.offers' },
 ]
 

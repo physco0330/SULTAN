@@ -95,7 +95,7 @@ export function StatusBadge({ value, label }: { value: string; label?: string })
 
 export function Th({ children, right }: { children?: ReactNode; right?: boolean }) {
   return (
-    <th className={cn('whitespace-nowrap px-4 py-3 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-gold/80', right && 'text-right')}>
+    <th className={cn('whitespace-nowrap px-4 py-3 text-left text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-gold/80', right && 'text-right')}>
       {children}
     </th>
   )

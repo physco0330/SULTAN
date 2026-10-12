@@ -4,9 +4,15 @@ import type { Product } from '@/types'
 import { fetchCatalog } from '@/services/productService'
 import { subscribeDataVersion } from '@/utils/liveSync'
 import { isFeatureEnabled } from '@/config/features'
+import { useWishlist } from '@/store/wishlist'
 
 let cache: Product[] | null = null
 let inflight: Promise<Product[]> | null = null
+
+/** Quita de favoritos los productos que ya no existen en el catálogo. */
+function syncWishlist(list: Product[]) {
+  if (list.length) useWishlist.getState().prune(list.map((p) => p.id))
+}
 
 /** Filtra módulos desactivados (p. ej. Mujer) de cualquier lista de productos. */
 function applyFeatureVisibility(list: Product[]): Product[] {
@@ -37,11 +43,13 @@ export function useCatalog(): CatalogState {
     inflight = null
     setLoading(true)
     try {
-      const list = applyFeatureVisibility(await fetchCatalog())
+      const raw = await fetchCatalog()
+      const list = applyFeatureVisibility(raw)
       cache = list
       setProducts(list)
       setOnline(true)
       setError(null)
+      syncWishlist(raw)
     } catch (err) {
       setProducts(applyFeatureVisibility(PRODUCTS))
       setOnline(false)
@@ -56,6 +64,7 @@ export function useCatalog(): CatalogState {
       setProducts(applyFeatureVisibility(cache))
       setOnline(true)
       setLoading(false)
+      syncWishlist(cache)
       return
     }
     let dead = false
@@ -68,6 +77,7 @@ export function useCatalog(): CatalogState {
         setProducts(applyFeatureVisibility(list))
         setOnline(true)
         setError(null)
+        syncWishlist(list)
       })
       .catch((err) => {
         if (dead) return
@@ -95,6 +105,7 @@ export function useCatalog(): CatalogState {
           setProducts(applyFeatureVisibility(list))
           setOnline(true)
           setError(null)
+          syncWishlist(list)
         }).catch(() => {
           /* keep the current list when offline */
         })

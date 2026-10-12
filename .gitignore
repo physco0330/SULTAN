@@ -4,17 +4,11 @@ node_modules/
 # Build
 dist/
 
-# Base de datos local (se recrea y siembra sola al arrancar)
+# Base SQLite antigua (solo respaldo local; el backend usa Firestore)
 server/data/
 
-# Backups automáticos de migraciones
-server/data/*.bak-*
-
-# Imágenes subidas (se regeneran desde el panel)
+# Imágenes locales antiguas (las fotos nuevas van a Cloudinary)
 server/uploads/
-
-# Imágenes subidas cuando viven en la carpeta de datos configurable
-server/data/uploads/
 
 # Logs
 *.log
@@ -28,3 +22,6 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+*firebase-adminsdk*.json
+*sultan-firebase*.json
+*sultan-cloudinary*

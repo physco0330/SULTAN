@@ -1,61 +1,7 @@
-import { existsSync, mkdirSync, statSync } from 'node:fs'
-import { dirname, isAbsolute, join, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
+import { existsSync } from 'node:fs'
 
 export const IS_PROD = process.env.NODE_ENV === 'production'
 export const IS_TEST = process.env.NODE_ENV === 'test'
-
-/* ------------------------------------------------------------------ */
-/* Rutas de datos                                                     */
-/* ------------------------------------------------------------------ */
-
-/**
- * Carpeta donde viven la base de datos y las imágenes subidas.
- *
- * En un entorno efímero (Render Free, Heroku, un contenedor temporal) esto
- * debe apuntar a un disco persistente: define SULTAN_DATA_DIR=/data.
- * Si no se define, se usa `server/data` dentro del repositorio.
- */
-function resolveDataDir() {
-  const raw = String(process.env.SULTAN_DATA_DIR ?? '').trim()
-  if (!raw) return join(__dirname, 'data')
-  return isAbsolute(raw) ? resolve(raw) : resolve(process.cwd(), raw)
-}
-
-export const DATA_DIR = resolveDataDir()
-
-/** Las imágenes se guardan junto a la base de datos para no perderlas al reiniciar. */
-export const UPLOADS_DIR = join(DATA_DIR, 'uploads')
-
-/** El directorio de datos debe existir y tener espacio de escritura. */
-export function ensureDataDirs() {
-  for (const dir of [DATA_DIR, UPLOADS_DIR]) {
-    try {
-      mkdirSync(dir, { recursive: true })
-    } catch (err) {
-      throw new Error(
-        `No se pudo crear el directorio de datos "${dir}": ${err.message}. ` +
-          'Revisa SULTAN_DATA_DIR y los permisos de escritura.',
-      )
-    }
-  }
-  try {
-    statSync(DATA_DIR)
-  } catch {
-    throw new Error(`El directorio de datos "${DATA_DIR}" no es accesible.`)
-  }
-}
-
-/** Aviso temprano si el directorio parece efímero y no hay nada que lo respalde. */
-export function dataDirIsEphemeral() {
-  if (IS_TEST) return false
-  if (process.env.SULTAN_DATA_DIR) return false
-  if (!IS_PROD) return false
-  /* Sin SULTAN_DATA_DIR en producción los datos se pierden en cada despliegue. */
-  return !existsSync(resolve(DATA_DIR, '.persisted'))
-}
 
 /* ------------------------------------------------------------------ */
 /* Red y cabeceras                                                     */
@@ -84,13 +30,29 @@ export function allowedOrigins() {
 export const SULTAN_SECRET = String(process.env.SULTAN_SECRET ?? '').trim()
 
 /* ------------------------------------------------------------------ */
+/* Servicios externos                                                  */
+/* ------------------------------------------------------------------ */
+
+/** Firebase: JSON completo (Render) o ruta a un archivo (PC). */
+export function firebaseConfigured() {
+  return Boolean(String(process.env.FIREBASE_SERVICE_ACCOUNT_JSON ?? '').trim() || String(process.env.FIREBASE_SERVICE_ACCOUNT_PATH ?? '').trim())
+}
+
+export function cloudinaryConfigured() {
+  if (String(process.env.CLOUDINARY_URL ?? '').trim()) return true
+  return ['CLOUDINARY_CLOUD_NAME', 'CLOUDINARY_API_KEY', 'CLOUDINARY_API_SECRET'].every((k) =>
+    String(process.env[k] ?? '').trim(),
+  )
+}
+
+/* ------------------------------------------------------------------ */
 /* Validación de arranque                                              */
 /* ------------------------------------------------------------------ */
 
 /**
  * Comprueba que la configuración sea válida. Devuelve la lista de problemas.
- * En producción, un error aquí detiene el arranque: es preferible no
- * arrancar a arrancar exponiendo datos o firmando tokens con claves débiles.
+ * Un error aquí detiene el arranque: es preferible no arrancar a arrancar
+ * exponiendo datos o firmando tokens con claves débiles.
  */
 export function validateConfig() {
   const errors = []
@@ -108,12 +70,6 @@ export function validateConfig() {
     if (!allowedOrigins().length) {
       errors.push('ALLOWED_ORIGINS o SITE_URL es obligatorio en producción (orígenes del frontend separados).')
     }
-
-    if (!process.env.SULTAN_DATA_DIR) {
-      errors.push(
-        'SULTAN_DATA_DIR es obligatorio en producción: sin un disco persistente, cada despliegue borra la base de datos y las imágenes.',
-      )
-    }
   } else {
     if (!SULTAN_SECRET) {
       warnings.push('SULTAN_SECRET no definido: se generará uno temporal (las sesiones caducan al reiniciar).')
@@ -121,6 +77,24 @@ export function validateConfig() {
     if (!allowedOrigins().length) {
       warnings.push('ALLOWED_ORIGINS no definido: se aceptarán únicamente peticiones del mismo origen.')
     }
+  }
+
+  if (!firebaseConfigured()) {
+    errors.push(
+      'Falta la clave de Firebase: define FIREBASE_SERVICE_ACCOUNT_JSON (contenido del JSON, en Render) o FIREBASE_SERVICE_ACCOUNT_PATH (ruta al archivo, en tu PC).',
+    )
+  } else if (!String(process.env.FIREBASE_SERVICE_ACCOUNT_JSON ?? '').trim()) {
+    const path = String(process.env.FIREBASE_SERVICE_ACCOUNT_PATH).trim()
+    if (!existsSync(path)) errors.push(`FIREBASE_SERVICE_ACCOUNT_PATH no existe: ${path}`)
+  }
+
+  const cloudinaryMsg =
+    'Faltan credenciales de Cloudinary: define CLOUDINARY_URL (cloudinary://clave:secreto@nombre) o las tres variables CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET. Sin ellas no se pueden subir fotos.'
+  if (!cloudinaryConfigured()) {
+    if (IS_PROD) errors.push(cloudinaryMsg)
+    else warnings.push(cloudinaryMsg)
+  } else if (String(process.env.CLOUDINARY_URL ?? '').trim() && !String(process.env.CLOUDINARY_URL).trim().startsWith('cloudinary://')) {
+    errors.push('CLOUDINARY_URL no tiene el formato cloudinary://clave:secreto@nombre.')
   }
 
   if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
@@ -133,11 +107,11 @@ export function validateConfig() {
 /** Imprime el resumen de configuración sin revelar secretos. */
 export function describeConfig() {
   const { errors, warnings } = validateConfig()
-  console.log('[config] datos     :', DATA_DIR)
-  console.log('[config] imágenes  :', UPLOADS_DIR)
-  console.log('[config] orígenes :', allowedOrigins().join(', ') || '(solo mismo origen)')
   console.log('[config] entorno   :', IS_PROD ? 'production' : IS_TEST ? 'test' : 'development')
+  console.log('[config] orígenes  :', allowedOrigins().join(', ') || '(solo mismo origen)')
   console.log('[config] secreto   :', SULTAN_SECRET ? 'definido' : 'NO definido')
+  console.log('[config] firebase  :', firebaseConfigured() ? 'clave definida' : 'NO definida')
+  console.log('[config] cloudinary:', cloudinaryConfigured() ? 'credenciales definidas' : 'NO definidas')
   for (const w of warnings) console.warn(`[config] AVISO: ${w}`)
   for (const e of errors) console.error(`[config] ERROR: ${e}`)
   return { errors, warnings, ok: errors.length === 0 }

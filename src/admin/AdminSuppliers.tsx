@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2, Pencil, Search, Truck, Power } from 'lucide-react'
+import { Plus, Trash2, Pencil, Search, Truck, Power, MessageCircle } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { useUi } from '@/store/ui'
 import { useLiveReload } from '@/hooks/useLiveReload'
@@ -12,7 +12,6 @@ const CATEGORY_SUGGESTIONS = ['Textiles', 'Confección', 'Accesorios', 'Calzado'
 
 const EMPTY_FORM = {
   company: '',
-  taxId: '',
   phone: '',
   email: '',
   address: '',
@@ -53,7 +52,7 @@ export function AdminSuppliers() {
     const q = query.trim().toLowerCase()
     if (!q) return rows
     return rows.filter((r) =>
-      `${r.company} ${r.tax_id ?? ''} ${r.email ?? ''} ${r.category ?? ''}`.toLowerCase().includes(q),
+      `${r.company} ${r.email ?? ''} ${r.category ?? ''}`.toLowerCase().includes(q),
     )
   }, [rows, query])
 
@@ -68,7 +67,6 @@ export function AdminSuppliers() {
     setEditing(row)
     setForm({
       company: row.company,
-      taxId: row.tax_id ?? '',
       phone: row.phone ?? '',
       email: row.email ?? '',
       address: row.address ?? '',
@@ -93,7 +91,6 @@ export function AdminSuppliers() {
     setSaving(true)
     const payload = {
       company: form.company.trim(),
-      taxId: form.taxId.trim(),
       phone: form.phone.trim(),
       email: form.email.trim(),
       address: form.address.trim(),
@@ -164,7 +161,7 @@ export function AdminSuppliers() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por empresa, NIT o correo…"
+            placeholder="Buscar por empresa, categoría o correo…"
             className="w-full border border-gold/25 bg-night py-2.5 pl-9 pr-3 text-xs text-ivory placeholder:text-bone/60 focus:border-gold focus:outline-none"
           />
         </div>
@@ -183,12 +180,12 @@ export function AdminSuppliers() {
       {/* ---------- tabla ---------- */}
       <div className="overflow-hidden border border-gold/15 bg-carbon/40">
         <TableScroller>
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[1040px]">
             <thead className="border-b border-gold/15">
               <tr>
                 <Th>Empresa</Th>
-                <Th>NIT / Identificación</Th>
                 <Th>Contacto</Th>
+                <Th>Correo</Th>
                 <Th>Categoría</Th>
                 <Th>Creado</Th>
                 <Th>Estado</Th>
@@ -206,10 +203,29 @@ export function AdminSuppliers() {
                     <p className="text-ivory">{r.company}</p>
                     {r.notes && <p className="line-clamp-1 max-w-[240px] text-xs text-bone" title={r.notes}>{r.notes}</p>}
                   </Td>
-                  <Td><span className="text-bone">{r.tax_id ?? '—'}</span></Td>
                   <Td>
-                    <p className="text-xs text-bone">{r.phone ?? '—'}</p>
-                    <p className="text-xs text-bone">{r.email ?? '—'}</p>
+                    {r.phone ? (
+                      <a
+                        href={`https://wa.me/${waNumber(r.phone)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Abrir WhatsApp"
+                        className="inline-flex items-center gap-1.5 text-xs text-bone transition-colors hover:text-gold"
+                      >
+                        <MessageCircle size={12} /> {r.phone}
+                      </a>
+                    ) : (
+                      <p className="text-xs text-bone">—</p>
+                    )}
+                  </Td>
+                  <Td>
+                    {r.email ? (
+                      <a href={`mailto:${r.email}`} className="text-xs text-bone transition-colors hover:text-gold">
+                        {r.email}
+                      </a>
+                    ) : (
+                      <p className="text-xs text-bone">—</p>
+                    )}
                   </Td>
                   <Td><span className="text-bone">{r.category ?? '—'}</span></Td>
                   <Td><span className="text-bone">{shortDate(r.created_at)}</span></Td>
@@ -248,10 +264,7 @@ export function AdminSuppliers() {
       <Modal open={formOpen} onClose={() => setFormOpen(false)} title={editing ? `Editar ${editing.company}` : 'Nuevo proveedor'} maxWidth="max-w-lg">
         <div className="space-y-4 p-6">
           {input('company', 'Empresa / nombre comercial *', 'Textiles Antioquia SAS')}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {input('taxId', 'NIT / identificación fiscal', '900123456-7')}
-            {input('phone', 'Teléfono', '+57 604 555 0000')}
-          </div>
+          {input('phone', 'Teléfono', '+57 604 555 0000')}
           {input('email', 'Correo electrónico', 'compras@empresa.com')}
           {input('address', 'Dirección', 'Cra 50 # 30-40, Medellín')}
           <div>
@@ -335,4 +348,9 @@ export function AdminSuppliers() {
 function shortDate(iso: string) {
   const d = new Date(iso.replace(' ', 'T'))
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString('es-CO')
+}
+
+/** Solo dígitos, para el enlace de WhatsApp (wa.me). Ej: +57 604 555 0000 → 576045550000 */
+function waNumber(phone: string) {
+  return phone.replace(/\D/g, '')
 }

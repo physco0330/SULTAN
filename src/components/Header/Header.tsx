@@ -10,13 +10,9 @@ import { useWishlist } from '@/store/wishlist'
 import { useUi } from '@/store/ui'
 import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { cn } from '@/utils/cn'
-import { isFeatureEnabled } from '@/config/features'
 
 const NAV_ITEMS = [
   { to: '/', key: 'home' },
-  { to: '/hombre', key: 'men' },
-  ...(isFeatureEnabled('women') ? [{ to: '/mujer', key: 'women' }] : []),
-  { to: '/nueva-coleccion', key: 'newCollection' },
   { to: '/catalogo', key: 'catalog' },
   { to: '/ofertas', key: 'offers' },
 ]

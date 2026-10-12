@@ -10,7 +10,7 @@
 import express from 'express'
 import { getProvider, PaymentError, PAYMENT_STATUS } from '../payments/index.mjs'
 
-export function paymentRoutes({ db, audit, getSetting, nowIso, rateLimit, toNum }) {
+export function paymentRoutes({ orders, audit, rateLimit }) {
   const router = express.Router()
 
   /**
@@ -22,7 +22,7 @@ export function paymentRoutes({ db, audit, getSetting, nowIso, rateLimit, toNum 
     const orderNumber = String(req.body.orderNumber ?? '').trim().toUpperCase()
     if (!orderNumber) return res.status(422).json({ error: 'Número de pedido requerido' })
 
-    const order = db.prepare('SELECT * FROM orders WHERE number = ?').get(orderNumber)
+    const order = await orders.findByNumber(orderNumber)
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' })
     if (order.status !== 'pending') {
       return res.status(409).json({ error: `El pedido ya está ${order.status}` })
@@ -39,7 +39,7 @@ export function paymentRoutes({ db, audit, getSetting, nowIso, rateLimit, toNum 
         { number: order.number, total: order.total_usd, currency: order.currency, customer: { email: order.customer_email, name: order.customer_name } },
         returnUrl,
       )
-      audit('cliente', 'payment.session', 'orders', order.number, `Sesión de pago creada (${session.reference})`)
+      await audit('cliente', 'payment.session', 'orders', order.number, `Sesión de pago creada (${session.reference})`)
       res.json({ checkoutUrl: session.checkoutUrl, reference: session.reference, status: PAYMENT_STATUS.PENDING })
     } catch (err) {
       if (err instanceof PaymentError) return res.status(err.status).json({ error: err.message, code: err.code })
@@ -78,15 +78,15 @@ router.post('/webhook', express.raw({ type: '*/*' }), async (req, res) => {
       return res.status(400).json({ error: 'Payload incompleto' })
     }
 
-    const order = db.prepare('SELECT * FROM orders WHERE number = ?').get(payload.orderNumber)
+    const order = await orders.findByNumber(payload.orderNumber)
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' })
 
     if (payload.status === PAYMENT_STATUS.AUTHORIZED) {
-      db.prepare("UPDATE orders SET status = 'confirmed', updated_at = ? WHERE number = ?").run(nowIso(), order.number)
-      audit('sistema', 'payment.approved', 'orders', order.number, `Pago autorizado (${payload.transactionId ?? 'sin txn'})`)
+      await orders.changeStatusByNumber(order.number, 'confirmed')
+      await audit('sistema', 'payment.approved', 'orders', order.number, `Pago autorizado (${payload.transactionId ?? 'sin txn'})`)
     } else if (payload.status === PAYMENT_STATUS.REJECTED) {
-      db.prepare("UPDATE orders SET status = 'cancelled', updated_at = ? WHERE number = ?").run(nowIso(), order.number)
-      audit('sistema', 'payment.rejected', 'orders', order.number, payload.reason || 'Pago rechazado')
+      await orders.changeStatusByNumber(order.number, 'cancelled')
+      await audit('sistema', 'payment.rejected', 'orders', order.number, payload.reason || 'Pago rechazado')
     }
 
     res.json({ ok: true })

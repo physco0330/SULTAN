@@ -122,6 +122,7 @@ export default function Checkout() {
     email: '', name: '', city: '', address: '', neighborhood: '', country: 'Colombia', phone: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [dataConsent, setDataConsent] = useState(false)
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -135,6 +136,7 @@ export default function Checkout() {
     if (form.address.trim().length < 5) er.address = t('checkout.errAddress')
     if (form.city.trim().length < 2) er.city = t('checkout.errCity')
     if (form.country.trim().length < 2) er.country = t('checkout.errCountry')
+    if (!dataConsent) er.consent = t('checkout.errConsent')
     setErrors(er)
     return Object.keys(er).length === 0
   }
@@ -320,6 +322,23 @@ export default function Checkout() {
                 </>
               )}
             </div>
+
+            <label className="mt-5 flex cursor-pointer items-start gap-3 border border-gold/20 bg-night/60 p-4">
+              <input
+                type="checkbox"
+                checked={dataConsent}
+                onChange={(e) => { setDataConsent(e.target.checked); setErrors((er) => ({ ...er, consent: '' })) }}
+                aria-invalid={!!errors.consent}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[#c9a227]"
+              />
+              <span className="text-xs leading-relaxed text-bone">
+                {t('checkout.consent')}{' '}
+                <Link to="/legal/privacidad" target="_blank" rel="noreferrer" className="text-gold underline-offset-2 hover:underline">
+                  {t('checkout.privacyPolicy')}
+                </Link>
+              </span>
+            </label>
+            {errors.consent && <p className="mt-1.5 text-xs text-red-400">{errors.consent}</p>}
           </section>
         </div>
 
@@ -358,9 +377,10 @@ export default function Checkout() {
                   <span className="font-display text-xl text-gold">{formatPrice(convertPrice(totalUsd, 'USD', code), code)}</span>
                 </div>
               </div>
-              <button type="submit" disabled={placing} className="mt-6 flex w-full items-center justify-center bg-gold px-6 py-4 text-xs font-bold uppercase tracking-[0.28em] text-night transition-all hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-50">
+              <button type="submit" disabled={placing || !dataConsent} className="mt-6 flex w-full items-center justify-center bg-gold px-6 py-4 text-xs font-bold uppercase tracking-[0.28em] text-night transition-all hover:bg-gold-soft disabled:cursor-not-allowed disabled:opacity-50">
                 {placing ? '···' : `${t('checkout.placeOrder')} →`}
               </button>
+              {!dataConsent && <p className="mt-2 text-center text-[0.62rem] text-gold">{t('checkout.errConsent')}</p>}
               <p className="mt-3 text-center text-[0.62rem] leading-relaxed text-bone">{t('checkout.terms')}</p>
             </>
           )}

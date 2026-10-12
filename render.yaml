@@ -1,27 +1,21 @@
 # Despliegue del API + frontend en Render (un solo dominio, sin CORS).
 #
-# ATENCION: el disco persistente no es gratis. Sin `disk`, Render usa un
-# sistema de archivos efimero y TODOS los pedidos, clientes, cupones y las
-# imagenes subidas se pierden en cada redespliegue.
+# Datos: Firestore (Firebase) y fotos: Cloudinary. El servicio no guarda nada
+# en disco, así que funciona en el plan gratuito de Render.
+#
+# Valores secretos (FIREBASE_SERVICE_ACCOUNT_JSON, CLOUDINARY_URL, SITE_URL...)
+# se introducen en el panel de Render: nunca van en este archivo.
 services:
   - type: web
     name: sultan-black
     runtime: node
-    plan: starter
+    plan: free
 
-    buildCommand: npm ci && npm run build
-    startCommand: npm start
+    buildCommand: npm install && npm run build
+    startCommand: node server/index.mjs
 
-    # La API sirve /api y tambien el build de Vite desde el mismo dominio.
+    # La API sirve /api y también el build de Vite desde el mismo dominio.
     healthCheckPath: /api/health
-
-    # --- Datos persistentes -------------------------------------------
-    # Base de datos SQLite e imagenes subidas viven aqui. Si cambias la ruta,
-    # cambia tambien SULTAN_DATA_DIR.
-    disk:
-      name: sultan-data
-      mountPath: /data
-      sizeGB: 1
 
     envVars:
       - key: NODE_VERSION
@@ -30,14 +24,24 @@ services:
       - key: NODE_ENV
         value: production
 
-      # Carpeta de datos persistentes (coincide con disk.mountPath).
-      - key: SULTAN_DATA_DIR
-        value: /data
+      # Render define NODE_ENV=production también durante el build, y npm
+      # entonces omitiría las devDependencies (vite, typescript) necesarias para
+      # `npm run build`. Esta variable fuerza su instalación.
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
+
+      # Contenido completo del JSON de la cuenta de servicio de Firebase.
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
 
       # Firma los tokens de admin y el token de seguimiento de pedidos.
-      # Render genera uno automaticamente: nunca lo subas al repositorio.
+      # Render genera uno automáticamente: nunca lo subas al repositorio.
       - key: SULTAN_SECRET
         generateValue: true
+
+      # Cloudinary: cloudinary://clave:secreto@nombre_de_nube
+      - key: CLOUDINARY_URL
+        sync: false
 
       # Origen de tu frontend, p. ej. https://sultan-black.onrender.com
       - key: SITE_URL
@@ -46,14 +50,5 @@ services:
       # Solo si el frontend vive en OTRO dominio; separado por comas.
       - key: ALLOWED_ORIGINS
         sync: false
-
-      # Contrasena del usuario admin la PRIMERA vez que se crea la base.
-      # Despues se ignora (la contrasena vive en la base de datos).
-      - key: SULTAN_ADMIN_PASSWORD
-        sync: false
-
-      # Cuantas copias automaticas de la base de datos se conservan.
-      - key: MAX_DB_BACKUPS
-        value: "5"
 
     autoDeploy: true
