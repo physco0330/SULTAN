@@ -30,7 +30,8 @@
     "new": "جديد",
     "limited": "إصدار محدود",
     "bestseller": "الأكثر مبيعاً",
-    "sale": "تخفيض"
+    "sale": "تخفيض",
+    "combo": "طقم"
   },
   "sections": {
     "categories": {

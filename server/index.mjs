@@ -234,6 +234,17 @@ function productBody(body) {
     isLimited: toBool(body.isLimited),
     isBestSeller: toBool(body.isBestSeller),
     isOnSale: toBool(body.isOnSale),
+    isCombo: toBool(body.isCombo),
+    comboItems: Array.isArray(body.comboItems)
+      ? body.comboItems
+          .map((it) => ({
+            productId: String(it?.productId ?? '').trim(),
+            name: String(it?.name ?? '').trim(),
+            qty: Math.max(1, Math.floor(toNum(it?.qty) || 1)),
+          }))
+          .filter((it) => it.productId || it.name)
+          .slice(0, 20)
+      : [],
     material: String(body.material ?? '').trim() || 'Premium cotton blend',
     sku: String(body.sku ?? '').trim(),
     description: String(body.description ?? '').trim(),

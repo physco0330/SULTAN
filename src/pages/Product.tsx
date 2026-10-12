@@ -154,6 +154,7 @@ export default function Product() {
             <div className="absolute right-4 top-4 flex flex-col gap-2">
               {product.isNew && <Badge tone="silver">{t('badges.new')}</Badge>}
               {product.isLimited && <Badge tone="gold">{t('badges.limited')}</Badge>}
+              {product.isCombo && <Badge tone="gold">{t('badges.combo')}</Badge>}
               {product.isOnSale && <Badge tone="outline">{t('badges.sale')}</Badge>}
             </div>
             {product.images.length > 1 && (
@@ -212,6 +213,20 @@ export default function Product() {
             <Price price={product.price} compareAtPrice={product.compareAtPrice} large />
           </div>
           <p className="mt-4 text-sm font-light leading-relaxed text-bone">{product.description}</p>
+
+          {product.isCombo && product.comboItems && product.comboItems.length > 0 && (
+            <div className="mt-5 border border-gold/15 bg-carbon/40 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{t('badges.combo')}</p>
+              <ul className="mt-2 space-y-1 text-sm text-bone">
+                {product.comboItems.map((ci, i) => (
+                  <li key={`${ci.productId}-${i}`} className="flex justify-between gap-3">
+                    <span>{ci.name}</span>
+                    <span className="text-ivory">×{ci.qty}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Color */}
           <div className="mt-6">

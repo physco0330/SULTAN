@@ -8,7 +8,7 @@ import { Modal } from '@/components/Modal'
 import { OrderFormModal } from '@/admin/OrderFormModal'
 import { PeriodPicker, periodLabel } from '@/admin/Calendar'
 import type { PeriodValue } from '@/admin/Calendar'
-import { usd, shortDate, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
+import { usd, toCop, shortDate, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { exportCsv, exportXlsx, exportPdf } from '@/admin/exporters'
 import { cn } from '@/utils/cn'
 import type { AdminOrder, AdminOrderDetail, AdminOrderStatus } from '@/services/adminService'
@@ -30,10 +30,10 @@ function orderToRow(o: AdminOrder): (string | number)[] {
     o.customer_name,
     o.customer_email ?? '',
     o.quantity,
-    o.subtotal_usd,
-    o.shipping_usd,
-    o.discount_usd,
-    o.total_usd,
+    toCop(o.subtotal_usd),
+    toCop(o.shipping_usd),
+    toCop(o.discount_usd),
+    toCop(o.total_usd),
     o.status,
   ]
 }
@@ -158,7 +158,7 @@ export function AdminOrders() {
   const exportData = async (format: 'xlsx' | 'csv' | 'pdf') => {
     if (filtered.length === 0) return pushToast('No hay datos para exportar', 'info')
     setExporting(true)
-    const header = ['N°', 'Fecha', 'Cliente', 'Email', 'Artículos', 'Subtotal USD', 'Envío USD', 'Descuento USD', 'Total USD', 'Estado']
+    const header = ['N°', 'Fecha', 'Cliente', 'Email', 'Artículos', 'Subtotal COP', 'Envío COP', 'Descuento COP', 'Total COP', 'Estado']
     const rows = filtered.map(orderToRow)
     const base = `pedidos-sultan-${new Date().toISOString().slice(0, 10)}`
     try {

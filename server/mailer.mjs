@@ -18,6 +18,13 @@ const MAIL_FROM = String(process.env.MAIL_FROM ?? '').trim()
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL ?? '').trim()
 const ADMIN_WHATSAPP = String(process.env.ADMIN_WHATSAPP ?? '').trim()
 
+/* Tasa interna USD→COP usada por el panel. Los correos muestran pesos. */
+const COP_RATE = 4100
+const cop = (usd) =>
+  new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(
+    Math.round(Number(usd ?? 0) * COP_RATE),
+  )
+
 export const mailerConfig = {
   configured: Boolean(MAIL_API_KEY && MAIL_FROM),
   from: MAIL_FROM,
@@ -68,40 +75,40 @@ export async function sendOrderConfirmation(order, items) {
       <h1 style="color:#C9A227">Gracias por tu pedido</h1>
       <p>Hola ${order.customer_name}, hemos recibido tu pedido <strong>${order.number}</strong>.</p>
       <table width="100%" cellpadding="8" style="border-collapse:collapse">
-        ${items.map((i) => `<tr><td>${i.name} × ${i.quantity}</td><td style="text-align:right">$${i.price_usd.toFixed(2)}</td></tr>`).join('')}
-        <tr><td>Envío</td><td style="text-align:right">$${order.shipping_usd.toFixed(2)}</td></tr>
-        <tr><td>Descuento</td><td style="text-align:right">−$${order.discount_usd.toFixed(2)}</td></tr>
-        <tr><td><strong>Total</strong></td><td style="text-align:right"><strong>$${order.total_usd.toFixed(2)}</strong></td></tr>
+        ${items.map((i) => `<tr><td>${i.name} × ${i.quantity}</td><td style="text-align:right">${cop(i.price_usd)}</td></tr>`).join('')}
+        <tr><td>Envío</td><td style="text-align:right">${cop(order.shipping_usd)}</td></tr>
+        <tr><td>Descuento</td><td style="text-align:right">−${cop(order.discount_usd)}</td></tr>
+        <tr><td><strong>Total</strong></td><td style="text-align:right"><strong>${cop(order.total_usd)}</strong></td></tr>
       </table>
       <p>Coordinaremos la entrega por WhatsApp o correo.</p>
       <p style="color:#888;font-size:12px">SULTAN BLACK · Diseñado en Estambul</p>
     </div>`
-  return sendMail({ to: order.customer_email, subject, html, text: `Pedido ${order.number} recibido. Total $${order.total_usd}` })
+  return sendMail({ to: order.customer_email, subject, html, text: `Pedido ${order.number} recibido. Total ${cop(order.total_usd)}` })
 }
 
 /** Notificación al negocio cuando llega un pedido. */
 export async function notifyNewOrder(order, items) {
-  const subject = `Nuevo pedido ${order.number} — $${order.total_usd}`
+  const subject = `Nuevo pedido ${order.number} — ${cop(order.total_usd)}`
   const html = `
     <div style="font-family:Georgia,serif;max-width:560px;margin:auto">
       <h1 style="color:#C9A227">Nuevo pedido</h1>
       <p><strong>${order.number}</strong> · ${order.customer_name} · ${order.customer_email}</p>
       <p>${order.ship_city}, ${order.ship_country} — ${order.ship_address}</p>
       <table width="100%" cellpadding="6">
-        ${items.map((i) => `<tr><td>${i.name} × ${i.quantity}</td><td style="text-align:right">$${i.price_usd.toFixed(2)}</td></tr>`).join('')}
-        <tr><td><strong>Total</strong></td><td style="text-align:right"><strong>$${order.total_usd.toFixed(2)}</strong></td></tr>
+        ${items.map((i) => `<tr><td>${i.name} × ${i.quantity}</td><td style="text-align:right">${cop(i.price_usd)}</td></tr>`).join('')}
+        <tr><td><strong>Total</strong></td><td style="text-align:right"><strong>${cop(order.total_usd)}</strong></td></tr>
       </table>
       <p>Estado: ${order.status}</p>
     </div>`
   const results = []
-  if (ADMIN_EMAIL) results.push(await sendMail({ to: ADMIN_EMAIL, subject, html, text: `Pedido ${order.number} por $${order.total_usd}` }))
-  else console.log(`[correo·demo] Notificación al negocio: pedido ${order.number} por $${order.total_usd}`)
+  if (ADMIN_EMAIL) results.push(await sendMail({ to: ADMIN_EMAIL, subject, html, text: `Pedido ${order.number} por ${cop(order.total_usd)}` }))
+  else console.log(`[correo·demo] Notificación al negocio: pedido ${order.number} por ${cop(order.total_usd)}`)
   return results
 }
 
 /** Notificación por WhatsApp (mensaje de texto plano vía wa.me). */
 export function whatsappOrderLink(order) {
   if (!ADMIN_WHATSAPP) return null
-  const msg = encodeURIComponent(`Nuevo pedido ${order.number} de ${order.customer_name} por $${order.total_usd}. Revisar panel.`)
+  const msg = encodeURIComponent(`Nuevo pedido ${order.number} de ${order.customer_name} por ${cop(order.total_usd)}. Revisar panel.`)
   return `https://wa.me/${ADMIN_WHATSAPP}?text=${msg}`
 }

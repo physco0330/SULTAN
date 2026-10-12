@@ -78,6 +78,8 @@ function Hero() {
 
 const CATEGORY_CARDS = [
   { to: '/catalogo', titleKey: 'nav.catalog', label: 'Catalog', image: categoryImage('SULTAN CATALOG') },
+  { to: '/nueva-coleccion', titleKey: 'nav.newCollection', label: 'New Collection', image: categoryImage('NEW COLLECTION') },
+  { to: '/ofertas', titleKey: 'nav.offers', label: 'Offers', image: categoryImage('OFFERS') },
   { to: '/catalogo?collection=limited', titleKey: 'badges.limited', label: 'Premium Edition', image: categoryImage('PREMIUM EDITION') },
 ]
 

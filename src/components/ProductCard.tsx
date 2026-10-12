@@ -59,6 +59,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
           <span className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
             {product.isNew && <Badge tone="silver">{t('badges.new')}</Badge>}
             {product.isLimited && <Badge tone="gold">{t('badges.limited')}</Badge>}
+            {product.isCombo && <Badge tone="gold">{t('badges.combo')}</Badge>}
             {product.isOnSale && <Badge tone="outline">{t('badges.sale')}</Badge>}
           </span>
         </Link>

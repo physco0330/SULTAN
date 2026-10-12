@@ -3,10 +3,14 @@ import { cn } from '@/utils/cn'
 import type { LucideIcon } from 'lucide-react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 
+/* Convierte un importe interno (USD) a pesos colombianos. */
+export function toCop(n: number): number {
+  return Math.round(n * 4100)
+}
+
 /* Muestra importes internos (USD) convertidos a pesos colombianos. */
 export function usd(n: number): string {
-  const cop = n * 4100
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(cop)
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(toCop(n))
 }
 
 export function shortDate(iso: string | null | undefined): string {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { Modal } from '@/components/Modal'
 import { useCategories, useCollections, createCategory, createCollection } from '@/hooks/useTaxonomies'
 import { convertPrice } from '@/data/currencies'
@@ -41,6 +42,8 @@ const emptyForm = () => ({
   isLimited: false,
   isBestSeller: false,
   isOnSale: false,
+  isCombo: false,
+  comboItems: [] as { productId: string; name: string; qty: number }[],
 })
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -76,6 +79,8 @@ export function ProductFormModal({
   const [creating, setCreating] = useState<null | 'category' | 'collection'>(null)
   const [creatingLabel, setCreatingLabel] = useState('')
   const [creatingBusy, setCreatingBusy] = useState(false)
+  const [productOptions, setProductOptions] = useState<AdminProduct[]>([])
+  const [comboPick, setComboPick] = useState('')
   const categories = useCategories()
   const collections = useCollections()
 
@@ -83,6 +88,11 @@ export function ProductFormModal({
     if (!open) return
     setErrors({})
     setPending([])
+    setComboPick('')
+    adminService
+      .products()
+      .then((r) => setProductOptions(r.items))
+      .catch(() => setProductOptions([]))
     if (product) {
       setLoadingImages(true)
       adminService
@@ -109,6 +119,8 @@ export function ProductFormModal({
         isLimited: product.isLimited,
         isBestSeller: product.isBestSeller,
         isOnSale: product.isOnSale,
+        isCombo: !!product.isCombo,
+        comboItems: product.comboItems ?? [],
       })
     } else {
       setImages([])
@@ -179,6 +191,22 @@ export function ProductFormModal({
     setErrors((er) => ({ ...er, [k]: '' }))
   }
 
+  /* --- Combos: agrupan prendas ya creadas y llevan su propio precio. --- */
+  const addComboItem = () => {
+    const picked = productOptions.find((p) => p.id === comboPick)
+    if (!picked) return
+    set('comboItems', [...form.comboItems, { productId: picked.id, name: picked.name, qty: 1 }])
+    setComboPick('')
+  }
+
+  const removeComboItem = (index: number) => {
+    set('comboItems', form.comboItems.filter((_, i) => i !== index))
+  }
+
+  const changeComboQty = (index: number, qty: number) => {
+    set('comboItems', form.comboItems.map((ci, i) => (i === index ? { ...ci, qty: Math.max(1, Math.min(99, qty)) } : ci)))
+  }
+
   const validate = () => {
     const er: Record<string, string> = {}
     if (!form.name.trim()) er.name = 'El nombre es obligatorio'
@@ -218,6 +246,8 @@ export function ProductFormModal({
       isLimited: form.isLimited,
       isBestSeller: form.isBestSeller,
       isOnSale: form.isOnSale || !!form.compareAtPrice,
+      isCombo: form.isCombo,
+      comboItems: form.isCombo ? form.comboItems : [],
       quality: form.quality,
       active: form.active,
     }
@@ -450,6 +480,7 @@ export function ProductFormModal({
               ['isLimited', 'Edición limitada'],
               ['isBestSeller', 'Más vendido'],
               ['isOnSale', 'En oferta'],
+              ['isCombo', 'Es combo de prendas'],
               ['active', 'Activo / visible'],
             ] as const
           ).map(([key, text]) => (
@@ -464,6 +495,55 @@ export function ProductFormModal({
             </label>
           ))}
         </div>
+
+        {form.isCombo && (
+          <div className="md:col-span-2 space-y-3 border-t border-gold/15 pt-5">
+            <label className={label}>Prendas del combo</label>
+            <p className="text-[0.62rem] leading-relaxed text-bone">
+              Elige prendas ya creadas. El precio del combo es el precio de este producto; también puedes escribir el combo a mano en la descripción.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <select
+                value={comboPick}
+                onChange={(e) => setComboPick(e.target.value)}
+                className="min-w-[220px] flex-1 border border-gold/25 bg-night px-3 py-2.5 text-sm text-ivory focus:border-gold focus:outline-none"
+              >
+                <option value="">Añadir prenda…</option>
+                {productOptions
+                  .filter((o) => o.id !== product?.id && !form.comboItems.some((ci) => ci.productId === o.id))
+                  .map((o) => (
+                    <option key={o.id} value={o.id}>{o.name}</option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                onClick={addComboItem}
+                disabled={!comboPick}
+                className="border border-gold/40 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gold hover:bg-gold/10 disabled:opacity-40"
+              >
+                Añadir
+              </button>
+            </div>
+            <ul className="space-y-1">
+              {form.comboItems.map((ci, i) => (
+                <li key={`${ci.productId}-${i}`} className="flex items-center justify-between gap-3 border border-gold/15 bg-night px-3 py-2 text-sm text-ivory">
+                  <span className="min-w-0 flex-1 truncate">{ci.name}</span>
+                  <span className="flex items-center gap-3">
+                    <span className="flex items-center gap-1">
+                      <button type="button" onClick={() => changeComboQty(i, ci.qty - 1)} aria-label="−" className="flex h-6 w-6 items-center justify-center border border-gold/25 text-gold hover:bg-gold/10">−</button>
+                      <span className="w-6 text-center">{ci.qty}</span>
+                      <button type="button" onClick={() => changeComboQty(i, ci.qty + 1)} aria-label="+" className="flex h-6 w-6 items-center justify-center border border-gold/25 text-gold hover:bg-gold/10">+</button>
+                    </span>
+                    <button type="button" onClick={() => removeComboItem(i)} aria-label="Quitar prenda" className="text-bone hover:text-red-400">
+                      <Trash2 size={14} />
+                    </button>
+                  </span>
+                </li>
+              ))}
+              {form.comboItems.length === 0 && <li className="text-xs text-bone">Sin prendas todavía.</li>}
+            </ul>
+          </div>
+        )}
 
         <div className="md:col-span-2 border-t border-gold/15 pt-5">
           <label className={label}>Imágenes del producto</label>

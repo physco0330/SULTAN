@@ -133,7 +133,7 @@ function SettingsForm() {
       </div>
 
       <div className="space-y-6">
-        <PhilosophyEditor form={form} onChange={setField} />
+        <PhilosophyEditor form={form} onChange={setField} onSave={save} saving={saving} />
         <div className="border border-gold/15 bg-carbon/40 p-6">
           <h3 className="font-display mb-3 text-sm tracking-[0.2em] text-ivory">VISIBILIDAD</h3>
           <p className="text-sm font-light leading-relaxed text-bone">
@@ -166,7 +166,17 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 /** Sección "Filosofía Sultán": título, texto y dos fotos que se ven en Inicio y Nosotros. */
-function PhilosophyEditor({ form, onChange }: { form: Record<string, string>; onChange: (k: string, v: string) => void }) {
+function PhilosophyEditor({
+  form,
+  onChange,
+  onSave,
+  saving,
+}: {
+  form: Record<string, string>
+  onChange: (k: string, v: string) => void
+  onSave: () => void
+  saving: boolean
+}) {
   const pushToast = useUi((s) => s.pushToast)
   const [uploading, setUploading] = useState<0 | 1 | 2>(0)
 
@@ -256,6 +266,13 @@ function PhilosophyEditor({ form, onChange }: { form: Record<string, string>; on
           })}
         </div>
       </div>
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className="mt-6 flex items-center justify-center bg-gold px-8 py-3 text-xs font-bold uppercase tracking-[0.24em] text-night hover:bg-gold-soft disabled:opacity-50"
+      >
+        {saving && <Spinner className="mr-2 border-night/30 border-t-night" />} Guardar filosofía
+      </button>
     </div>
   )
 }

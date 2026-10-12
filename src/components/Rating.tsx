@@ -1,5 +1,4 @@
 import { Star } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
 import { cn } from '@/utils/cn'
 
 /**
@@ -9,15 +8,11 @@ import { cn } from '@/utils/cn'
  * "0 estrellas (0)" inventa una impresión de reseñas que no existen.
  */
 export function Rating({ value, count, className }: { value: number; count?: number; className?: string }) {
-  const { t } = useTranslation()
   const total = typeof count === 'number' ? count : 0
 
   if (!total || value <= 0) {
-    return (
-      <span className={cn('text-[0.68rem] uppercase tracking-[0.18em] text-bone/70', className)}>
-        {t('product.noReviewsYet')}
-      </span>
-    )
+    /* Sin reseñas no se muestra nada: el texto "noReviewsYet" sobraba en la ficha. */
+    return null
   }
 
   return (

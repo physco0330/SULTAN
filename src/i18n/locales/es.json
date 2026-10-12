@@ -30,7 +30,8 @@
     "new": "Nuevo",
     "limited": "Edición limitada",
     "bestseller": "Más vendido",
-    "sale": "Oferta"
+    "sale": "Oferta",
+    "combo": "Combo"
   },
   "sections": {
     "categories": {

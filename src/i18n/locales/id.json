@@ -30,7 +30,8 @@
     "new": "Baru",
     "limited": "Terbatas",
     "bestseller": "Terlaris",
-    "sale": "Diskon"
+    "sale": "Diskon",
+    "combo": "Combo"
   },
   "sections": {
     "categories": {

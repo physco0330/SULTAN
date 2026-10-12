@@ -30,7 +30,8 @@
     "new": "Новинка",
     "limited": "Лимитировано",
     "bestseller": "Хит",
-    "sale": "Скидка"
+    "sale": "Скидка",
+    "combo": "Комбо"
   },
   "sections": {
     "categories": {

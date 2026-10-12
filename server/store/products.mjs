@@ -86,6 +86,8 @@ export function shape(p, catalog, admin) {
     isLimited: !!p.is_limited,
     isBestSeller: !!p.is_best_seller,
     isOnSale: !!p.is_on_sale,
+    isCombo: !!p.is_combo,
+    comboItems: Array.isArray(p.combo_items) ? p.combo_items : [],
     material: p.material,
     /* El SKU es un dato interno: solo lo ven los administradores. */
     ...(admin ? { sku: p.sku } : {}),
@@ -203,6 +205,8 @@ function productDoc(id, slug, sku, b, createdAt) {
     is_limited: b.isLimited,
     is_best_seller: b.isBestSeller,
     is_on_sale: b.isOnSale,
+    is_combo: b.isCombo,
+    combo_items: b.comboItems,
     material: b.material,
     sku,
     description: b.description,

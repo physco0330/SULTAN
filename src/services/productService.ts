@@ -88,6 +88,8 @@ export function toApiProduct(p: Product) {
     isLimited: p.isLimited,
     isBestSeller: p.isBestSeller,
     isOnSale: p.isOnSale,
+    isCombo: p.isCombo ?? false,
+    comboItems: p.comboItems ?? [],
     quality: p.quality,
     material: p.material,
     sku: p.sku,

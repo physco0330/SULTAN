@@ -30,7 +30,8 @@
     "new": "新品",
     "limited": "限量",
     "bestseller": "畅销",
-    "sale": "特惠"
+    "sale": "特惠",
+    "combo": "组合"
   },
   "sections": {
     "categories": {

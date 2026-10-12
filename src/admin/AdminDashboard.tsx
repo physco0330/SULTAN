@@ -6,7 +6,7 @@ import { useUi } from '@/store/ui'
 import { useLiveReload } from '@/hooks/useLiveReload'
 import { PeriodPicker, periodLabel } from '@/admin/Calendar'
 import type { PeriodValue } from '@/admin/Calendar'
-import { Section, StatCard, StatusBadge, shortDate, usd, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
+import { Section, StatCard, StatusBadge, shortDate, usd, toCop, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { exportCsv, exportXlsx, exportPdf } from '@/admin/exporters'
 import { ProductThumb } from '@/admin/ProductThumb'
 import type { AdminStats, PeriodKey } from '@/services/adminService'
@@ -76,16 +76,16 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
     const header = ['Métrica', 'Valor']
     const rows: (string | number)[][] = [
       ['Periodo', stats.period.label],
-      ['Ingresos (USD)', stats.revenue.total],
+      ['Ingresos (COP)', toCop(stats.revenue.total)],
       ['Pedidos', stats.revenue.orders],
-      ['Ticket promedio (USD)', ticket],
+      ['Ticket promedio (COP)', toCop(ticket)],
       ['Productos activos', stats.products.total],
       ['Stock bajo', stats.products.lowStock],
       ['Agotados', stats.products.outOfStock],
       ['Suscriptores', stats.social.subscribers],
       ['Contactos', stats.social.contacts],
     ]
-    for (const m of stats.revenueByMonth) rows.push([`Ingresos ${m.label} (USD)`, m.revenue])
+    for (const m of stats.revenueByMonth) rows.push([`Ingresos ${m.label} (COP)`, toCop(m.revenue)])
     const base = `resumen-sultan-${new Date().toISOString().slice(0, 10)}`
     try {
       if (format === 'xlsx') await exportXlsx(`${base}.xlsx`, 'Resumen', header, rows)
@@ -132,7 +132,7 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
       <Section title={`INGRESOS — ${stats.period.label.toUpperCase()}`} action={<Star size={14} className="text-gold/40" />}>
         <div className="px-5 pb-5 pt-4">
           <div className="mb-4 flex flex-wrap gap-4 text-[0.65rem] uppercase tracking-widest text-bone">
-            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 bg-gold" /> Ingresos (USD)</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 bg-gold" /> Ingresos (COP)</span>
             <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 bg-sky-300" /> Pedidos confirmados</span>
           </div>
           <div className="flex items-end gap-4">

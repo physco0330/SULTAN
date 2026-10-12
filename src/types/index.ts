@@ -35,6 +35,12 @@ export interface ProductColor {
 
 export type ProductQuality = 'original' | 'turkish'
 
+export interface ProductComboItem {
+  productId: string
+  name: string
+  qty: number
+}
+
 export interface Product {
   id: string
   name: string
@@ -59,6 +65,8 @@ export interface Product {
   isLimited: boolean
   isBestSeller: boolean
   isOnSale: boolean
+  isCombo?: boolean
+  comboItems?: ProductComboItem[]
   quality: ProductQuality
 }
 
