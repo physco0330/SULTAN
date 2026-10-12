@@ -17,6 +17,7 @@ const MAIL_API_URL = (process.env.MAIL_API_URL ?? 'https://api.resend.com/emails
 const MAIL_FROM = String(process.env.MAIL_FROM ?? '').trim()
 const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL ?? '').trim()
 const ADMIN_WHATSAPP = String(process.env.ADMIN_WHATSAPP ?? '').trim()
+const CALLMEBOT_API_KEY = String(process.env.CALLMEBOT_API_KEY ?? '').trim()
 
 /* Tasa interna USD→COP usada por el panel. Los correos muestran pesos. */
 const COP_RATE = 4100
@@ -30,6 +31,7 @@ export const mailerConfig = {
   from: MAIL_FROM,
   adminEmail: ADMIN_EMAIL,
   adminWhatsapp: ADMIN_WHATSAPP,
+  whatsappConfigured: Boolean(ADMIN_WHATSAPP && CALLMEBOT_API_KEY),
 }
 
 /**
@@ -103,7 +105,29 @@ export async function notifyNewOrder(order, items) {
   const results = []
   if (ADMIN_EMAIL) results.push(await sendMail({ to: ADMIN_EMAIL, subject, html, text: `Pedido ${order.number} por ${cop(order.total_usd)}` }))
   else console.log(`[correo·demo] Notificación al negocio: pedido ${order.number} por ${cop(order.total_usd)}`)
+  if (mailerConfig.whatsappConfigured) {
+    results.push(await sendWhatsapp(`Nuevo pedido ${order.number} de ${order.customer_name} por ${cop(order.total_usd)}. Revisa el panel de SULTAN BLACK.`))
+  }
   return results
+}
+
+/**
+ * Aviso por WhatsApp al negocio usando CallMeBot (servicio gratuito).
+ * Requiere ADMIN_WHATSAPP (con indicativo) y CALLMEBOT_API_KEY.
+ * El número debe haber activado el bot: https://www.callmebot.com/blog/free-api-whatsapp-messages/
+ */
+export async function sendWhatsapp(text) {
+  if (!ADMIN_WHATSAPP || !CALLMEBOT_API_KEY) return { ok: false, skipped: true }
+  const url =
+    'https://api.callmebot.com/whatsapp.php' +
+    `?phone=${encodeURIComponent(ADMIN_WHATSAPP)}&text=${encodeURIComponent(text)}&apikey=${encodeURIComponent(CALLMEBOT_API_KEY)}`
+  try {
+    const res = await fetch(url)
+    return { ok: res.ok, status: res.status }
+  } catch (err) {
+    console.error('[whatsapp] fallo de red:', err.message)
+    return { ok: false, error: err.message }
+  }
 }
 
 /** Notificación por WhatsApp (mensaje de texto plano vía wa.me). */
