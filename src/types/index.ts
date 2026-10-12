@@ -96,6 +96,8 @@ export interface CartItem {
   color: string
   quantity: number
   compareAtPrice?: number
+  /** Stock disponible del producto (se actualiza con el catálogo). */
+  stock?: number
 }
 
 export interface OrderTotals {

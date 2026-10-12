@@ -30,6 +30,17 @@ export function uploadProductImage(buffer, productId) {
   })
 }
 
+/** Sube una imagen de la tienda (p. ej. filosofía). Con nombre fijo: al re-subir se reemplaza, sin huérfanas. */
+export function uploadSiteImage(buffer, name) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'sultan-black/site', public_id: name, overwrite: true, resource_type: 'image' },
+      (err, result) => (err ? reject(err) : resolve({ url: result.secure_url, publicId: result.public_id })),
+    )
+    stream.end(buffer)
+  })
+}
+
 /** Borra una foto de Cloudinary. Un fallo aquí no debe romper la petición. */
 export async function destroyImage(publicId) {
   if (!publicId) return

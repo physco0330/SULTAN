@@ -21,6 +21,28 @@ const copToNumber = (v: string) => Number(v.replace(/\D/g, ''))
 /** Guarda en USD con decimales: redondear a dólares enteros cambiaba el precio al volver a COP. */
 const usdFromCop = (cop: number) => Math.round(convertPrice(cop, 'COP', 'USD') * 1e6) / 1e6
 
+/** Valores iniciales de un producto nuevo. Se generan de cero cada vez: nada se hereda del anterior. */
+const emptyForm = () => ({
+  name: '',
+  gender: 'unisex' as Gender,
+  category: 'tshirts' as CategoryId,
+  collection: 'new' as CollectionId,
+  price: '',
+  compareAtPrice: '',
+  stock: '',
+  material: 'Premium cotton blend',
+  description: '',
+  sizes: [] as string[],
+  colors: ['black'] as string[],
+  quality: 'turkish' as ProductQuality,
+  active: true,
+  featured: false,
+  isNew: false,
+  isLimited: false,
+  isBestSeller: false,
+  isOnSale: false,
+})
+
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
 
@@ -42,26 +64,7 @@ export function ProductFormModal({
   onSaved: (p: AdminProduct) => void
 }) {
   const pushToast = useUi((s) => s.pushToast)
-  const [form, setForm] = useState({
-    name: '',
-    gender: 'unisex' as Gender,
-    category: 'tshirts' as CategoryId,
-    collection: 'new' as CollectionId,
-    price: '',
-    compareAtPrice: '',
-    stock: '0',
-    material: 'Premium cotton blend',
-    description: '',
-    sizes: [] as string[],
-    colors: ['black'] as string[],
-    quality: 'turkish' as ProductQuality,
-    active: true,
-    featured: false,
-    isNew: false,
-    isLimited: false,
-    isBestSeller: false,
-    isOnSale: false,
-  })
+  const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -109,7 +112,7 @@ export function ProductFormModal({
       })
     } else {
       setImages([])
-      setForm((f) => ({ ...f, name: '', price: '', compareAtPrice: '', stock: '0', description: '', costToUsd: '' }))
+      setForm(emptyForm())
     }
   }, [open, product])
 
@@ -184,7 +187,7 @@ export function ProductFormModal({
     const offer = copToNumber(form.compareAtPrice)
     if (form.compareAtPrice && (!Number.isFinite(offer) || offer <= 0)) er.compareAtPrice = 'Precio inválido'
     else if (form.compareAtPrice && offer >= price) er.compareAtPrice = 'La oferta debe ser menor que el precio normal'
-    if (!/^\d+$/.test(form.stock)) er.stock = 'Stock numérico'
+    if (!/^\d+$/.test(form.stock)) er.stock = 'Indica el stock (número entero)'
     setErrors(er)
     return Object.keys(er).length === 0
   }

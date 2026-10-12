@@ -183,6 +183,10 @@ export interface StoreConfig {
   expressShipping: number
   instagramUrl: string
   announcements: string[]
+  philosophyTitle: string
+  philosophyText: string
+  philosophyImage1: string
+  philosophyImage2: string
 }
 
 export const FALLBACK_CONFIG: StoreConfig = {
@@ -198,6 +202,10 @@ export const FALLBACK_CONFIG: StoreConfig = {
   expressShipping: EXPRESS_SHIPPING_USD,
   instagramUrl: '',
   announcements: [],
+  philosophyTitle: '',
+  philosophyText: '',
+  philosophyImage1: '',
+  philosophyImage2: '',
 }
 
 export async function fetchConfig(): Promise<StoreConfig> {

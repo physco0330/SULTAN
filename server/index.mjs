@@ -9,7 +9,7 @@ import { audit, cents, cmpStr, recentAudit, StoreError, toBool, toNum } from './
 import * as products from './store/products.mjs'
 import * as orders from './store/orders.mjs'
 import * as content from './store/content.mjs'
-import { destroyImage, uploadProductImage } from './cloudinary.mjs'
+import { destroyImage, uploadProductImage, uploadSiteImage } from './cloudinary.mjs'
 import { registerProvider } from './payments/index.mjs'
 import { demoProvider } from './payments/providers/demo.mjs'
 import { paymentRoutes } from './payments/routes.mjs'
@@ -125,6 +125,7 @@ setInterval(() => {
 }, RATE_WINDOW_MS).unref()
 
 app.use('/api/admin/products/:id/images', express.json({ limit: '12mb' }))
+app.use('/api/admin/settings/philosophy-image', express.json({ limit: '12mb' }))
 app.use(express.json({ limit: '1mb' }))
 
 /* ---------- utilidades de validación de imágenes ---------- */
@@ -283,6 +284,10 @@ app.get('/api/config', async (_req, res) => {
     expressShipping: toNum(get('express_shipping', '45')),
     instagramUrl: get('instagram_url'),
     announcements: get('announcement_bar').split('|').map((x) => x.trim()).filter(Boolean),
+    philosophyTitle: get('philosophy_title'),
+    philosophyText: get('philosophy_text'),
+    philosophyImage1: get('philosophy_image_1'),
+    philosophyImage2: get('philosophy_image_2'),
   })
 })
 
@@ -942,6 +947,7 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
     'company_name', 'company_tagline', 'company_email', 'company_phone',
     'company_whatsapp', 'company_address', 'default_currency', 'free_shipping_threshold',
     'flat_shipping', 'express_shipping', 'instagram_url', 'announcement_bar',
+    'philosophy_title', 'philosophy_text', 'philosophy_image_1', 'philosophy_image_2',
   ]
   const entries = {}
   for (const k of allowed) {
@@ -950,6 +956,24 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
   if (Object.keys(entries).length > 0) await content.saveSettings(entries)
   await audit(req.auth.username, 'settings.update', 'settings', null, 'Actualizó configuración')
   res.json({ ok: true })
+})
+
+/* Imagen de la sección "Filosofía Sultán": se sube a Cloudinary y se guarda su URL en ajustes. */
+app.post('/api/admin/settings/philosophy-image', requireAuth, rateLimit('upload', 60), async (req, res) => {
+  const slot = String(req.body.slot ?? '')
+  if (slot !== '1' && slot !== '2') return res.status(422).json({ error: 'Posición de imagen no válida' })
+  const decoded = decodeBase64Image(req.body.data)
+  if (!decoded || decoded.error) return res.status(422).json({ error: decoded?.error ?? 'Imagen inválida' })
+  let uploaded
+  try {
+    uploaded = await uploadSiteImage(decoded.buf, `philosophy-${slot}`)
+  } catch (err) {
+    console.error('[upload filosofía]', err)
+    return res.status(500).json({ error: 'No se pudo guardar la imagen' })
+  }
+  await content.saveSettings({ [`philosophy_image_${slot}`]: uploaded.url })
+  await audit(req.auth.username, 'settings.image', 'settings', `philosophy_image_${slot}`, 'Actualizó imagen de filosofía')
+  res.status(201).json({ url: uploaded.url })
 })
 
 app.post('/api/admin/coupons', requireAuth, async (req, res) => {

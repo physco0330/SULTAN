@@ -68,6 +68,7 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
 
   const monthlyRevenue = stats.revenueByMonth
   const maxRev = Math.max(...monthlyRevenue.map((m) => m.revenue), 1)
+  const maxOrders = Math.max(...monthlyRevenue.map((m) => m.orders), 1)
   const ticket = stats.revenue.orders > 0 ? Math.round(stats.revenue.total / stats.revenue.orders) : 0
 
   const exportStats = async (format: 'xlsx' | 'csv' | 'pdf') => {
@@ -119,7 +120,7 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Ingresos" value={usd(stats.revenue.total)} icon={DollarSign} delta={stats.revenue.delta} hint="vs periodo anterior" />
-        <StatCard label="Pedidos" value={stats.revenue.orders} icon={ShoppingBag} delta={stats.ordersDelta} hint="vs periodo anterior" />
+        <StatCard label="Pedidos confirmados" value={stats.revenue.orders} icon={ShoppingBag} delta={stats.ordersDelta} hint="vs periodo anterior" />
         <StatCard label="Ticket promedio" value={usd(ticket)} icon={Receipt} />
         <StatCard label="Productos activos" value={stats.products.total} icon={Package} />
         <StatCard label="Stock bajo" value={stats.products.lowStock} icon={AlertTriangle} />
@@ -129,20 +130,32 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
       </div>
 
       <Section title={`INGRESOS — ${stats.period.label.toUpperCase()}`} action={<Star size={14} className="text-gold/40" />}>
-        <div className="flex h-52 items-end gap-3 px-5 py-5">
-          {monthlyRevenue.map((m) => (
-            <div key={m.month} className="group flex flex-1 flex-col items-center gap-2">
-              <span className="text-[0.62rem] text-gold opacity-0 transition-opacity group-hover:opacity-100">
-                {m.revenue > 0 ? usd(m.revenue) : '$0'}
-              </span>
-              <div
-                className="w-full border border-gold/25 bg-gradient-to-t from-gold/30 to-gold/10 transition-all group-hover:border-gold/60"
-                style={{ height: `${Math.max((m.revenue / maxRev) * 100, 4)}%` }}
-              />
-              <span className="text-[0.6rem] uppercase tracking-wider text-bone">{m.label}</span>
-              <span className="text-[0.6rem] text-bone">{m.orders} pedidos</span>
-            </div>
-          ))}
+        <div className="px-5 pb-5 pt-4">
+          <div className="mb-4 flex flex-wrap gap-4 text-[0.65rem] uppercase tracking-widest text-bone">
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 bg-gold" /> Ingresos (USD)</span>
+            <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 bg-sky-300" /> Pedidos confirmados</span>
+          </div>
+          <div className="flex items-end gap-4">
+            {monthlyRevenue.map((m) => (
+              <div key={m.month} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                <span className="whitespace-nowrap text-[0.62rem] font-medium text-gold">{m.revenue > 0 ? usd(m.revenue) : '$0'}</span>
+                <div className="flex h-40 w-full items-end justify-center gap-1.5">
+                  <div
+                    title={`${m.label}: ${usd(m.revenue)}`}
+                    className="w-1/2 max-w-[1.4rem] bg-gold"
+                    style={{ height: `${Math.max((m.revenue / maxRev) * 100, m.revenue > 0 ? 3 : 0)}%` }}
+                  />
+                  <div
+                    title={`${m.label}: ${m.orders} pedidos`}
+                    className="w-1/2 max-w-[1.4rem] bg-sky-300"
+                    style={{ height: `${Math.max((m.orders / maxOrders) * 100, m.orders > 0 ? 3 : 0)}%` }}
+                  />
+                </div>
+                <span className="text-[0.66rem] font-semibold uppercase tracking-wider text-ivory">{m.label}</span>
+                <span className="text-[0.62rem] text-bone">{m.orders} ped.</span>
+              </div>
+            ))}
+          </div>
         </div>
       </Section>
 

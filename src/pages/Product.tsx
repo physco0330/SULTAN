@@ -15,7 +15,7 @@ import { SafeImage } from '@/components/SafeImage'
 import { isFeatureEnabled } from '@/config/features'
 import { ProductGrid } from '@/components/ProductGrid'
 import { Reveal } from '@/components/Reveal'
-import { useCart } from '@/store/cart'
+import { useCart, maxQtyFor } from '@/store/cart'
 import { useWishlist } from '@/store/wishlist'
 import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
@@ -98,6 +98,7 @@ export default function Product() {
 
   const wished = wishlist.includes(product.id)
   const sizeGuideOpen = sizeGuide
+  const maxQty = maxQtyFor(product.stock)
 
   const ensureSelection = () => {
     if (!size) {
@@ -205,7 +206,6 @@ export default function Product() {
           </h1>
           <div className="mt-3 flex items-center gap-3">
             <Rating value={product.rating} count={product.reviews} />
-            <span className="text-xs text-bone">{t('product.sku')}: {product.sku}</span>
           </div>
 
           <div className="mt-5">
@@ -263,10 +263,20 @@ export default function Product() {
                 <Minus size={15} />
               </button>
               <span className="w-10 text-center text-ivory">{qty}</span>
-              <button onClick={() => setQty((q) => Math.min(10, q + 1))} aria-label="+" className="flex h-12 w-11 items-center justify-center text-silver hover:text-gold">
+              <button
+                onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
+                disabled={qty >= maxQty}
+                aria-label="+"
+                className="flex h-12 w-11 items-center justify-center text-silver hover:text-gold disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-silver"
+              >
                 <Plus size={15} />
               </button>
             </div>
+            {product.stock > 0 && (
+              <span className={cn('basis-full text-[0.65rem] uppercase tracking-widest', product.stock <= 3 ? 'text-red-400' : 'text-bone')}>
+                {t('cart.stockLeft', { count: product.stock })}
+              </span>
+            )}
             <button
               onClick={handleAdd}
               disabled={product.stock === 0}

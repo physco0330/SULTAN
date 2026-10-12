@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { editorialImage } from '@/utils/placeholder'
+import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { Reveal } from '@/components/Reveal'
 import { SectionTitle } from '@/components/SectionTitle'
 
@@ -14,12 +15,16 @@ const STATS = [
 
 export default function About() {
   const { t } = useTranslation()
+  const cfg = useStoreConfig()
+  const paragraphs = cfg.philosophyText
+    ? cfg.philosophyText.split('\n').map((p) => p.trim()).filter(Boolean)
+    : [t('about.para1'), t('about.para2'), t('about.para3')]
 
   return (
     <>
       <section className="relative flex min-h-[60vh] items-end overflow-hidden">
         <div className="absolute inset-0">
-          <img src={editorialImage('SULTAN BLACK ATELIER')} alt="" className="h-full w-full object-cover opacity-45" />
+          <img src={cfg.philosophyImage1 || editorialImage('SULTAN BLACK ATELIER')} alt="" className="h-full w-full object-cover opacity-45" />
           <div className="absolute inset-0 bg-gradient-to-t from-night via-night/50 to-night/30" />
         </div>
         <div className="relative z-10 mx-auto w-full max-w-[1600px] px-4 pb-16 lg:px-8">
@@ -34,10 +39,10 @@ export default function About() {
 
       <section className="mx-auto max-w-[1600px] px-4 py-20 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <SectionTitle align="center" eyebrow={t('sections.philosophy.title')} title={t('about.mission')} />
+          <SectionTitle align="center" eyebrow={cfg.philosophyTitle || t('sections.philosophy.title')} title={t('about.mission')} />
         </div>
         <div className="mx-auto mt-8 grid max-w-2xl gap-8 text-center">
-          {[t('about.para1'), t('about.para2'), t('about.para3')].map((p, i) => (
+          {paragraphs.map((p, i) => (
             <Reveal key={i} delay={i * 80}>
               <p className="font-accent text-xl italic leading-relaxed text-bone">{p}</p>
             </Reveal>
@@ -61,7 +66,7 @@ export default function About() {
       <section className="mx-auto max-w-[1600px] px-4 py-20 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <Reveal variant="fade-in">
-            <img src={editorialImage('HANDCRAFT HERITAGE')} alt="" className="aspect-[4/3] w-full border border-gold/15 object-cover" />
+            <img src={cfg.philosophyImage2 || editorialImage('HANDCRAFT HERITAGE')} alt="" className="aspect-[4/3] w-full border border-gold/15 object-cover" />
           </Reveal>
           <Reveal variant="fade-up">
             <SectionTitle align="left" eyebrow={`— ${t('about.voyageKicker')} —`} title={t('about.voyage')} subtitle={t('about.voyageBody')} />

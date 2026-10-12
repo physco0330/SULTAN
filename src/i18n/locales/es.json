@@ -183,6 +183,9 @@
     "returnsText": "Devoluciones gratis en 30 días desde la entrega. Las prendas deben estar sin uso y con sus etiquetas."
   },
   "cart": {
+    "stockLeft": "{{count}} disponibles",
+    "totalUnits": "Unidades",
+    "shippingNote": "El envío se calcula al ingresar tu dirección.",
     "title": "Tu Carrito",
     "drawerTitle": "Bolsa de Compras",
     "empty": "Tu carrito está vacío",
@@ -250,6 +253,8 @@
     "summary": "Resumen del pedido",
     "terms": "Al realizar tu pedido aceptas nuestros términos y política de privacidad.",
     "consent": "Autorizo el tratamiento de mis datos personales conforme a la ley.",
+    "consentRequired": "Autorización obligatoria",
+    "shippingPending": "Se calcula con tu dirección",
     "privacyPolicy": "Política de privacidad",
     "errConsent": "Debes autorizar el tratamiento de tus datos para continuar",
     "thankYou": "Gracias por tu pedido",

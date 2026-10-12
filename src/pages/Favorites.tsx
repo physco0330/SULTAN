@@ -50,11 +50,11 @@ export default function Favorites() {
                   </span>
                 </span>
               </Link>
-              <div className="mt-3">
+              <div className="mt-3 min-w-0">
                 <Link to={`/producto/${p.slug}`} className="font-display text-sm text-ivory hover:text-gold">{p.name}</Link>
-                <div className="mt-1 flex items-center justify-between">
-                  <Rating value={p.rating} count={p.reviews} />
-                  <Price price={p.price} compareAtPrice={p.compareAtPrice} />
+                <div className="mt-1 flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                  <Rating value={p.rating} count={p.reviews} className="min-w-0 flex-wrap" />
+                  <Price price={p.price} compareAtPrice={p.compareAtPrice} className="min-w-0 max-w-full" />
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button

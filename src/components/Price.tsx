@@ -16,7 +16,7 @@ export function Price({ price, compareAtPrice, currency = 'USD', className, larg
   const was = compareAtPrice ? formatPrice(convertPrice(compareAtPrice, currency, code), code) : null
 
   return (
-    <span className={cn('flex items-baseline gap-2', className)}>
+    <span className={cn('flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5', className)}>
       <span className={cn('font-medium text-ivory', large && 'text-2xl md:text-3xl font-display')}>
         {shown}
       </span>

@@ -7,7 +7,7 @@ import { useUi } from '@/store/ui'
 import { usd, shortDate, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { cn } from '@/utils/cn'
 import { AdminReviews } from '@/admin/AdminReviews'
-import type { CouponRow, SubscriberRow, CustomerRow, AuditRow } from '@/services/adminService'
+import type { CouponRow, SubscriberRow, CustomerRow, AuditRow, AdminOrderStatus } from '@/services/adminService'
 
 export type AdminSettingsSection = 'Empresa' | 'Cupones' | 'Suscriptores' | 'Clientes' | 'Reseñas' | 'Auditoría'
 const TABS: AdminSettingsSection[] = ['Empresa', 'Cupones', 'Suscriptores', 'Clientes', 'Reseñas', 'Auditoría']
@@ -67,6 +67,8 @@ function SettingsForm() {
   useEffect(() => {
     load()
   }, [load])
+
+  const setField = (k: string, v: string) => setForm((s) => ({ ...s, [k]: v }))
 
   const save = async () => {
     setSaving(true)
@@ -131,6 +133,7 @@ function SettingsForm() {
       </div>
 
       <div className="space-y-6">
+        <PhilosophyEditor form={form} onChange={setField} />
         <div className="border border-gold/15 bg-carbon/40 p-6">
           <h3 className="font-display mb-3 text-sm tracking-[0.2em] text-ivory">VISIBILIDAD</h3>
           <p className="text-sm font-light leading-relaxed text-bone">
@@ -144,6 +147,113 @@ function SettingsForm() {
             Los precios, descuentos y totales de los pedidos se recalculan y validan en el servidor; nunca se confía en los
             valores enviados por el cliente. Todo cambio queda registrado en el registro de auditoría.
           </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'))
+    reader.readAsDataURL(file)
+  })
+}
+
+/** Sección "Filosofía Sultán": título, texto y dos fotos que se ven en Inicio y Nosotros. */
+function PhilosophyEditor({ form, onChange }: { form: Record<string, string>; onChange: (k: string, v: string) => void }) {
+  const pushToast = useUi((s) => s.pushToast)
+  const [uploading, setUploading] = useState<0 | 1 | 2>(0)
+
+  const upload = async (slot: 1 | 2, file: File | undefined) => {
+    if (!file) return
+    if (!PHOTO_TYPES.includes(file.type)) {
+      pushToast('Formato no permitido. Usa JPEG, PNG o WebP', 'error')
+      return
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      pushToast('La imagen supera el máximo de 5 MB', 'error')
+      return
+    }
+    setUploading(slot)
+    try {
+      const data = await readAsDataUrl(file)
+      const res = await adminService.uploadPhilosophyImage(slot, data)
+      onChange(`philosophy_image_${slot}`, res.url)
+      invalidateConfigCache()
+      pushToast('Imagen de filosofía guardada')
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'No se pudo subir la imagen', 'error')
+    } finally {
+      setUploading(0)
+    }
+  }
+
+  return (
+    <div className="border border-gold/15 bg-carbon/40 p-6">
+      <h3 className="font-display mb-3 text-sm tracking-[0.2em] text-ivory">FILOSOFÍA SULTÁN</h3>
+      <p className="mb-5 text-xs leading-relaxed text-bone">
+        Se muestra en Inicio (sección Filosofía) y en Nosotros. Si lo dejas vacío, la tienda usa los textos y fotos por defecto.
+      </p>
+      <div className="space-y-4">
+        <div>
+          <label className="mb-1.5 block text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-bone">Título</label>
+          <input value={form.philosophy_title ?? ''} onChange={(e) => onChange('philosophy_title', e.target.value)} placeholder="La Filosofía Sultán" className={input} />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-bone">Texto (un párrafo por línea)</label>
+          <textarea
+            rows={5}
+            value={form.philosophy_text ?? ''}
+            onChange={(e) => onChange('philosophy_text', e.target.value)}
+            className={`${input} resize-y`}
+          />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {([1, 2] as const).map((slot) => {
+            const url = form[`philosophy_image_${slot}`] ?? ''
+            return (
+              <div key={slot} className="space-y-2">
+                <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-bone">Foto {slot}</p>
+                <div className="aspect-[3/4] w-full overflow-hidden border border-gold/20 bg-night">
+                  {url ? (
+                    <img src={url} alt={`Filosofía ${slot}`} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center px-3 text-center text-xs text-bone">Sin imagen (usa la de por defecto)</div>
+                  )}
+                </div>
+                <label
+                  className={cn(
+                    'flex cursor-pointer items-center justify-center gap-2 border border-gold/40 py-2.5 text-[0.62rem] font-semibold uppercase tracking-widest text-gold hover:bg-gold/10',
+                    uploading !== 0 && 'pointer-events-none opacity-50',
+                  )}
+                >
+                  {uploading === slot && <Spinner />}
+                  {uploading === slot ? 'Subiendo…' : 'Subir foto'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      void upload(slot, e.target.files?.[0])
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
+                <input
+                  value={url}
+                  onChange={(e) => onChange(`philosophy_image_${slot}`, e.target.value)}
+                  placeholder="o pega una URL https://…"
+                  className={input}
+                />
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -331,6 +441,14 @@ function SubscribersPanel() {
 }
 
 
+const STATUS_COLUMNS: { key: AdminOrderStatus; label: string }[] = [
+  { key: 'pending', label: 'Pendientes' },
+  { key: 'confirmed', label: 'Confirmados' },
+  { key: 'shipped', label: 'Enviados' },
+  { key: 'delivered', label: 'Entregados' },
+  { key: 'cancelled', label: 'Cancelados' },
+]
+
 function CustomersPanel() {
   const [items, setItems] = useState<CustomerRow[]>([])
   const [busy, setBusy] = useState(true)
@@ -349,24 +467,57 @@ function CustomersPanel() {
   return (
     <div className="overflow-hidden border border-gold/15 bg-carbon/40">
       <TableScroller>
-        <table className="w-full min-w-[720px]">
+        <table className="w-full min-w-[1200px]">
           <thead className="border-b border-gold/15">
-            <tr><Th>Cliente</Th><Th>Ciudad</Th><Th>Pedidos</Th><Th right>Total gastado</Th></tr>
+            <tr>
+              <Th>Cliente</Th>
+              <Th>Teléfono</Th>
+              <Th>Ciudad · barrio · dirección</Th>
+              <Th>País</Th>
+              <Th>Registro</Th>
+              {STATUS_COLUMNS.map((s) => (
+                <Th key={s.key} right>{s.label}</Th>
+              ))}
+              <Th right>Total gastado</Th>
+              <Th>Último pedido</Th>
+            </tr>
           </thead>
           <tbody className="divide-y divide-gold/10">
-            {busy && items.length === 0 && <EmptyRow colSpan={4} message="Cargando…" />}
-            {!busy && items.length === 0 && <EmptyRow colSpan={4} message="Sin clientes" />}
-            {items.map((c) => (
-              <tr key={c.id} className="hover:bg-carbon/60">
-                <Td>
-                  <p className="text-ivory">{c.name}</p>
-                  <p className="text-xs text-bone">{c.email ?? '—'}</p>
-                </Td>
-                <Td className="text-bone">{[c.city, c.country].filter(Boolean).join(', ') || '—'}</Td>
-                <Td>{c.order_count}</Td>
-                <Td right className="font-medium">{usd(c.total_spent)}</Td>
-              </tr>
-            ))}
+            {busy && items.length === 0 && <EmptyRow colSpan={STATUS_COLUMNS.length + 7} message="Cargando…" />}
+            {!busy && items.length === 0 && <EmptyRow colSpan={STATUS_COLUMNS.length + 7} message="Sin clientes" />}
+            {items.map((c) => {
+              const wa = (c.phone ?? '').replace(/\D/g, '')
+              return (
+                <tr key={c.id} className="hover:bg-carbon/60">
+                  <Td>
+                    <p className="text-ivory">{c.name}</p>
+                    <p className="text-xs text-bone">{c.email ?? '—'}</p>
+                  </Td>
+                  <Td>
+                    {wa ? (
+                      <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer" className="text-emerald-300 hover:underline">
+                        {c.phone}
+                      </a>
+                    ) : (
+                      <span className="text-bone">—</span>
+                    )}
+                  </Td>
+                  <Td>
+                    <p className="text-ivory">{[c.city, c.neighborhood].filter(Boolean).join(' · ') || '—'}</p>
+                    <p className="text-xs text-bone">{c.address || '—'}</p>
+                  </Td>
+                  <Td className="text-bone">{c.country || '—'}</Td>
+                  <Td><span className="text-bone">{shortDate(c.created_at)}</span></Td>
+                  {STATUS_COLUMNS.map((s) => (
+                    <Td key={s.key} right className={(c.orders_by_status?.[s.key] ?? 0) > 0 ? 'text-ivory' : 'text-bone'}>
+                      {c.orders_by_status?.[s.key] ?? 0}
+                    </Td>
+                  ))}
+                  <Td right className="font-medium">{usd(c.total_spent)}</Td>
+                  <Td><span className="text-bone">{shortDate(c.last_order_at)}</span></Td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </TableScroller>

@@ -34,6 +34,7 @@ export function SearchOverlay() {
   const [recent, setRecent] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const categoryName = (c: { id: string; label: string }) => t(`catalog.types.${c.id}`, { defaultValue: c.label })
 
   useEffect(() => {
     if (open) {
@@ -61,7 +62,13 @@ export function SearchOverlay() {
         p.category.toLowerCase().includes(q) ||
         p.collection.toLowerCase().includes(q),
     )
-    const categories = allCategories.filter((c) => c.label.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+    /* Se busca en el nombre del idioma activo y también en el original (id y etiqueta de la API). */
+    const categories = allCategories.filter(
+      (c) =>
+        categoryName(c).toLowerCase().includes(q) ||
+        c.label.toLowerCase().includes(q) ||
+        c.id.toLowerCase().includes(q),
+    )
     return { products, categories }
   }, [query, t, catalogProducts, allCategories])
 
@@ -136,7 +143,7 @@ export function SearchOverlay() {
                       onClick={close}
                       className="border border-gold/15 px-4 py-3 text-sm text-ivory transition-all hover:border-gold/60 hover:text-gold"
                     >
-                      {t(`catalog.types.${c.id}`)}
+                      {categoryName(c)}
                     </Link>
                   ))}
                 </div>
@@ -165,7 +172,7 @@ export function SearchOverlay() {
                           <SafeImage src={p.images[0]?.src} alt={p.name} className="h-16 w-12" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-ivory transition-colors group-hover:text-gold">{p.name}</p>
-                            <p className="text-xs text-bone">{t(`catalog.types.${p.category}`)} · {p.sku}</p>
+                            <p className="text-xs text-bone">{t(`catalog.types.${p.category}`)}</p>
                           </div>
                           <Price price={p.price} />
                         </Link>
@@ -180,7 +187,7 @@ export function SearchOverlay() {
                       <div className="flex flex-wrap gap-2">
                         {results.categories.map((c) => (
                           <Link key={c.id} to={`/catalogo?category=${c.id}`} onClick={close} className="border border-gold/25 px-3 py-1.5 text-sm text-silver hover:border-gold hover:text-gold">
-                            {t(`catalog.types.${c.id}`)}
+                            {categoryName(c)}
                           </Link>
                         ))}
                       </div>

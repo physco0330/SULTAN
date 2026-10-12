@@ -23,6 +23,7 @@ export default function Checkout() {
   const cfg = useStoreConfig()
 
   const subtotalUsd = useMemo(() => items.reduce((s, i) => s + i.price * i.quantity, 0), [items])
+  const unitsCount = useMemo(() => items.reduce((s, i) => s + i.quantity, 0), [items])
   const [discountUsd, setDiscountUsd] = useState(0)
   const [placing, setPlacing] = useState(false)
 
@@ -43,9 +44,6 @@ export default function Checkout() {
       dead = true
     }
   }, [promoCode, subtotalUsd])
-
-  const shippingUsd = subtotalUsd - discountUsd >= cfg.freeShippingThreshold ? 0 : cfg.flatShipping
-  const totalUsd = Math.max(subtotalUsd - discountUsd, 0) + shippingUsd
 
   /** Aplica un cupón. Solo uno por pedido: si ya hay uno, se reemplaza
    *  únicamente después de que el backend valide el nuevo. */
@@ -99,10 +97,11 @@ export default function Checkout() {
         (it) =>
           `• ${it.name} — ${it.size} / ${it.color} ×${it.quantity} = ${money(it.price * it.quantity)}`,
       ),
+      `${t('cart.totalUnits')}: ${unitsCount}`,
       '',
       `${t('cart.subtotal')}: ${money(subtotalUsd)}`,
       discountUsd > 0 ? `${t('cart.discount')}: −${money(discountUsd)}` : null,
-      `${t('cart.shipping')}: ${shippingUsd === 0 ? t('misc.freeShippingBadge') : money(shippingUsd)}`,
+      hasAddress ? `${t('cart.shipping')}: ${shippingUsd === 0 ? t('misc.freeShippingBadge') : money(shippingUsd)}` : null,
       `*${t('cart.total')}: ${money(totalUsd)}*`,
       promoCode ? `${t('cart.promo')}: ${promoCode}` : null,
     ]
@@ -123,6 +122,11 @@ export default function Checkout() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [dataConsent, setDataConsent] = useState(false)
+
+  /* El envío se calcula cuando hay dirección; antes no se suma al total. */
+  const hasAddress = form.city.trim() !== '' && form.address.trim() !== ''
+  const shippingUsd = subtotalUsd - discountUsd >= cfg.freeShippingThreshold ? 0 : cfg.flatShipping
+  const totalUsd = Math.max(subtotalUsd - discountUsd, 0) + (hasAddress ? shippingUsd : 0)
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -323,22 +327,33 @@ export default function Checkout() {
               )}
             </div>
 
-            <label className="mt-5 flex cursor-pointer items-start gap-3 border border-gold/20 bg-night/60 p-4">
-              <input
-                type="checkbox"
-                checked={dataConsent}
-                onChange={(e) => { setDataConsent(e.target.checked); setErrors((er) => ({ ...er, consent: '' })) }}
-                aria-invalid={!!errors.consent}
-                className="mt-0.5 h-4 w-4 shrink-0 accent-[#c9a227]"
-              />
-              <span className="text-xs leading-relaxed text-bone">
-                {t('checkout.consent')}{' '}
-                <Link to="/legal/privacidad" target="_blank" rel="noreferrer" className="text-gold underline-offset-2 hover:underline">
-                  {t('checkout.privacyPolicy')}
-                </Link>
+            <label
+              className={cn(
+                'mt-6 flex cursor-pointer items-start gap-4 border-2 bg-gold/5 p-5 shadow-[0_0_28px_rgba(201,162,39,0.12)] transition-colors md:p-6',
+                errors.consent ? 'border-red-500/70' : 'border-gold hover:bg-gold/10',
+              )}
+            >
+              <span className="mt-0.5 flex shrink-0 items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={dataConsent}
+                  onChange={(e) => { setDataConsent(e.target.checked); setErrors((er) => ({ ...er, consent: '' })) }}
+                  aria-invalid={!!errors.consent}
+                  className="h-6 w-6 accent-[#c9a227]"
+                />
+                <ShieldCheck size={26} className="text-gold" aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[0.65rem] font-bold uppercase tracking-[0.24em] text-gold">{t('checkout.consentRequired')}</span>
+                <span className="mt-1.5 block text-sm leading-relaxed text-ivory md:text-base">
+                  {t('checkout.consent')}{' '}
+                  <Link to="/legal/privacidad" target="_blank" rel="noreferrer" className="text-gold underline underline-offset-2 hover:text-gold-soft">
+                    {t('checkout.privacyPolicy')}
+                  </Link>
+                </span>
               </span>
             </label>
-            {errors.consent && <p className="mt-1.5 text-xs text-red-400">{errors.consent}</p>}
+            {errors.consent && <p className="mt-2 text-sm font-medium text-red-400">{errors.consent}</p>}
           </section>
         </div>
 
@@ -362,16 +377,24 @@ export default function Checkout() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm text-ivory">{it.name}</p>
-                      <p className="text-xs text-bone">{it.size} · {it.color}</p>
+                      <p className="text-xs text-bone">{it.size} · {it.color} · <span className="text-gold">×{it.quantity}</span></p>
                     </div>
                     <p className="text-sm text-silver">{formatPrice(convertPrice(it.price * it.quantity, 'USD', code), code)}</p>
                   </li>
                 ))}
               </ul>
               <div className="mt-5 space-y-2.5 border-t border-gold/15 pt-4 text-sm">
+                <div className="flex justify-between text-bone"><span>{t('cart.totalUnits')}</span><span className="text-ivory">{unitsCount}</span></div>
                 <div className="flex justify-between text-bone"><span>{t('cart.subtotal')}</span><span className="text-ivory">{formatPrice(convertPrice(subtotalUsd, 'USD', code), code)}</span></div>
                 {discountUsd > 0 && <div className="flex justify-between text-bone"><span>{t('cart.discount')}</span><span className="text-gold">−{formatPrice(convertPrice(discountUsd, 'USD', code), code)}</span></div>}
-                <div className="flex justify-between text-bone"><span>{t('cart.shipping')}</span><span className="text-ivory">{shippingUsd === 0 ? t('misc.freeShippingBadge') : formatPrice(convertPrice(shippingUsd, 'USD', code), code)}</span></div>
+                <div className="flex justify-between text-bone">
+                  <span>{t('cart.shipping')}</span>
+                  <span className="text-right text-ivory">
+                    {!hasAddress
+                      ? <span className="text-xs text-bone">{t('checkout.shippingPending')}</span>
+                      : shippingUsd === 0 ? t('misc.freeShippingBadge') : formatPrice(convertPrice(shippingUsd, 'USD', code), code)}
+                  </span>
+                </div>
                 <div className="flex justify-between border-t border-gold/15 pt-3">
                   <span className="text-ivory">{t('cart.total')}</span>
                   <span className="font-display text-xl text-gold">{formatPrice(convertPrice(totalUsd, 'USD', code), code)}</span>

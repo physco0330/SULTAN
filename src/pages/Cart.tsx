@@ -2,12 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useCart, cartKey } from '@/store/cart'
+import { useCart, cartKey, maxQtyFor } from '@/store/cart'
 import { useCurrency } from '@/store/currency'
 import { convertPrice, formatPrice } from '@/data/currencies'
 import { applyPromo, discountAmount } from '@/services/discounts'
 import { validateCoupon } from '@/services/productService'
-import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
 import { SafeImage } from '@/components/SafeImage'
@@ -25,14 +24,14 @@ export default function CartPage() {
   const setPromo = useCart((s) => s.setPromo)
   const code = useCurrency((s) => s.code)
   const pushToast = useUi((s) => s.pushToast)
-  const cfg = useStoreConfig()
   const [promoInput, setPromoInput] = useState('')
   const [promoBusy, setPromoBusy] = useState(false)
 
   const subtotalUsd = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  const unitsCount = items.reduce((s, i) => s + i.quantity, 0)
   const discountUsd = promoCode ? discountAmount(promoCode, subtotalUsd) : 0
-  const shippingUsd = subtotalUsd - discountUsd >= cfg.freeShippingThreshold ? 0 : cfg.flatShipping
-  const totalUsd = Math.max(subtotalUsd - discountUsd, 0) + shippingUsd
+  /* El envío no se muestra aquí: depende de la dirección y se calcula en checkout. */
+  const totalUsd = Math.max(subtotalUsd - discountUsd, 0)
 
   const tryPromo = async () => {
     const codeToCheck = promoInput.trim()
@@ -85,27 +84,46 @@ export default function CartPage() {
             <ul>
               {items.map((item) => {
                 const key = cartKey(item.productId, item.size, item.color)
+                const atMax = item.quantity >= maxQtyFor(item.stock)
                 return (
                   <li key={key} className="grid grid-cols-[64px_1fr] gap-4 border-b border-gold/10 px-5 py-5 md:grid-cols-[80px_1fr_90px_120px] md:items-center">
                     <Link to={`/producto/${item.slug}`} className="block aspect-[3/4] max-h-24 overflow-hidden border border-gold/15">
                       <SafeImage src={item.image} alt={item.name} />
                     </Link>
-                    <div>
+                    <div className="min-w-0">
                       <Link to={`/producto/${item.slug}`} className="font-display text-sm text-ivory hover:text-gold">{item.name}</Link>
                       <p className="mt-1 text-xs text-bone">
                         {t('cart.size')}: {item.size} · {t('cart.color')}: {item.color}
                       </p>
-                      <p className="mt-1 text-sm font-medium text-gold md:hidden">{fmt(item.price * item.quantity, code)}</p>
+                      <p className="mt-1 text-sm font-medium text-gold md:hidden">
+                        {fmt(item.price * item.quantity, code)} <span className="text-xs font-normal text-bone">×{item.quantity}</span>
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 md:justify-center">
-                      <div className="flex items-center border border-gold/25">
-                        <button onClick={() => updateQty(key, item.quantity - 1)} aria-label="−" className="flex h-8 w-8 items-center justify-center text-silver hover:text-gold"><Minus size={13} /></button>
-                        <span className="w-8 text-center text-sm text-ivory">{item.quantity}</span>
-                        <button onClick={() => updateQty(key, item.quantity + 1)} aria-label="+" className="flex h-8 w-8 items-center justify-center text-silver hover:text-gold"><Plus size={13} /></button>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 md:flex-col md:items-center md:gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center border border-gold/25">
+                          <button onClick={() => updateQty(key, item.quantity - 1)} aria-label="−" className="flex h-8 w-8 items-center justify-center text-silver hover:text-gold"><Minus size={13} /></button>
+                          <span className="w-8 text-center text-sm text-ivory">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQty(key, item.quantity + 1)}
+                            disabled={atMax}
+                            aria-label="+"
+                            className="flex h-8 w-8 items-center justify-center text-silver hover:text-gold disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-silver"
+                          >
+                            <Plus size={13} />
+                          </button>
+                        </div>
+                        <button onClick={() => removeItem(key)} aria-label={t('cart.remove')} className="ml-1 text-bone hover:text-red-400"><Trash2 size={15} /></button>
                       </div>
-                      <button onClick={() => removeItem(key)} aria-label={t('cart.remove')} className="ml-1 text-bone hover:text-red-400"><Trash2 size={15} /></button>
+                      {item.stock !== undefined && (
+                        <span className={cn('text-[0.62rem] uppercase tracking-widest', item.stock <= 3 ? 'text-red-400' : 'text-bone')}>
+                          {t('cart.stockLeft', { count: item.stock })}
+                        </span>
+                      )}
                     </div>
-                    <p className="hidden text-right font-medium text-ivory md:block">{fmt(item.price * item.quantity, code)}</p>
+                    <p className="hidden text-right font-medium text-ivory md:block">
+                      {fmt(item.price * item.quantity, code)} <span className="text-xs font-normal text-bone">×{item.quantity}</span>
+                    </p>
                   </li>
                 )
               })}
@@ -129,13 +147,14 @@ export default function CartPage() {
             {promoCode && <p className="mt-2 text-xs text-gold">{t('cart.promoApplied', { code: promoCode })}</p>}
 
             <div className="mt-5 space-y-2.5 border-t border-gold/15 pt-4 text-sm">
+              <div className="flex justify-between text-bone"><span>{t('cart.totalUnits')}</span><span className="text-ivory">{unitsCount}</span></div>
               <div className="flex justify-between text-bone"><span>{t('cart.subtotal')}</span><span className="text-ivory">{fmt(subtotalUsd, code)}</span></div>
-              <div className="flex justify-between text-bone"><span>{t('cart.shipping')}</span><span className="text-ivory">{shippingUsd === 0 ? t('misc.freeShippingBadge') : fmt(shippingUsd, code)}</span></div>
               {discountUsd > 0 && <div className="flex justify-between text-bone"><span>{t('cart.discount')}</span><span className="text-gold">−{fmt(discountUsd, code)}</span></div>}
               <div className="flex justify-between border-t border-gold/15 pt-3">
                 <span className="text-ivory">{t('cart.total')}</span>
                 <span className="font-display text-xl text-gold">{fmt(totalUsd, code)}</span>
               </div>
+              <p className="text-xs text-bone">{t('cart.shippingNote')}</p>
             </div>
 
             <Link to="/checkout" className={cn('mt-6 flex w-full items-center justify-center bg-gold px-6 py-4 text-xs font-bold uppercase tracking-[0.28em] text-night transition-all hover:bg-gold-soft')}>

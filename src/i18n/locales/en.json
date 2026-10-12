@@ -203,7 +203,10 @@
     "freeShipping": "You are ${{amount}} away from free shipping.",
     "freeShippingMet": "Your order ships free.",
     "promoApplied": "Code applied: {{code}}",
-    "promoInvalid": "Invalid code."
+    "promoInvalid": "Invalid code.",
+    "stockLeft": "{{count}} available",
+    "totalUnits": "Units",
+    "shippingNote": "Shipping is calculated when you enter your address."
   },
   "checkout": {
     "title": "Secure Checkout",
@@ -250,6 +253,8 @@
     "summary": "Order Summary",
     "terms": "By placing your order you agree to our terms and privacy policy.",
     "consent": "I authorize the processing of my personal data in accordance with the law.",
+    "consentRequired": "Required authorization",
+    "shippingPending": "Calculated with your address",
     "privacyPolicy": "Privacy policy",
     "errConsent": "You must authorize the processing of your data to continue",
     "thankYou": "Thank you for your order",

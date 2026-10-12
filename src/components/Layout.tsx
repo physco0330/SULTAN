@@ -7,6 +7,8 @@ import { SearchOverlay } from '@/components/Search/SearchOverlay'
 import { CartDrawer } from '@/components/Cart/CartDrawer'
 import { FloatingButtons } from '@/components/FloatingButtons'
 import { useTranslation } from 'react-i18next'
+import { useCatalog } from '@/hooks/useCatalog'
+import { useCart } from '@/store/cart'
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -18,6 +20,13 @@ function ScrollToTop() {
 
 export function Layout() {
   const { t } = useTranslation()
+  const { products } = useCatalog()
+  const syncStock = useCart((s) => s.syncStock)
+
+  useEffect(() => {
+    syncStock(products)
+  }, [products, syncStock])
+
   return (
     <div className="flex min-h-screen flex-col bg-night text-ivory">
       <a

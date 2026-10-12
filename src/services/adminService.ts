@@ -92,14 +92,18 @@ export interface CustomerRow {
   email: string | null
   phone: string | null
   city: string | null
+  neighborhood: string | null
   country: string | null
   document: string | null
   address: string | null
   created_at: string
   first_order_at: string | null
+  /** Último pedido confirmado (confirmed, shipped, delivered). */
   last_order_at: string | null
+  /** Gasto: solo pedidos confirmados. */
   total_spent: number
   order_count: number
+  orders_by_status: Record<AdminOrderStatus, number>
 }
 
 export interface ProductImageRow {
@@ -223,6 +227,8 @@ export const adminService = {
 
   settings: () => api.get<{ settings: Record<string, string>; coupons: CouponRow[] }>('/admin/settings'),
   saveSettings: (body: Record<string, string>) => api.put<{ ok: boolean }>('/admin/settings', body),
+  uploadPhilosophyImage: (slot: 1 | 2, data: string) =>
+    api.post<{ url: string }>('/admin/settings/philosophy-image', { slot, data }),
 
   createCoupon: (body: { code: string; percent: number; minSubtotal: number; active: boolean }) =>
     api.post<{ coupon: CouponRow }>('/admin/coupons', body),

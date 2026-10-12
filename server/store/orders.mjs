@@ -22,6 +22,10 @@ import { couponReason } from './content.mjs'
 
 export const ORDER_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
 
+/** Pedido confirmado: el único que cuenta para ventas, ingresos, top y gasto de clientes. */
+export const CONFIRMED_STATUSES = ['confirmed', 'shipped', 'delivered']
+export const isConfirmed = (o) => CONFIRMED_STATUSES.includes(o.status)
+
 /** Rango de fechas de los filtros de admin (en UTC, como el resto de fechas). */
 export function periodRange(period, opts = {}) {
   const now = new Date()
@@ -110,6 +114,7 @@ export async function placeOrder({ lines, info, promoCode, shippingFor, requireA
   const email = String(info.email ?? '').trim().toLowerCase()
   const phone = String(info.phone ?? '').trim()
   const city = String(info.city ?? '').trim()
+  const neighborhood = String(info.neighborhood ?? '').trim().slice(0, 80)
   const country = String(info.country ?? '').trim()
   const address = String(info.address ?? '').trim()
   const zip = String(info.zip ?? '').trim()
@@ -173,6 +178,7 @@ export async function placeOrder({ lines, info, promoCode, shippingFor, requireA
           name: name || existing.name,
           phone: pick(phone, existing.phone),
           city: pick(city, existing.city),
+          neighborhood: pick(neighborhood, existing.neighborhood),
           country: pick(country, existing.country),
           address: pick(address, existing.address),
           document: pick(document, existing.document),
@@ -183,17 +189,16 @@ export async function placeOrder({ lines, info, promoCode, shippingFor, requireA
           email: email || null,
           phone: phone || null,
           city: city || null,
+          neighborhood: neighborhood || null,
           country: country || null,
           address: address || null,
           document: document || null,
           created_at: now,
           first_order_at: null,
           last_order_at: null,
-          total_spent: 0,
         }
     customer.first_order_at = customer.first_order_at ?? now
     customer.last_order_at = now
-    customer.total_spent = Math.round((Number(customer.total_spent) || 0) + total)
 
     /* ---- escrituras ---- */
     const orderId = lastOrder + 1
@@ -205,6 +210,7 @@ export async function placeOrder({ lines, info, promoCode, shippingFor, requireA
       customer_email: email,
       customer_phone: phone,
       ship_city: city,
+      ship_neighborhood: neighborhood,
       ship_country: country,
       ship_address: address,
       ship_zip: zip,
@@ -347,6 +353,7 @@ export async function listAdminOrders({ status, period, demo }) {
     .map((o) => ({ ...o, itemCount: counts.get(o.id)?.n ?? 0, quantity: counts.get(o.id)?.qty ?? 0 }))
 }
 
+/** Clientes con su historial. Gasto y último pedido solo cuentan pedidos confirmados. */
 export async function listCustomers() {
   const [customers, orders] = await Promise.all([listAll('customers'), listAll('orders')])
   return customers
@@ -354,10 +361,20 @@ export async function listCustomers() {
       const mine = orders.filter(
         (o) => o.customer_id === c.id || (o.customer_id == null && c.email != null && o.customer_email === c.email),
       )
-      const spent = mine.filter((o) => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total_usd), 0)
-      return { ...c, order_count: mine.length, total_spent_calc: spent, total_spent: spent }
+      const byStatus = Object.fromEntries(ORDER_STATUSES.map((s) => [s, 0]))
+      for (const o of mine) if (o.status in byStatus) byStatus[o.status] += 1
+      const confirmed = mine.filter(isConfirmed)
+      const spent = confirmed.reduce((s, o) => s + Number(o.total_usd), 0)
+      const lastOrderAt = confirmed.map((o) => o.created_at).sort().at(-1) ?? null
+      return {
+        ...c,
+        order_count: mine.length,
+        orders_by_status: byStatus,
+        total_spent: Math.round(spent * 100) / 100,
+        last_order_at: lastOrderAt,
+      }
     })
-    .sort((a, b) => b.total_spent_calc - a.total_spent_calc)
+    .sort((a, b) => b.total_spent - a.total_spent)
 }
 
 export async function countRealOrders() {
@@ -396,7 +413,7 @@ export async function computeStats({ period, from, to }) {
   const when = (o) => tsOf(o.created_at)
   const startMs = start ? start.getTime() : null
   const endMs = end ? end.getTime() : null
-  const live = orders.filter((o) => o.status !== 'cancelled' && !o.is_demo)
+  const live = orders.filter((o) => isConfirmed(o) && !o.is_demo)
   const sumOf = (list) => ({ total: list.reduce((s, o) => s + Number(o.total_usd), 0), n: list.length })
 
   const revenue = sumOf(live.filter((o) => (startMs === null || when(o) >= startMs) && (endMs === null || when(o) <= endMs)))
@@ -447,8 +464,8 @@ export async function computeStats({ period, from, to }) {
   const groups = new Map()
   for (const it of items) {
     const o = orderById.get(it.order_id)
-    if (!o || o.is_demo) continue
-    const g = groups.get(it.product_id) ?? { product_id: it.product_id, name: it.name, qty: 0, revenue: 0 }
+    if (!o || o.is_demo || !isConfirmed(o)) continue
+    const g = groups.get(it.product_id) ?? { productId: it.product_id, name: it.name, qty: 0, revenue: 0 }
     g.qty += Number(it.quantity)
     g.revenue += Number(it.quantity) * Number(it.price_usd)
     groups.set(it.product_id, g)

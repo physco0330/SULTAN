@@ -71,7 +71,7 @@ export function FilterPanel({
   onChange: (patch: FilterCallbacks) => void
   bounds: { min: number; max: number }
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const toggle = (field: 'genders' | 'categories' | 'sizes' | 'colors' | 'collections' | 'availability' | 'quality') => (id: string) => {
     const current = state[field] as string[]
@@ -96,9 +96,10 @@ export function FilterPanel({
   const categories = useCategories()
   const allCollections = useCollections()
 
+  const isSpanish = i18n.language?.startsWith('es')
   const collections: { id: CollectionId; label: string }[] = allCollections.map((c) => ({
     id: c.id as CollectionId,
-    label: c.label_es,
+    label: isSpanish ? c.label_es : c.label_en || c.label_es,
   }))
 
 
@@ -123,7 +124,7 @@ export function FilterPanel({
 
       <CheckGroup options={genders} value={state.genders} onToggle={toggle('genders')} label={t('catalog.gender')} />
       <CheckGroup
-        options={categories.map((c) => ({ id: c.id, label: c.label }))}
+        options={categories.map((c) => ({ id: c.id, label: t(`catalog.types.${c.id}`, { defaultValue: c.label }) }))}
         value={state.categories}
         onToggle={toggle('categories')}
         label={t('catalog.type')}

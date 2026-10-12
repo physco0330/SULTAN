@@ -4,10 +4,10 @@ import { Minus, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { CartItem } from '@/types'
 import { Drawer } from '@/components/Drawer'
-import { useCart, cartKey } from '@/store/cart'
+import { useCart, cartKey, maxQtyFor } from '@/store/cart'
 import { convertPrice, formatPrice } from '@/data/currencies'
 import { useCurrency } from '@/store/currency'
-import { applyPromo, discountAmount, FLAT_SHIPPING_USD, FREE_SHIPPING_THRESHOLD_USD } from '@/services/discounts'
+import { applyPromo, discountAmount, FREE_SHIPPING_THRESHOLD_USD } from '@/services/discounts'
 import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
 import { SafeImage } from '@/components/SafeImage'
@@ -22,6 +22,7 @@ function LineItem({ item, index }: { item: CartItem; index: number }) {
   const updateQty = useCart((s) => s.updateQty)
   const code = useCurrency((s) => s.code)
   const key = cartKey(item.productId, item.size, item.color)
+  const atMax = item.quantity >= maxQtyFor(item.stock)
 
   return (
     <li className={cn('flex gap-4 border-b border-gold/10 py-4', index === 0 && 'pt-2')}>
@@ -44,7 +45,7 @@ function LineItem({ item, index }: { item: CartItem; index: number }) {
         <p className="mt-0.5 text-xs text-bone">
           {t('cart.size')}: {item.size} · {t('cart.color')}: {item.color}
         </p>
-        <div className="mt-2 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between gap-2">
           <div className="flex items-center border border-gold/25">
             <button
               onClick={() => updateQty(key, item.quantity - 1)}
@@ -56,14 +57,22 @@ function LineItem({ item, index }: { item: CartItem; index: number }) {
             <span className="w-8 text-center text-sm text-ivory">{item.quantity}</span>
             <button
               onClick={() => updateQty(key, item.quantity + 1)}
+              disabled={atMax}
               aria-label="+"
-              className="flex h-8 w-8 items-center justify-center text-silver hover:text-gold"
+              className="flex h-8 w-8 items-center justify-center text-silver hover:text-gold disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-silver"
             >
               <Plus size={13} />
             </button>
           </div>
-          <span className="text-sm font-medium text-gold">{formatIn(item.price * item.quantity, code)}</span>
+          <span className="min-w-0 text-right text-sm font-medium text-gold">
+            {formatIn(item.price * item.quantity, code)} <span className="text-xs font-normal text-bone">×{item.quantity}</span>
+          </span>
         </div>
+        {item.stock !== undefined && (
+          <p className={cn('mt-1.5 text-[0.62rem] uppercase tracking-widest', item.stock <= 3 ? 'text-red-400' : 'text-bone')}>
+            {t('cart.stockLeft', { count: item.stock })}
+          </p>
+        )}
       </div>
     </li>
   )
@@ -81,9 +90,10 @@ export function CartDrawer() {
   const [promoInput, setPromoInput] = useState('')
 
   const subtotalUsd = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  const unitsCount = items.reduce((s, i) => s + i.quantity, 0)
   const discountUsd = promoCode ? discountAmount(promoCode, subtotalUsd) : 0
-  const shippingUsd = subtotalUsd - discountUsd === 0 || subtotalUsd - discountUsd >= FREE_SHIPPING_THRESHOLD_USD ? 0 : FLAT_SHIPPING_USD
-  const totalUsd = Math.max(subtotalUsd - discountUsd, 0) + shippingUsd
+  /* El envío no se muestra aquí: depende de la dirección y se calcula en checkout. */
+  const totalUsd = Math.max(subtotalUsd - discountUsd, 0)
   const remainingUsd = Math.max(FREE_SHIPPING_THRESHOLD_USD - (subtotalUsd - discountUsd), 0)
   const progress = Math.min(((subtotalUsd - discountUsd) / FREE_SHIPPING_THRESHOLD_USD) * 100, 100)
 
@@ -156,12 +166,12 @@ export function CartDrawer() {
 
           <div className="mt-5 space-y-2 border-t border-gold/15 px-5 pt-4 text-sm">
             <div className="flex justify-between text-bone">
-              <span>{t('cart.subtotal')}</span>
-              <span className="text-ivory">{formatIn(subtotalUsd, code)}</span>
+              <span>{t('cart.totalUnits')}</span>
+              <span className="text-ivory">{unitsCount}</span>
             </div>
             <div className="flex justify-between text-bone">
-              <span>{t('cart.shipping')}</span>
-              <span className="text-ivory">{shippingUsd === 0 ? t('misc.freeShippingBadge') : formatIn(shippingUsd, code)}</span>
+              <span>{t('cart.subtotal')}</span>
+              <span className="text-ivory">{formatIn(subtotalUsd, code)}</span>
             </div>
             {discountUsd > 0 && (
               <div className="flex justify-between text-bone">
@@ -173,6 +183,7 @@ export function CartDrawer() {
               <span className="text-ivory">{t('cart.total')}</span>
               <span className="font-display text-lg text-gold">{formatIn(totalUsd, code)}</span>
             </div>
+            <p className="text-xs text-bone">{t('cart.shippingNote')}</p>
           </div>
 
           <div className="mt-5 px-5 pb-6">

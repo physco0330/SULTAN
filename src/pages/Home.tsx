@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUpRight, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { heroImage, categoryImage, editorialImage } from '@/utils/placeholder'
 import { useCatalog } from '@/hooks/useCatalog'
+import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { Reveal } from '@/components/Reveal'
 import { SectionTitle } from '@/components/SectionTitle'
 import { ProductGrid } from '@/components/ProductGrid'
@@ -121,7 +122,8 @@ function Categories() {
 function Featured() {
   const { t } = useTranslation()
   const { products } = useCatalog()
-  const featured = products.filter((p) => p.featured && p.collection !== 'offers').slice(0, 10)
+  /* Edición limitada: solo productos de la colección "limited" (la API ya devuelve activos), máximo 5. */
+  const featured = products.filter((p) => p.collection === 'limited').slice(0, 5)
   return (
     <section className="border-y border-gold/10 bg-carbon/40 py-20 md:py-28">
       <div className="mx-auto max-w-[1600px] px-4 lg:px-8">
@@ -151,17 +153,23 @@ const PILLARS = [
 
 function Philosophy() {
   const { t } = useTranslation()
+  const cfg = useStoreConfig()
   return (
     <section className="mx-auto max-w-[1600px] px-4 py-20 md:py-28 lg:px-8">
       <div className="grid items-center gap-12 lg:grid-cols-2">
         <Reveal variant="fade-in">
           <div className="grid grid-cols-2 gap-3">
-            <img src={editorialImage('ATELIER I')} alt="" loading="lazy" className="aspect-[3/4] w-full object-cover border border-gold/10" />
-            <img src={editorialImage('ATELIER II')} alt="" loading="lazy" className="mt-10 aspect-[3/4] w-full object-cover border border-gold/10" />
+            <img src={cfg.philosophyImage1 || editorialImage('ATELIER I')} alt="" loading="lazy" className="aspect-[3/4] w-full object-cover border border-gold/10" />
+            <img src={cfg.philosophyImage2 || editorialImage('ATELIER II')} alt="" loading="lazy" className="mt-10 aspect-[3/4] w-full object-cover border border-gold/10" />
           </div>
         </Reveal>
         <div>
-          <SectionTitle align="left" eyebrow={t('about.kicker')} title={t('sections.philosophy.title')} subtitle={t('sections.philosophy.subtitle')} />
+          <SectionTitle
+            align="left"
+            eyebrow={t('about.kicker')}
+            title={cfg.philosophyTitle || t('sections.philosophy.title')}
+            subtitle={cfg.philosophyText || t('sections.philosophy.subtitle')}
+          />
           <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2">
             {PILLARS.map((p, i) => (
               <Reveal key={p.key} delay={i * 70}>
