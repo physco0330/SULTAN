@@ -264,7 +264,10 @@
     "couponInvalid": "Cupón no válido",
     "couponApplied": "Cupón aplicado",
     "couponOneOnly": "Solo se puede usar un cupón por pedido. Aplicar uno nuevo reemplaza al anterior.",
-    "couponMin": "Cupón no válido"
+    "couponMin": "Cupón no válido",
+    "serverErrorTitle": "No pudimos registrar tu pedido",
+    "serverError": "No nos conectamos con el servidor, así que el pedido no se ha creado ni se ha cobrado nada.",
+    "serverErrorRetry": "Tu carrito sigue intacto: revisa tu conexión e inténtalo de nuevo."
   },
   "favorites": {
     "title": "Favoritos",
@@ -542,7 +545,8 @@
     "send": "Publicar reseña",
     "sendError": "No se pudo publicar la reseña",
     "success": "¡Gracias! Tu reseña fue publicada",
-    "verified": "Compra verificada"
+    "verified": "Compra verificada",
+    "pendingNotice": "¡Gracias! Tu reseña se publicará cuando sea aprobada."
   },
   "misc": {
     "loading": "Cargando",

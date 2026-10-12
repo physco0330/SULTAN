@@ -10,6 +10,7 @@ import { validateCoupon } from '@/services/productService'
 import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
+import { SafeImage } from '@/components/SafeImage'
 
 function fmt(usd: number, code: string) {
   return formatPrice(convertPrice(usd, 'USD', code), code)
@@ -87,7 +88,7 @@ export default function CartPage() {
                 return (
                   <li key={key} className="grid grid-cols-[64px_1fr] gap-4 border-b border-gold/10 px-5 py-5 md:grid-cols-[80px_1fr_90px_120px] md:items-center">
                     <Link to={`/producto/${item.slug}`} className="block aspect-[3/4] max-h-24 overflow-hidden border border-gold/15">
-                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      <SafeImage src={item.image} alt={item.name} />
                     </Link>
                     <div>
                       <Link to={`/producto/${item.slug}`} className="font-display text-sm text-ivory hover:text-gold">{item.name}</Link>

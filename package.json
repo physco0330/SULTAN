@@ -11,6 +11,10 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "start": "node server/index.mjs",
+    "db:check": "node scripts/db.mjs check",
+    "db:backup": "node scripts/db.mjs backup",
+    "db:prune": "node scripts/db.mjs prune",
+    "db:migrate": "node scripts/db.mjs migrate",
     "typecheck": "tsc --noEmit --pretty",
     "lint": "tsc --noEmit"
   },

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Star, Send, MessageSquareQuote } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { api } from '@/services/api'
@@ -6,7 +6,7 @@ import { useUi } from '@/store/ui'
 import { subscribeDataVersion } from '@/utils/liveSync'
 import { Reveal } from '@/components/Reveal'
 import { SectionTitle } from '@/components/SectionTitle'
-import type { ReviewRow } from '@/services/adminService'
+import type { PublicReview } from '@/services/adminService'
 import { cn } from '@/utils/cn'
 
 const input =
@@ -46,15 +46,19 @@ function Stars({ value, onSelect, size = 13 }: { value: number; onSelect?: (v: n
 export function ReviewsSection() {
   const { t } = useTranslation()
   const pushToast = useUi((s) => s.pushToast)
-  const [items, setItems] = useState<ReviewRow[]>([])
+  const [items, setItems] = useState<PublicReview[]>([])
+  const [summary, setSummary] = useState({ count: 0, average: 0 })
   const [busy, setBusy] = useState(true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', city: '', rating: 5, comment: '' })
 
   const load = useCallback(() => {
     api
-      .get<{ items: ReviewRow[] }>('/reviews')
-      .then((r) => setItems(r.items))
+      .get<{ items: PublicReview[]; summary: { count: number; average: number } }>('/reviews')
+      .then((r) => {
+        setItems(r.items)
+        setSummary(r.summary)
+      })
       .catch(() => setItems([]))
       .finally(() => setBusy(false))
   }, [])
@@ -66,19 +70,17 @@ export function ReviewsSection() {
   /* Live sync: refresh the reviews silently when data changes anywhere. */
   useEffect(() => subscribeDataVersion(load), [load])
 
-  const average = useMemo(() => {
-    if (items.length === 0) return 0
-    return Math.round((items.reduce((s, r) => s + r.rating, 0) / items.length) * 10) / 10
-  }, [items])
+  /* El promedio lo calcula el servidor sobre TODAS las aprobadas, no solo las 50 visibles. */
+  const average = summary.average
 
   const submit = async () => {
     if (!form.name.trim()) return pushToast(t('reviews.nameRequired'), 'error')
     if (!form.comment.trim() || form.comment.trim().length < 4) return pushToast(t('reviews.commentRequired'), 'error')
     setSaving(true)
     try {
-      await api.post('/reviews', form)
+      await api.post<{ ok: boolean; status: string }>('/reviews', form)
       setForm({ name: '', city: '', rating: 5, comment: '' })
-      pushToast(t('reviews.success'))
+      pushToast(t('reviews.pendingNotice'))
       load()
     } catch (err) {
       pushToast(err instanceof Error ? err.message : t('reviews.sendError'), 'error')
@@ -98,7 +100,7 @@ export function ReviewsSection() {
             <div>
               <Stars value={average} size={16} />
               <p className="mt-1 text-xs text-bone">
-                {items.length} {t('reviews.count')} · {t('reviews.latest50')}
+                {summary.count} {t('reviews.count')} · {t('reviews.latest50')}
               </p>
             </div>
           </div>
@@ -127,7 +129,6 @@ export function ReviewsSection() {
                         <p className="truncate text-sm font-medium text-ivory">{r.name}</p>
                         <p className="truncate text-xs text-bone">
                           {r.city || 'SULTAN BLACK'}
-                          {r.rating === 5 && <span className="ml-2 text-gold">★ {t('reviews.verified')}</span>}
                         </p>
                       </div>
                     </footer>

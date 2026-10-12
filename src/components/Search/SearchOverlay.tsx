@@ -8,6 +8,7 @@ import { useCategories } from '@/hooks/useTaxonomies'
 import { useCatalog } from '@/hooks/useCatalog'
 import { Price } from '@/components/Price'
 import { useUi } from '@/store/ui'
+import { SafeImage } from '@/components/SafeImage'
 
 const RECENT_KEY = 'sultan-recent-searches'
 
@@ -161,7 +162,7 @@ export function SearchOverlay() {
                           onClick={close}
                           className="group flex items-center gap-4 border border-transparent bg-carbon/60 p-3 transition-all hover:border-gold/40 hover:bg-onyx"
                         >
-                          <img src={p.images[0]?.src} alt="" className="h-16 w-12 object-cover" />
+                          <SafeImage src={p.images[0]?.src} alt={p.name} className="h-16 w-12" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-ivory transition-colors group-hover:text-gold">{p.name}</p>
                             <p className="text-xs text-bone">{t(`catalog.types.${p.category}`)} · {p.sku}</p>

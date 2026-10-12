@@ -8,6 +8,7 @@ export interface AdminUser {
   username: string
   name: string
   role: string
+  mustChangePassword?: boolean
 }
 
 export type AdminProduct = Product & { active: boolean }
@@ -45,6 +46,7 @@ export interface AdminOrder {
   currency: string
   coupon_code: string | null
   status: string
+  is_demo?: number
   created_at: string
   itemCount: number
   quantity: number
@@ -139,19 +141,48 @@ export interface AuditRow {
   created_at: string
 }
 
-export interface ReviewRow {
+export interface PublicReview {
   id: number
   name: string
   city: string | null
   rating: number
   comment: string
+  product_id: string | null
   created_at: string
+}
+
+export type ReviewStatus = 'pending' | 'approved' | 'rejected'
+
+export interface AdminReview {
+  id: number
+  name: string
+  city: string | null
+  rating: number
+  comment: string
+  product_id: string | null
+  product_name: string | null
+  product_slug: string | null
+  status: ReviewStatus
+  is_demo?: number
+  created_at: string
+  updated_at: string | null
+}
+
+export interface ReviewInput {
+  name: string
+  city?: string
+  rating: number
+  comment: string
+  productId?: string | null
+  status?: ReviewStatus
 }
 
 export const adminService = {
   login: (username: string, password: string) =>
     api.post<{ token: string; user: AdminUser }>('/admin/auth/login', { username, password }),
   me: () => api.get<{ user: AdminUser }>('/admin/me'),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post<{ ok: boolean; token: string }>('/admin/auth/password', { currentPassword, newPassword }),
 
   stats: (period?: PeriodKey, range?: { from?: string; to?: string }) => {
     const qp = new URLSearchParams()
@@ -206,7 +237,19 @@ export const adminService = {
   deleteContact: (id: number) => api.del<{ ok: boolean }>(`/admin/contacts/${id}`),
 
   customers: () => api.get<{ items: CustomerRow[] }>('/admin/customers'),
-  reviews: () => api.get<{ items: ReviewRow[] }>('/admin/reviews'),
+  reviews: (params?: { status?: string; q?: string }) => {
+    const qp = new URLSearchParams()
+    if (params?.status) qp.set('status', params.status)
+    if (params?.q) qp.set('q', params.q)
+    const qs = qp.toString()
+    return api.get<{ items: AdminReview[]; counts: Record<string, number>; demoCount: number }>(`/admin/reviews${qs ? `?${qs}` : ''}`)
+  },
+  purgeDemoContent: (scope: 'reviews' | 'orders') =>
+    api.post<{ ok: true; removed: Record<string, number> }>('/admin/demo/purge', { scope }),
+  createReview: (body: ReviewInput) => api.post<{ review: AdminReview }>('/admin/reviews', body),
+  updateReview: (id: number, body: ReviewInput) => api.put<{ review: AdminReview }>(`/admin/reviews/${id}`, body),
+  moderateReview: (id: number, status: 'pending' | 'approved' | 'rejected') =>
+    api.patch<{ ok: boolean }>(`/admin/reviews/${id}`, { status }),
   deleteReview: (id: number) => api.del<{ ok: boolean }>(`/admin/reviews/${id}`),
   audit: () => api.get<{ items: AuditRow[] }>('/admin/audit'),
 

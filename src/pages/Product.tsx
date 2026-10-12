@@ -10,6 +10,7 @@ import { Price } from '@/components/Price'
 import { Rating } from '@/components/Rating'
 import { AccordionItem } from '@/components/Accordion'
 import { Modal } from '@/components/Modal'
+import { SafeImage } from '@/components/SafeImage'
 import { isFeatureEnabled } from '@/config/features'
 import { ProductGrid } from '@/components/ProductGrid'
 import { Reveal } from '@/components/Reveal'
@@ -143,10 +144,10 @@ export default function Product() {
         {/* Gallery */}
         <div>
           <div className="group relative overflow-hidden border border-gold/15 bg-ash">
-            <img
+            <SafeImage
               src={product.images[activeImg]?.src}
               alt={product.name}
-              className="aspect-[3/4] w-full object-cover transition-transform duration-700 group-hover:scale-105"
+              className="aspect-[3/4] w-full transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute right-4 top-4 flex flex-col gap-2">
               {product.isNew && <Badge tone="silver">{t('badges.new')}</Badge>}
@@ -166,7 +167,7 @@ export default function Product() {
                   i === activeImg ? 'border-gold' : 'border-gold/15 hover:border-gold/50',
                 )}
               >
-                <img src={img.src} alt="" className="h-full w-full object-cover" />
+                <SafeImage src={img.src} alt={`${product.name} — ${i + 1}`} />
               </button>
             ))}
           </div>

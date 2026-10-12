@@ -44,6 +44,7 @@ export function AdminOrders() {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<AdminOrderStatus | ''>('')
   const [query, setQuery] = useState('')
+  const [showDemo, setShowDemo] = useState<'exclude' | 'only' | 'all'>('exclude')
   const [period, setPeriod] = useState<PeriodValue>(EMPTY_PERIOD)
   const [advOpen, setAdvOpen] = useState(false)
   const [page, setPage] = useState(1)
@@ -76,6 +77,8 @@ export function AdminOrders() {
     const q = query.trim().toLowerCase()
     return orders.filter((o) => {
       if (status && o.status !== status) return false
+      if (showDemo === 'exclude' && o.is_demo === 1) return false
+      if (showDemo === 'only' && o.is_demo !== 1) return false
       if (q) {
         const hay = `${o.number} ${o.customer_name} ${o.customer_email ?? ''}`.toLowerCase()
         if (!hay.includes(q)) return false
@@ -88,11 +91,11 @@ export function AdminOrders() {
       }
       return true
     })
-  }, [orders, status, query, period])
+  }, [orders, status, query, period, showDemo])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
-  useEffect(() => { setPage(1) }, [status, query, period.from, period.to])
+  useEffect(() => { setPage(1) }, [status, query, period.from, period.to, showDemo])
   const pageItems = useMemo(
     () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
     [filtered, safePage],
@@ -234,7 +237,7 @@ export function AdminOrders() {
 
         {/* ---------- filtros avanzados ---------- */}
         {advOpen && (
-          <div className="mt-3 grid gap-3 border-t border-gold/15 pt-3 sm:grid-cols-3">
+          <div className="mt-3 grid gap-3 border-t border-gold/15 pt-3 sm:grid-cols-4">
             <div>
               <p className="mb-1.5 text-[0.58rem] font-semibold uppercase tracking-[0.24em] text-bone">Estado</p>
               <div className="flex flex-wrap gap-1.5">
@@ -242,6 +245,20 @@ export function AdminOrders() {
                 {ORDER_STATUSES.map((s) => (
                   <button key={s} onClick={() => setStatus(s)} className={cn('border px-2.5 py-1.5 text-[0.58rem] uppercase tracking-wider', status === s ? 'border-gold bg-gold text-night' : 'border-gold/25 text-bone hover:text-gold')}>
                     {STATUS_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-1.5 text-[0.58rem] font-semibold uppercase tracking-[0.24em] text-bone">Contenido</p>
+              <div className="flex flex-wrap gap-1.5">
+                {([['exclude', 'Solo reales'], ['only', 'Solo demo'], ['all', 'Todos']] as const).map(([v, label]) => (
+                  <button
+                    key={v}
+                    onClick={() => setShowDemo(v)}
+                    className={cn('border px-2.5 py-1.5 text-[0.58rem] uppercase tracking-wider', showDemo === v ? 'border-gold bg-gold text-night' : 'border-gold/25 text-bone hover:text-gold')}
+                  >
+                    {label}
                   </button>
                 ))}
               </div>

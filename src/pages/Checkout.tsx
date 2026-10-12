@@ -11,6 +11,7 @@ import { ApiError } from '@/services/api'
 import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { brandConfig } from '@/config/brand'
 import { cn } from '@/utils/cn'
+import { SafeImage } from '@/components/SafeImage'
 
 export default function Checkout() {
   const { t } = useTranslation()
@@ -112,6 +113,7 @@ export default function Checkout() {
     `https://wa.me/${brandConfig.whatsappNumber}?text=${encodeURIComponent(buildWaMessage(orderNumber))}`
 
   const [placed, setPlaced] = useState<{ number: string; offline: boolean; waUrl: string } | null>(null)
+  const [serverError, setServerError] = useState(false)
   const [couponInput, setCouponInput] = useState('')
   const [couponBusy, setCouponBusy] = useState(false)
   const [couponError, setCouponError] = useState('')
@@ -141,6 +143,7 @@ export default function Checkout() {
     e.preventDefault()
     if (!validate() || placing) return
     setPlacing(true)
+    setServerError(false)
     try {
       const order = await placeOrder({
         items: items.map((it) => ({
@@ -165,14 +168,15 @@ export default function Checkout() {
       setPlaced({ number: order.number, offline: false, waUrl: waUrlFor(order.number) })
       window.open(waUrlFor(order.number), '_blank', 'noopener,noreferrer')
     } catch (err) {
+      /* Nunca se inventa un pedido: si el servidor no confirma, el cliente
+         tiene que saberlo. El carrito se conserva para reintentar. */
       if (err instanceof ApiError && err.status === 409) {
         pushToast(err.message, 'error')
+      } else if (err instanceof ApiError) {
+        pushToast(err.message, 'error')
       } else {
-        const number = `S-${Math.floor(100000 + Math.random() * 899999)}`
-        clear()
-        setPlaced({ number, offline: true, waUrl: waUrlFor(number) })
-        pushToast('Modo demostración: sin conexión al servidor, pedido simulado', 'info')
-        window.open(waUrlFor(number), '_blank', 'noopener,noreferrer')
+        setServerError(true)
+        pushToast(t('checkout.serverError'), 'error')
       }
     } finally {
       setPlacing(false)
@@ -234,6 +238,13 @@ export default function Checkout() {
 
       <form onSubmit={submit} className="mt-10 grid gap-10 lg:grid-cols-[1fr_400px]">
         <div className="space-y-6">
+          {serverError && (
+            <div role="alert" className="border border-red-500/50 bg-red-500/5 p-4">
+              <p className="text-sm font-medium text-red-300">{t('checkout.serverErrorTitle')}</p>
+              <p className="mt-1 text-xs leading-relaxed text-bone">{t('checkout.serverError')}</p>
+              <p className="mt-2 text-xs leading-relaxed text-bone">{t('checkout.serverErrorRetry')}</p>
+            </div>
+          )}
           <section className="border border-gold/15 p-6 md:p-8">
             <h2 className="font-display mb-5 text-lg text-ivory">1 · {t('checkout.contact')}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -327,7 +338,7 @@ export default function Checkout() {
                 {items.map((it) => (
                   <li key={`${it.productId}-${it.size}-${it.color}`} className="flex items-center gap-3">
                     <div className="relative aspect-[3/4] w-12 shrink-0 overflow-hidden border border-gold/15">
-                      <img src={it.image} alt={it.name} className="h-full w-full object-cover" />
+                      <SafeImage src={it.image} alt={it.name} />
                       <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center bg-gold text-[0.6rem] font-bold text-night">{it.quantity}</span>
                     </div>
                     <div className="min-w-0 flex-1">

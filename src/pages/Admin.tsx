@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Package, ShoppingBag, LogOut, Mail, Users, Banknote, ShieldCheck, PencilRuler, MessageSquare, Image, Truck, Tags } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, LogOut, Mail, Users, Banknote, ShieldCheck, PencilRuler, MessageSquare, Truck, Tags } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getAdminToken, setAdminToken } from '@/services/api'
 import { adminService } from '@/services/adminService'
 import { AdminLogin } from '@/admin/AdminLogin'
+import { ForcePasswordChange } from '@/admin/ForcePasswordChange'
 import { AdminDashboard } from '@/admin/AdminDashboard'
 import { AdminProducts } from '@/admin/AdminProducts'
 import { AdminOrders } from '@/admin/AdminOrders'
-import { AdminImages } from '@/admin/AdminImages'
 import { AdminTaxonomies } from '@/admin/AdminTaxonomies'
 import { AdminSuppliers } from '@/admin/AdminSuppliers'
 import { AdminSettings, type AdminSettingsSection } from '@/admin/AdminSettings'
@@ -15,13 +15,12 @@ import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
 import type { AdminUser } from '@/services/adminService'
 
-type Section = 'dashboard' | 'products' | 'orders' | 'images' | 'taxonomies' | 'suppliers' | AdminSettingsSection
+type Section = 'dashboard' | 'products' | 'orders' | 'taxonomies' | 'suppliers' | AdminSettingsSection
 
 const NAV: { key: Section; label: string; icon: typeof LayoutDashboard; group: 'general' | 'ventas' | 'catalogo' }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'general' },
   { key: 'products', label: 'Productos', icon: Package, group: 'ventas' },
   { key: 'orders', label: 'Pedidos', icon: ShoppingBag, group: 'ventas' },
-  { key: 'images', label: 'Imágenes del catálogo', icon: Image, group: 'catalogo' },
   { key: 'taxonomies', label: 'Categorías y colecciones', icon: Tags, group: 'catalogo' },
 ]
 
@@ -39,7 +38,6 @@ const SECTION_TITLE: Record<string, string> = {
   dashboard: 'Dashboard',
   products: 'Productos',
   orders: 'Pedidos',
-  images: 'Imágenes del catálogo',
   taxonomies: 'Categorías y colecciones',
   suppliers: 'Proveedores',
   Empresa: 'Configuración · Empresa',
@@ -91,6 +89,15 @@ export default function Admin() {
   }
 
   if (checking) return null
+  if (user?.mustChangePassword) {
+    return (
+      <ForcePasswordChange
+        onDone={() =>
+          setUser((u) => (u ? { ...u, mustChangePassword: false } : u))
+        }
+      />
+    )
+  }
   if (!authorized || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-night px-4">
@@ -104,7 +111,7 @@ export default function Admin() {
     )
   }
 
-  const isSettings = !['dashboard', 'products', 'orders', 'images', 'taxonomies', 'suppliers'].includes(section)
+  const isSettings = !['dashboard', 'products', 'orders', 'taxonomies', 'suppliers'].includes(section)
 
   return (
     <div className="flex min-h-screen bg-night text-ivory">
@@ -209,7 +216,6 @@ export default function Admin() {
           {section === 'dashboard' && <AdminDashboard onNavigate={setSection} />}
           {section === 'products' && <AdminProducts />}
           {section === 'orders' && <AdminOrders />}
-          {section === 'images' && <AdminImages />}
           {section === 'taxonomies' && <AdminTaxonomies />}
           {section === 'suppliers' && <AdminSuppliers />}
           {isSettings && (

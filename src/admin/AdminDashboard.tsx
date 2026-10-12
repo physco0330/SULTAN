@@ -1,12 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { DollarSign, ShoppingBag, Package, AlertTriangle, Star, Users, Mail, Truck, FileSpreadsheet, File as FileIcon, FileText, RefreshCw, Receipt } from 'lucide-react'
+import { DollarSign, ShoppingBag, Package, AlertTriangle, Star, Users, Mail, Truck, FileSpreadsheet, File as FileIcon, FileText, Receipt } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { useUi } from '@/store/ui'
 import { PeriodPicker, periodLabel } from '@/admin/Calendar'
 import type { PeriodValue } from '@/admin/Calendar'
 import { Section, StatCard, StatusBadge, shortDate, usd, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { exportCsv, exportXlsx, exportPdf } from '@/admin/exporters'
+import { ProductThumb } from '@/admin/ProductThumb'
 import type { AdminStats, PeriodKey } from '@/services/adminService'
 
 const EMPTY_PERIOD: PeriodValue = { mode: 'range', from: null, to: null }
@@ -27,19 +28,6 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
   const [periodValue, setPeriodValue] = useState<PeriodValue>(EMPTY_PERIOD)
   const [exporting, setExporting] = useState(false)
   const pushToast = useUi((s) => s.pushToast)
-
-  const load = useCallback(
-    (v: PeriodValue) => {
-      setBusy(true)
-      const q = periodToQuery(v)
-      return adminService
-        .stats(q.period, { from: q.from, to: q.to })
-        .then(setStats)
-        .catch((e) => pushToast(e instanceof Error ? e.message : 'Error al cargar', 'error'))
-        .finally(() => setBusy(false))
-    },
-    [pushToast],
-  )
 
   useEffect(() => {
     let dead = false
@@ -117,13 +105,6 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
           </button>
           <span className="mx-2 hidden h-6 w-px bg-gold/15 sm:block" />
           <p className="text-lg text-bone">{periodLabel(periodValue)}</p>
-          <button
-            onClick={() => load(periodValue)}
-            title="Actualizar"
-            className="ml-1 flex h-9 w-9 items-center justify-center border border-gold/40 text-gold hover:bg-gold hover:text-night"
-          >
-            <RefreshCw size={14} />
-          </button>
         </div>
       </div>
 
@@ -215,7 +196,7 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
             <ul className="divide-y divide-gold/10">
               {stats.lowStockProducts.map((p) => (
                 <li key={p.id} className="flex items-center gap-4 px-5 py-3">
-                  <img src={p.images[0]?.src} alt="" className="h-12 w-9 border border-gold/15 object-cover" />
+                  <ProductThumb src={p.images[0]?.src} alt={p.name} className="h-12 w-9 shrink-0 border border-gold/15" />
                   <Link to={`/producto/${p.slug}`} className="min-w-0 flex-1 truncate text-sm text-ivory hover:text-gold">
                     {p.name}
                   </Link>

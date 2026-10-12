@@ -9,6 +9,7 @@ import { Price } from '@/components/Price'
 import { Rating } from '@/components/Rating'
 import { EmptyState } from '@/components/EmptyState'
 import { useCatalog } from '@/hooks/useCatalog'
+import { SafeImage } from '@/components/SafeImage'
 
 export default function Favorites() {
   const { t } = useTranslation()
@@ -42,7 +43,7 @@ export default function Favorites() {
           {favorites.map((p) => (
             <div key={p.id} className="group">
               <Link to={`/producto/${p.slug}`} className="relative block aspect-[3/4] overflow-hidden border border-gold/10">
-                <img src={p.images[0].src} alt={p.name} className="h-full w-full object-cover" />
+                <SafeImage src={p.images[0]?.src} alt={p.name} />
                 <span className="absolute inset-0 flex items-center justify-center bg-night/60 opacity-0 transition-opacity group-hover:opacity-100">
                   <span className="border border-gold/60 px-5 py-2.5 text-[0.66rem] font-semibold uppercase tracking-[0.26em] text-gold">
                     {t('product.viewProduct')}

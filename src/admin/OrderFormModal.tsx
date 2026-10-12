@@ -125,7 +125,7 @@ export function OrderFormModal({
                       <option value="">— Seleccionar producto —</option>
                       {products.map((x) => (
                         <option key={x.id} value={x.id} disabled={x.stock === 0}>
-                          {x.name} · {x.sku} (${x.price} · stock {x.stock})
+                          {x.name} (${x.price} · stock {x.stock})
                         </option>
                       ))}
                     </select>

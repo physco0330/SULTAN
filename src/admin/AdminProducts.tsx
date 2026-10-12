@@ -4,6 +4,7 @@ import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { useUi } from '@/store/ui'
 import { ProductFormModal } from '@/admin/ProductFormModal'
+import { ProductThumb } from '@/admin/ProductThumb'
 import { Modal } from '@/components/Modal'
 import { usd, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { useCategories, useCollections } from '@/hooks/useTaxonomies'
@@ -93,7 +94,7 @@ export function AdminProducts() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por nombre o SKU…"
+              placeholder="Buscar por nombre o categoría…"
               className="w-full border border-gold/25 bg-night py-2.5 pl-9 pr-3 text-sm text-ivory placeholder:text-bone/60 focus:border-gold focus:outline-none"
             />
           </div>
@@ -127,15 +128,15 @@ export function AdminProducts() {
             </thead>
             <tbody className="divide-y divide-gold/10">
               {loading && products.length === 0 && <EmptyRow colSpan={8} message="Cargando…" />}
-              {!loading && products.length === 0 && <EmptyRow colSpan={7} message="No hay productos que coincidan con la búsqueda" />}
+              {!loading && products.length === 0 && <EmptyRow colSpan={8} message="No hay productos que coincidan con la búsqueda" />}
               {products.map((p) => (
                 <tr key={p.id} className="hover:bg-carbon/60">
                   <Td>
                     <div className="flex items-center gap-3">
-                      <img src={p.images[0]?.src} alt="" className="h-14 w-11 shrink-0 border border-gold/15 object-cover" />
+                      <ProductThumb src={p.images[0]?.src} alt={p.name} className="h-14 w-11 shrink-0 border border-gold/15" />
                       <div className="min-w-0">
                         <p className="truncate font-medium text-ivory">{p.name}</p>
-                        <p className="text-xs text-bone">{p.sku}</p>
+                        <p className="text-xs text-bone">{categories.find((c) => c.id === p.category)?.label ?? p.category}</p>
                       </div>
                     </div>
                   </Td>

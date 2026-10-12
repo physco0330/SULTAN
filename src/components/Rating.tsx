@@ -1,7 +1,25 @@
 import { Star } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/utils/cn'
 
+/**
+ * Valoración de un producto.
+ *
+ * Si el producto no tiene ninguna reseña real no se dibuja nada: mostrar
+ * "0 estrellas (0)" inventa una impresión de reseñas que no existen.
+ */
 export function Rating({ value, count, className }: { value: number; count?: number; className?: string }) {
+  const { t } = useTranslation()
+  const total = typeof count === 'number' ? count : 0
+
+  if (!total || value <= 0) {
+    return (
+      <span className={cn('text-[0.68rem] uppercase tracking-[0.18em] text-bone/70', className)}>
+        {t('product.noReviewsYet')}
+      </span>
+    )
+  }
+
   return (
     <div className={cn('flex items-center gap-2', className)}>
       <div className="flex" role="img" aria-label={`${value} / 5`}>
@@ -14,9 +32,9 @@ export function Rating({ value, count, className }: { value: number; count?: num
           />
         ))}
       </div>
-      {typeof count === 'number' && (
-        <span className="text-xs text-bone">({count})</span>
-      )}
+      <span className="text-xs text-bone">
+        {value.toFixed(1)} ({total})
+      </span>
     </div>
   )
 }

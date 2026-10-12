@@ -7,6 +7,7 @@ import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { SIZES, FABRIC_COLORS } from '@/data/categories'
 import { Spinner } from '@/admin/ui'
+import { ProductThumb } from '@/admin/ProductThumb'
 import { cn } from '@/utils/cn'
 import { isFeatureEnabled } from '@/config/features'
 import type { Gender, CollectionId, CategoryId, ProductQuality } from '@/types'
@@ -44,7 +45,6 @@ export function ProductFormModal({
     compareAtPrice: '',
     stock: '0',
     material: 'Premium cotton blend',
-    sku: '',
     description: '',
     sizes: [] as string[],
     colors: ['black'] as string[],
@@ -89,7 +89,6 @@ export function ProductFormModal({
         compareAtPrice: product.compareAtPrice ? String(Math.round(convertPrice(product.compareAtPrice, 'USD', 'COP'))) : '',
         stock: String(product.stock),
         material: product.material,
-        sku: product.sku,
         description: product.description,
         sizes: product.sizes,
         colors: product.colors.map((c) => c.id),
@@ -103,7 +102,7 @@ export function ProductFormModal({
       })
     } else {
       setImages([])
-      setForm((f) => ({ ...f, name: '', price: '', compareAtPrice: '', stock: '0', sku: '', description: '', costToUsd: '' }))
+      setForm((f) => ({ ...f, name: '', price: '', compareAtPrice: '', stock: '0', description: '', costToUsd: '' }))
     }
   }, [open, product])
 
@@ -194,7 +193,7 @@ export function ProductFormModal({
       compareAtPrice: form.compareAtPrice ? Math.round(convertPrice(Number(form.compareAtPrice), 'COP', 'USD')) : undefined,
       stock: Math.max(0, Number(form.stock)),
       material: form.material.trim() || 'Premium cotton blend',
-      sku: form.sku.trim(),
+      sku: product?.sku ?? '',
       description: form.description.trim(),
       colors: FABRIC_COLORS.filter((c) => form.colors.includes(c.id)).map((c) => ({
         id: c.id,
@@ -356,10 +355,6 @@ export function ProductFormModal({
           {input('stock', 'Ej. 24')}
           {errors.stock && <p className="mt-1 text-xs text-red-400">{errors.stock}</p>}
         </div>
-        <div>
-          <label className={label}>SKU</label>
-          {input('sku', 'Auto si se deja vacío')}
-        </div>
         <div className="md:col-span-2">
           <label className={label}>Material</label>
           {input('material', 'Ej. Moleskin cotton')}
@@ -474,7 +469,11 @@ export function ProductFormModal({
               <div className="flex flex-wrap gap-2">
                 {[...images].sort((a, b) => a.position - b.position || a.id - b.id).map((img) => (
                   <div key={img.id} className={cn('group relative h-24 w-19 overflow-hidden border', img.is_primary ? 'border-gold' : 'border-gold/15')} style={{ width: '4.75rem' }}>
-                    <img src={img.path} alt={img.alt || ''} className="h-full w-full object-cover" />
+                    <ProductThumb
+                      src={img.path}
+                      alt={img.alt || img.id.toString()}
+                      className="h-full w-full"
+                    />
                     {img.is_primary && (
                       <span className="absolute left-1 top-1 bg-gold px-1.5 py-0.5 text-[0.5rem] font-bold uppercase text-night">Portada</span>
                     )}

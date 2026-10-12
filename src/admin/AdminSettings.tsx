@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Trash2, Pencil, Star } from 'lucide-react'
+import { Plus, Trash2, Pencil } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { invalidateConfigCache } from '@/hooks/useStoreConfig'
 import { useUi } from '@/store/ui'
 import { usd, shortDate, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { cn } from '@/utils/cn'
-import type { CouponRow, SubscriberRow, CustomerRow, AuditRow, ReviewRow } from '@/services/adminService'
+import { AdminReviews } from '@/admin/AdminReviews'
+import type { CouponRow, SubscriberRow, CustomerRow, AuditRow } from '@/services/adminService'
 
 export type AdminSettingsSection = 'Empresa' | 'Cupones' | 'Suscriptores' | 'Clientes' | 'Reseñas' | 'Auditoría'
 const TABS: AdminSettingsSection[] = ['Empresa', 'Cupones', 'Suscriptores', 'Clientes', 'Reseñas', 'Auditoría']
@@ -41,7 +42,7 @@ export function AdminSettings({
       {tab === 'Cupones' && <CouponsPanel />}
       {tab === 'Suscriptores' && <SubscribersPanel />}
       {tab === 'Clientes' && <CustomersPanel />}
-      {tab === 'Reseñas' && <ReviewsPanel />}
+      {tab === 'Reseñas' && <AdminReviews />}
       {tab === 'Auditoría' && <AuditPanel />}
     </div>
   )
@@ -368,75 +369,6 @@ function CustomersPanel() {
   )
 }
 
-function ReviewsPanel() {
-  const [items, setItems] = useState<ReviewRow[]>([])
-  const [busy, setBusy] = useState(true)
-  const pushToast = useUi((s) => s.pushToast)
-
-  const load = useCallback(() => {
-    setBusy(true)
-    adminService
-      .reviews()
-      .then((r) => setItems(r.items))
-      .catch((e) => pushToast(e instanceof Error ? e.message : 'Error', 'error'))
-      .finally(() => setBusy(false))
-  }, [pushToast])
-
-  useEffect(() => {
-    load()
-  }, [load])
-
-  const remove = async (r: ReviewRow) => {
-    try {
-      await adminService.deleteReview(r.id)
-      setItems((list) => list.filter((x) => x.id !== r.id))
-      pushToast(`Reseña de ${r.name} eliminada`)
-    } catch (err) {
-      pushToast(err instanceof Error ? err.message : 'Error', 'error')
-    }
-  }
-
-  return (
-    <div className="overflow-hidden border border-gold/15 bg-carbon/40">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gold/15 px-5 py-4">
-        <p className="text-xs text-bone">
-          {items.length} reseñas registradas · se muestran en la página de inicio las 50 más recientes
-        </p>
-      </div>
-      <TableScroller>
-        <table className="w-full min-w-[720px]">
-          <thead className="border-b border-gold/15">
-            <tr><Th>Cliente</Th><Th>Calificación</Th><Th>Comentario</Th><Th>Fecha</Th><Th right>Acciones</Th></tr>
-          </thead>
-          <tbody className="divide-y divide-gold/10">
-            {busy && items.length === 0 && <EmptyRow colSpan={5} message="Cargando…" />}
-            {!busy && items.length === 0 && <EmptyRow colSpan={5} message="Sin reseñas todavía" />}
-            {items.map((r) => (
-              <tr key={r.id} className="hover:bg-carbon/60">
-                <Td>
-                  <p className="text-ivory">{r.name}</p>
-                  <p className="text-xs text-bone">{r.city ?? '—'}</p>
-                </Td>
-                <Td>
-                  <span className="flex items-center gap-1 text-gold">
-                    <Star size={13} className="fill-gold" /> {r.rating} / 5
-                  </span>
-                </Td>
-                <Td><span className="line-clamp-2 max-w-[300px] text-bone">{r.comment}</span></Td>
-                <Td><span className="text-bone">{shortDate(r.created_at)}</span></Td>
-                <Td right>
-                  <button onClick={() => remove(r)} aria-label="Eliminar reseña" title="Eliminar reseña" className="flex h-8 w-8 items-center justify-center border border-gold/20 text-bone hover:border-red-400/40 hover:text-red-400">
-                    <Trash2 size={13} />
-                  </button>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableScroller>
-    </div>
-  )
-}
 
 function AuditPanel() {
   const [items, setItems] = useState<AuditRow[]>([])

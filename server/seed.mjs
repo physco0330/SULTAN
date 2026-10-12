@@ -1,5 +1,5 @@
 import { initDb, db, nowIso } from './db.mjs'
-import { scryptSync, timingSafeEqual } from 'node:crypto'
+import { scryptSync, timingSafeEqual, randomBytes } from 'node:crypto'
 
 process.on('warning', (w) => {
   if (w.name === 'ExperimentalWarning') return
@@ -195,15 +195,34 @@ function seedCoupons() {
   rows.forEach((r) => insert.run(...r))
 }
 
+/**
+ * Cuenta de arranque.
+ * - Si se define SULTAN_ADMIN_PASSWORD (o SEED_ADMIN_PASSWORD) se usa esa.
+ * - Si no, se genera una contraseña aleatoria de un solo uso y se imprime por
+ *   consola: nunca queda una contraseña de ejemplo escrita en el repositorio.
+ * En ambos casos la cuenta nace con must_change_password = 1.
+ */
 function seedAdmin() {
   const existing = db.prepare("SELECT id FROM admin_users WHERE username = 'admin'").get()
   if (existing) return
-  const salt = Math.random().toString(36).slice(2) + Date.now().toString(36)
-  const hash = hashPassword('sultan2026', salt)
-  db.prepare('INSERT INTO admin_users (username, name, role, password_hash, salt) VALUES (?,?,?,?,?)').run(
-    'admin', 'Administrador', 'ADMIN', hash, salt,
-  )
-  console.log('seed: admin user created (username: admin, password: sultan2026)')
+
+  const fromEnv = String(process.env.SULTAN_ADMIN_PASSWORD || process.env.SEED_ADMIN_PASSWORD || '').trim()
+  const generated = !fromEnv
+  const password = fromEnv || randomBytes(12).toString('base64url')
+  const salt = randomBytes(16).toString('hex')
+  const hash = hashPassword(password, salt)
+
+  db.prepare(
+    'INSERT INTO admin_users (username, name, role, password_hash, salt, must_change_password) VALUES (?,?,?,?,?,1)',
+  ).run('admin', 'Administrador', 'ADMIN', hash, salt)
+
+  if (generated) {
+    console.log('seed: usuario admin creado.')
+    console.log(`seed: CONTRASENA TEMPORAL (solo se muestra ahora): ${password}`)
+    console.log('seed: cambiala al entrar al panel; no se guarda en ningún archivo.')
+  } else {
+    console.log('seed: usuario admin creado con SULTAN_ADMIN_PASSWORD (debe cambiarse al entrar).')
+  }
 }
 
 function seedSocial() {
@@ -248,8 +267,8 @@ function seedDemoOrders() {
   const orderIns = db.prepare(`INSERT INTO orders (
     number, customer_name, customer_email, customer_phone, ship_city, ship_country,
     ship_address, ship_zip, subtotal_usd, shipping_usd, discount_usd, total_usd, currency,
-    coupon_code, status, created_at
-  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+coupon_code, status, created_at, is_demo
+  ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1)`)
   const itemIns = db.prepare(
     'INSERT INTO order_items (order_id, product_id, name, size, color, quantity, price_usd, image) VALUES (?,?,?,?,?,?,?,?)',
   )

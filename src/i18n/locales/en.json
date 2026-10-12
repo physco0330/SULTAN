@@ -264,7 +264,10 @@
     "couponInvalid": "Invalid coupon",
     "couponApplied": "Coupon applied",
     "couponOneOnly": "Only one coupon per order. Applying a new one replaces the previous.",
-    "couponMin": "Invalid coupon"
+    "couponMin": "Invalid coupon",
+    "serverErrorTitle": "We could not place your order",
+    "serverError": "We could not reach the server, so the order was not created and nothing was charged.",
+    "serverErrorRetry": "Your cart is still intact: check your connection and try again."
   },
   "favorites": {
     "title": "Favorites",
@@ -542,7 +545,8 @@
     "send": "Publish review",
     "sendError": "Could not publish review",
     "success": "Thanks! Your review was published",
-    "verified": "Verified purchase"
+    "verified": "Verified purchase",
+    "pendingNotice": "Thanks! Your review will be published once approved."
   },
   "misc": {
     "loading": "Loading",

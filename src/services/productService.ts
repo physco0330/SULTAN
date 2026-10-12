@@ -250,7 +250,9 @@ export interface PlacedOrder {
   number: string
   status: string
   createdAt: string
-  customer: { name: string; email: string }
+  customer: { name: string }
+  /** Token necesario para consultar el estado del pedido después. */
+  trackingToken: string
   totals: { subtotal: number; shipping: number; discount: number; total: number; currency: string }
 }
 
@@ -262,8 +264,23 @@ export async function placeOrder(input: {
   return api.post<PlacedOrder>('/orders', input)
 }
 
-export async function lookupOrderByNumber(number: string) {
-  return api.get<{ order: Record<string, unknown> }>(`/orders/${encodeURIComponent(number)}`)
+export interface TrackedOrder {
+  number: string
+  status: string
+  createdAt: string
+  shipCity: string | null
+  items: { name: string; size: string; color: string; quantity: number; price: number }[]
+  totals: { subtotal: number; shipping: number; discount: number; total: number; currency: string }
+}
+
+/**
+ * Consulta el estado de un pedido. Exige el token recibido al crearlo:
+ * sin él el servidor responde 404, así el número de pedido no es enumerable.
+ */
+export async function lookupOrderByNumber(number: string, token: string) {
+  return api.get<{ order: TrackedOrder }>(
+    `/orders/${encodeURIComponent(number)}?token=${encodeURIComponent(token)}`,
+  )
 }
 
 /* ---------------- contact & newsletter ---------------- */

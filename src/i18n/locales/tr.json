@@ -264,7 +264,10 @@
     "couponInvalid": "Geçersiz kupon",
     "couponApplied": "Kupon uygulandı",
     "couponOneOnly": "Sipariş başına yalnızca bir kupon. Yeni bir kupon öncekini değiştirir.",
-    "couponMin": "Geçersiz kupon"
+    "couponMin": "Geçersiz kupon",
+    "serverErrorTitle": "Siparişin oluşturulamadı",
+    "serverError": "Sunucuya ulaşılamadığı için sipariş oluşturulmadı ve herhangi bir ücret alınmadı.",
+    "serverErrorRetry": "Sepetiniz olduğu gibi duruyor: bağlantınızı kontrol edip tekrar deneyin."
   },
   "favorites": {
     "title": "Favoriler",
@@ -542,7 +545,8 @@
     "send": "Yorumu yayınla",
     "sendError": "Yorum yayınlanamadı",
     "success": "Teşekkürler! Yorumun yayınlandı",
-    "verified": "Doğrulanmış satın alma"
+    "verified": "Doğrulanmış satın alma",
+    "pendingNotice": "Teşekkürler! Yorumunuz onaylandıktan sonra yayımlanacak."
   },
   "misc": {
     "loading": "Yükleniyor",

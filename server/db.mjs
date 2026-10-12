@@ -1,16 +1,34 @@
 import { DatabaseSync } from 'node:sqlite'
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { copyFileSync, existsSync, readdirSync, rmSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+import { DATA_DIR, IS_PROD, ensureDataDirs } from './config.mjs'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-export const DATA_DIR = join(__dirname, 'data')
-mkdirSync(DATA_DIR, { recursive: true })
+ensureDataDirs()
+export { DATA_DIR }
 export const DB_PATH = join(DATA_DIR, 'sultan.db')
 
 export const db = new DatabaseSync(DB_PATH)
+/* WAL + sincronización normal: aguanta reinicios sin corromper el archivo. */
 db.exec('PRAGMA journal_mode = WAL;')
 db.exec('PRAGMA foreign_keys = ON;')
+db.exec('PRAGMA synchronous = NORMAL;')
+db.exec('PRAGMA busy_timeout = 5000;')
+
+/** Verifica que el archivo no esté dañado antes de empezar a servir tráfico. */
+export function integrityCheck() {
+  const row = db.prepare('PRAGMA integrity_check').get()
+  const result = row && Object.values(row)[0]
+  return result === 'ok' ? { ok: true } : { ok: false, error: String(result ?? 'desconocido') }
+}
+
+/** Cierra el WAL dejando todo dentro del archivo .db (copias y despliegues). */
+export function checkpoint() {
+  try {
+    db.exec('PRAGMA wal_checkpoint(TRUNCATE);')
+  } catch {
+    /* si hay lectores activos se ignora: el WAL se fusiona al cerrar */
+  }
+}
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS settings (
@@ -206,7 +224,7 @@ export function initDb() {
  * Antes de aplicar migraciones pendientes se crea una copia de
  * seguridad del archivo .db. No se eliminan datos ni columnas. */
 
-function appliedMigrations() {
+export function appliedMigrations() {
   db.exec('CREATE TABLE IF NOT EXISTS schema_migrations (id TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime(\'now\')) )')
   return new Set(db.prepare('SELECT id FROM schema_migrations').all().map((r) => r.id))
 }
@@ -219,16 +237,48 @@ function hasColumn(table, column) {
   return db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === column)
 }
 
+const MAX_BACKUPS = Number(process.env.MAX_DB_BACKUPS || 5)
+
+/**
+ * Copia de seguridad antes de migrar. En producción se poda: un disco
+ * persistente lleno por copias antiguas acaba tumbando la aplicación.
+ */
 function backupDatabase(tag) {
   if (!existsSync(DB_PATH)) return null
   const stamp = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19)
   const backupPath = `${DB_PATH}.bak-${stamp}-${tag}`
   try {
+    checkpoint()
     copyFileSync(DB_PATH, backupPath)
+    pruneBackups()
     return backupPath
-  } catch {
+  } catch (err) {
+    console.warn('[db] no se pudo crear la copia de seguridad:', err.message)
     return null
   }
+}
+
+/** Conserva solo las MAX_BACKUPS copias más recientes. */
+export function pruneBackups(keep = MAX_BACKUPS) {
+  try {
+    const files = readdirSync(DATA_DIR)
+      .filter((f) => f.startsWith('sultan.db.bak-'))
+      .sort()
+    const excess = files.slice(0, Math.max(0, files.length - keep))
+    for (const f of excess) {
+      try { rmSync(join(DATA_DIR, f), { force: true }) } catch { /* ya no está */ }
+    }
+    return { removed: excess.length, kept: files.length - excess.length }
+  } catch {
+    return { removed: 0, kept: 0 }
+  }
+}
+
+/** Copia manual de la base (descarga de seguridad o antes de un cambio grande). */
+export function manualBackup(tag = 'manual') {
+  const backupPath = backupDatabase(tag)
+  if (!backupPath) return null
+  return { path: backupPath, size: statSync(backupPath).size }
 }
 
 const MIGRATIONS = [
@@ -266,6 +316,79 @@ const MIGRATIONS = [
         updated_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`)
       db.exec('CREATE INDEX IF NOT EXISTS idx_product_images_product ON product_images(product_id, position)')
+    },
+  },
+  {
+    id: 'm011_real_ratings',
+    run: () => {
+      /* products.rating y products.reviews eran columnas fijas sembradas con
+         valores inventados (5.4 estrellas, 67 reseñas) que no tenían nada que
+         ver con la tabla reviews. Mostraban miles de testimonios inexistentes.
+         Se ponen a cero y el promedio se calcula siempre desde las reseñas
+         reales y aprobadas. */
+      db.exec('UPDATE products SET rating = 0, reviews = 0')
+      if (!hasColumn('products', 'is_demo')) db.exec('ALTER TABLE products ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0')
+      /* El catálogo entero viene del seed de demostración hasta que se cargue
+         el catálogo real, así que se marca como tal. */
+      db.exec('UPDATE products SET is_demo = 1')
+    },
+  },
+  {
+    id: 'm010_demo_content',
+    run: () => {
+      /* Distingue el contenido inventado del contenido real.
+         Lo sembrado para probar la tienda no puede publicarse como si fueran
+         clientes reales, pero tampoco se borra: queda ahi, identificado y
+         listo para vaciarse cuando el negocio tenga datos de verdad. */
+      if (!hasColumn('reviews', 'is_demo')) db.exec('ALTER TABLE reviews ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0')
+      if (!hasColumn('orders', 'is_demo')) db.exec('ALTER TABLE orders ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0')
+      if (!hasColumn('coupons', 'is_demo')) db.exec('ALTER TABLE coupons ADD COLUMN is_demo INTEGER NOT NULL DEFAULT 0')
+
+      /* Reseñas del catálogo de demostración: personas que no existen. */
+      db.prepare(`
+        UPDATE reviews SET is_demo = 1
+        WHERE product_id IS NULL
+          AND name IN (
+            'Juan David Ospina', 'Santiago Herrera', 'Mariana Botero',
+            'Daniela Vargas', 'Mateo Restrepo'
+          )
+      `).run()
+
+      /* Pedidos de prueba: direcciones y correos @demo.co. */
+      db.prepare(`
+        UPDATE orders SET is_demo = 1
+        WHERE customer_email LIKE '%@demo.co' OR ship_address = 'Calle de demostración 123'
+      `).run()
+
+      /* Cupones de ejemplo. */
+      db.prepare("UPDATE coupons SET is_demo = 1 WHERE code IN ('SULTAN10', 'SULTAN20', 'LUXE')").run()
+
+      /* Todo lo marcado como demo se despublica de inmediato. */
+      db.exec("UPDATE reviews SET status = 'rejected' WHERE is_demo = 1 AND status = 'approved'")
+
+      db.exec('CREATE INDEX IF NOT EXISTS idx_reviews_demo ON reviews(is_demo, status)')
+    },
+  },
+  {
+    id: 'm009_admin_password_policy',
+    run: () => {
+      if (!hasColumn('admin_users', 'must_change_password')) {
+        db.exec('ALTER TABLE admin_users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0')
+      }
+      /* Las cuentas creadas con la contraseña de ejemplo quedan marcadas
+         para obligar a cambiarla en el primer inicio de sesión. */
+      db.prepare('UPDATE admin_users SET must_change_password = 1 WHERE username = ?').run('admin')
+    },
+  },
+  {
+    id: 'm008_reviews_product_status',
+    run: () => {
+      if (!hasColumn('reviews', 'product_id')) db.exec('ALTER TABLE reviews ADD COLUMN product_id TEXT')
+      if (!hasColumn('reviews', 'status')) db.exec("ALTER TABLE reviews ADD COLUMN status TEXT NOT NULL DEFAULT 'approved'")
+      if (!hasColumn('reviews', 'updated_at')) db.exec('ALTER TABLE reviews ADD COLUMN updated_at TEXT')
+      /* reseñas ya publicadas siguen publicadas */
+      db.exec("UPDATE reviews SET status = 'approved' WHERE status IS NULL OR status = ''")
+      db.exec('CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id, status)')
     },
   },
   {
@@ -321,10 +444,24 @@ const MIGRATIONS = [
   },
 ]
 
+/**
+ * Las migraciones se ejecutan ordenadas por su número (m001, m002, …),
+ * no por la posición en el array: varias dependen de columnas que crea
+ * otra anterior, así que el orden tiene que ser estable aunque alguien
+ * añada una migración nueva al final de la lista.
+ */
+const ORDERED_MIGRATIONS = [...MIGRATIONS].sort((a, b) => {
+  const n = (id) => Number(String(id).slice(1, 4))
+  return n(a.id) - n(b.id) || String(a.id).localeCompare(String(b.id))
+})
+
 export function runMigrations() {
   const applied = appliedMigrations()
-  const pending = MIGRATIONS.filter((m) => !applied.has(m.id))
+  const pending = ORDERED_MIGRATIONS.filter((m) => !applied.has(m.id))
+  const done = []
   let backup = null
+  let failed = null
+
   if (pending.length > 0) {
     backup = backupDatabase(pending[0].id)
     for (const m of pending) {
@@ -333,14 +470,17 @@ export function runMigrations() {
         m.run()
         db.prepare('INSERT INTO schema_migrations (id) VALUES (?)').run(m.id)
         db.exec('COMMIT')
+        done.push(m.id)
       } catch (err) {
         try { db.exec('ROLLBACK') } catch { /* ya estaba en rollback */ }
         console.error(`[migración ${m.id}] falló:`, err.message)
+        failed = { id: m.id, error: err.message }
         break
       }
     }
   }
-  return { applied: pending.map((m) => m.id), backup }
+  /* No se announces como aplicadas las migraciones que fallaron. */
+  return { applied: done, failed, backup, pendingAfter: failed ? [failed.id] : [] }
 }
 
 export function nowIso() {

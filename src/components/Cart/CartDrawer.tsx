@@ -10,6 +10,7 @@ import { useCurrency } from '@/store/currency'
 import { applyPromo, discountAmount, FLAT_SHIPPING_USD, FREE_SHIPPING_THRESHOLD_USD } from '@/services/discounts'
 import { useUi } from '@/store/ui'
 import { cn } from '@/utils/cn'
+import { SafeImage } from '@/components/SafeImage'
 
 function formatIn(usd: number, code: string) {
   return formatPrice(convertPrice(usd, 'USD', code), code)
@@ -25,7 +26,7 @@ function LineItem({ item, index }: { item: CartItem; index: number }) {
   return (
     <li className={cn('flex gap-4 border-b border-gold/10 py-4', index === 0 && 'pt-2')}>
       <Link to={`/producto/${item.slug}`} className="block h-24 w-[4.5rem] shrink-0 overflow-hidden border border-gold/15 bg-ash">
-        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+        <SafeImage src={item.image} alt={item.name} />
       </Link>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">

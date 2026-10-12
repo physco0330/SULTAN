@@ -1,11 +1,23 @@
 import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
-import { scryptSync, timingSafeEqual, randomUUID } from 'node:crypto'
+import { scryptSync, timingSafeEqual, randomUUID, randomBytes, createHmac } from 'node:crypto'
 import { existsSync, mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { db, initDb, runMigrations, audit, nowIso } from './db.mjs'
+import { db, initDb, runMigrations, audit, nowIso, checkpoint, integrityCheck, DB_PATH } from './db.mjs'
+import { registerProvider } from './payments/index.mjs'
+import { demoProvider } from './payments/providers/demo.mjs'
+import { paymentRoutes } from './payments/routes.mjs'
+import { sendOrderConfirmation, notifyNewOrder, whatsappOrderLink, mailerConfig } from './mailer.mjs'
+import {
+  IS_PROD,
+  PORT,
+  UPLOADS_DIR,
+  SULTAN_SECRET,
+  allowedOrigins,
+  describeConfig,
+} from './config.mjs'
 import { seedAll } from './seed.mjs'
 
 process.on('warning', (w) => {
@@ -13,19 +25,56 @@ process.on('warning', (w) => {
   console.warn(w)
 })
 
-const PORT = Number(process.env.PORT || 4001)
-const JWT_SECRET = process.env.SULTAN_SECRET || 'sultan-black-demo-secret-2026'
+/* Se valida la configuracion ANTES de tocar nada: es preferible no arrancar.
+   Se hace primero para poder reportar TODOS los problemas de una vez. */
+const configReport = describeConfig()
+if (!configReport.ok && IS_PROD) {
+  console.error('[config] configuracion invalida: corrige lo anterior antes de desplegar.')
+  process.exit(1)
+}
+
+/**
+ * El secreto JWT nunca tiene un valor por defecto en el codigo.
+ * - En produccion es obligatorio definir SULTAN_SECRET (32+ caracteres).
+ * - En desarrollo se genera uno aleatorio por arranque, de modo que nadie
+ *   pueda firmar tokens de admin con una clave publicada en el repositorio.
+ */
+const JWT_SECRET = (() => {
+  if (SULTAN_SECRET.length >= 32) return SULTAN_SECRET
+  console.warn('[config] AVISO: SULTAN_SECRET no definido. Se genero uno temporal; las sesiones admin se invalidaran al reiniciar.')
+  return randomBytes(32).toString('hex')
+})()
 const JWT_ISSUER = 'sultan-black'
 const JWT_AUDIENCE = 'sultan-black-admin'
 const TOKEN_TTL = '12h'
-const UPLOADS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'uploads')
+
+/* Pasarela de pago: registra el adaptador según PAYMENT_PROVIDER (demo por defecto). */
+registerProvider('demo', demoProvider)
+if (!process.env.PAYMENT_PROVIDER) {
+  process.env.PAYMENT_PROVIDER = 'demo'
+  console.warn('[pago] PAYMENT_PROVIDER no definido: usando adaptador demo (sin cobro real).')
+}
+
+const integrity = integrityCheck()
+if (!integrity.ok) {
+  console.error(`[db] el archivo de base de datos esta danado (${integrity.error}). Restaura una copia ${DB_PATH}.bak-*`)
+  process.exit(1)
+}
 
 initDb()
 const migration = runMigrations()
 if (migration.applied.length > 0) {
   console.log(`[migraciones] aplicadas: ${migration.applied.join(', ')}${migration.backup ? ` (backup: ${migration.backup})` : ''}`)
 }
+if (migration.failed) {
+  console.error(`[migraciones] la migracion ${migration.failed.id} fallo: ${migration.failed.error}`)
+  if (IS_PROD) process.exit(1)
+}
 seedAll()
+
+if (IS_PROD && !process.env.SULTAN_DATA_DIR) {
+  console.warn('[aviso] SULTAN_DATA_DIR no definido: la base de datos y las imagenes se perderan en el proximo despliegue.')
+}
 
 const app = express()
 app.disable('x-powered-by')
@@ -53,13 +102,14 @@ app.use((_req, res, next) => {
 })
 
 /* ---------- CORS restringido ---------- */
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean)
+const ALLOWED_ORIGINS = allowedOrigins()
 app.use(
   cors({
-    origin: ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS : true,
+    /* Sin lista configurada solo se acepta el mismo origen (navegador). */
+    origin: ALLOWED_ORIGINS.length > 0 ? ALLOWED_ORIGINS : (origin, cb) => {
+      const sameOrigin = !origin || origin === `http://localhost:${PORT}` || origin === `https://localhost:${PORT}`
+      cb(null, sameOrigin)
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     maxAge: 600,
@@ -174,9 +224,47 @@ function productImagesOf(productId) {
     .all(productId)
 }
 
-function toProduct(row) {
+/**
+ * Promedio y número de reseñas reales de varios productos en una sola pasada.
+ * Nunca se usan las columnas products.rating / products.reviews: esas pueden
+ * contener valores inventados. Solo cuentan las reseñas aprobadas y no-demo.
+ *
+ * @param {string[]} ids identificadores de producto
+ */
+function realRatingsFor(ids) {
+  const out = {}
+  const list = [...new Set(ids.filter(Boolean))]
+  if (list.length === 0) return out
+  const placeholders = list.map(() => '?').join(',')
+  const rows = db
+    .prepare(
+      `SELECT product_id, COUNT(*) AS n, AVG(rating) AS avg
+         FROM reviews
+        WHERE status = 'approved' AND is_demo = 0 AND product_id IN (${placeholders})
+        GROUP BY product_id`,
+    )
+    .all(...list)
+  const byId = new Map(rows.map((r) => [r.product_id, r]))
+  for (const id of list) {
+    const row = byId.get(id)
+    out[id] = row && row.n ? { rating: Math.round(row.avg * 10) / 10, count: row.n } : { rating: 0, count: 0 }
+  }
+  return out
+}
+
+/** Igual que realRatingsFor, pero para un solo producto. */
+function realRating(productId) {
+  return realRatingsFor([productId])[productId] ?? { rating: 0, count: 0 }
+}
+
+function toProduct(row, opts) {
+  /* 'opts' solo cuenta si trae la clave: asi un .map(toProduct) (que pasa el
+     indice) nunca filtra el SKU por accidente. */
+  const admin = !!(opts && typeof opts === 'object' && opts.admin === true)
   if (!row) return null
   const images = productImagesOf(row.id)
+  /* En listados se reutiliza el cálculo ya hecho para todos los productos. */
+  const rr = (opts && opts.ratings && opts.ratings[row.id]) || realRating(row.id)
   return {
     id: row.id,
     name: row.name,
@@ -188,15 +276,16 @@ function toProduct(row) {
     compareAtPrice: row.compare_at_price,
     currency: row.currency,
     stock: row.stock,
-    rating: row.rating,
-    reviews: row.reviews,
+    rating: rr.rating,
+    reviews: rr.count,
     featured: !!row.featured,
     isNew: !!row.is_new,
     isLimited: !!row.is_limited,
     isBestSeller: !!row.is_best_seller,
     isOnSale: !!row.is_on_sale,
     material: row.material,
-    sku: row.sku,
+    /* El SKU es un dato interno: solo lo ven los administradores. */
+    ...(admin ? { sku: row.sku } : {}),
     description: row.description,
     quality: row.quality === 'original' ? 'original' : 'turkish',
     colors: JSON.parse(row.colors_json || '[]'),
@@ -234,6 +323,10 @@ function publicConfig() {
   }
 }
 
+function hashPassword(password, salt) {
+  return scryptSync(password, salt, 64).toString('hex')
+}
+
 function verifyPassword(password, salt, expected) {
   const hash = scryptSync(password, salt, 64)
   const buf = Buffer.from(expected, 'hex')
@@ -242,11 +335,20 @@ function verifyPassword(password, salt, expected) {
 
 function signAuth(user) {
   return jwt.sign(
-    { username: user.username, role: user.role, name: user.name },
+    {
+      username: user.username,
+      role: user.role,
+      name: user.name,
+      /* Mientras valga 1, el token solo habilita el cambio de contraseña. */
+      pwd: user.must_change_password ? 1 : 0,
+    },
     JWT_SECRET,
     { expiresIn: TOKEN_TTL, issuer: JWT_ISSUER, audience: JWT_AUDIENCE },
   )
 }
+
+/** Rutas abiertas aunque el administrador aún deba cambiar la contraseña. */
+const PASSWORD_CHANGE_ALLOWED = new Set(['/api/admin/me', '/api/admin/auth/password'])
 
 function requireAuth(req, res, next) {
   const header = req.headers.authorization || ''
@@ -254,10 +356,17 @@ function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Autenticación requerida' })
   try {
     req.auth = jwt.verify(token, JWT_SECRET, { issuer: JWT_ISSUER, audience: JWT_AUDIENCE })
-    next()
   } catch {
     return res.status(401).json({ error: 'Sesión inválida o expirada' })
   }
+  /* Contraseña provisional (cuenta seed): no se permite tocar nada más. */
+  if (req.auth.pwd === 1 && !PASSWORD_CHANGE_ALLOWED.has(req.path)) {
+    return res.status(403).json({
+      error: 'Debes cambiar la contraseña temporal antes de continuar',
+      mustChangePassword: true,
+    })
+  }
+  next()
 }
 
 function snakeRow(row) {
@@ -374,6 +483,7 @@ app.get('/api/products', (req, res) => {
 
   let sql = `SELECT * FROM products WHERE ${where.join(' AND ')}`
   const sort = String(req.query.sort ?? 'featured')
+  const byRated = sort === 'rated' || sort === 'featured'
   const orderBy =
     sort === 'price-asc' ? 'price ASC'
     : sort === 'price-desc' ? 'price DESC'
@@ -383,7 +493,14 @@ app.get('/api/products', (req, res) => {
   sql += ` ORDER BY ${orderBy}`
 
   const rows = db.prepare(sql).all(...params)
-  let items = rows.map(toProduct)
+  const ratings = byRated ? realRatingsFor(rows.map((r) => r.id)) : null
+  /* Ordenar por valoración usa el promedio real, no la columna inventada. */
+  let items = rows.map((row) => toProduct(row, ratings ? { ratings } : undefined))
+  if (sort === 'rated') {
+    items.sort((a, b) => (b.reviews - a.reviews) || (b.rating - a.rating) || a.name.localeCompare(b.name))
+  } else if (sort === 'featured') {
+    items.sort((a, b) => Number(!!b.featured) - Number(!!a.featured) || b.rating - a.rating || b.reviews - a.reviews)
+  }
   if (availability.length) {
     items = items.filter((p) => {
       const a = p.stock === 0 ? 'out-of-stock' : p.stock <= 8 ? 'low-stock' : 'in-stock'
@@ -531,8 +648,14 @@ app.post('/api/orders', rateLimit('orders', 20), (req, res) => {
     return res.status(500).json({ error: 'No se pudo registrar el pedido' })
   }
 
-  audit('cliente', 'order.create', 'orders', number, `Pedido ${number} por ${subtotal} USD`)
+audit('cliente', 'order.create', 'orders', number, `Pedido ${number} por ${subtotal} USD`)
   if (customerId) audit('cliente', 'customer.auto', 'customers', String(customerId), `Cliente vinculado al pedido ${number}`)
+
+  /* Notificaciones: email al cliente y aviso al negocio. */
+  const orderRow = db.prepare('SELECT * FROM orders WHERE number = ?').get(number)
+  const orderItems = db.prepare('SELECT name, quantity, price_usd FROM order_items WHERE order_id = ?').all(orderId)
+  sendOrderConfirmation(orderRow, orderItems).catch((e) => console.warn('[correo] confirmación al cliente:', e.message))
+  notifyNewOrder(orderRow, orderItems).catch((e) => console.warn('[correo] notificación al negocio:', e.message))
 
   res.status(201).json({
     ok: true,
@@ -540,26 +663,64 @@ app.post('/api/orders', rateLimit('orders', 20), (req, res) => {
       number,
       status: 'pending',
       createdAt: nowIso(),
-      customer: { name: info.name, email: info.email },
+      customer: { name: String(info.name).trim() },
+      trackingToken: trackingToken(number),
       totals: { subtotal, shipping, discount, total, currency: 'USD' },
     },
   })
 })
 
-app.get('/api/orders/:number', (req, res) => {
-  const order = db.prepare('SELECT * FROM orders WHERE number = ?').get(req.params.number)
-  if (!order) return res.status(404).json({ error: 'Orden no encontrada' })
-  const rows = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id)
+/**
+ * Token opaco de seguimiento. Solo quien lo recibe (quien creo el pedido)
+ * puede consultarlo, y la respuesta nunca incluye datos personales.
+ */
+function trackingToken(number) {
+  const secret = process.env.SULTAN_SECRET || JWT_SECRET
+  return createHmac('sha256', secret).update(`order:${number}`).digest('base64url').slice(0, 24)
+}
+
+/** Comparacion en tiempo constante: no se filtra el token por temporizacion. */
+function tokenMatches(a, b) {
+  const x = Buffer.from(String(a))
+  const y = Buffer.from(String(b))
+  return x.length === y.length && timingSafeEqual(x, y)
+}
+
+/**
+ * Consulta publica del estado de un pedido.
+ * Exige el token entregado al crear el pedido: sin el no se revela nada, asi
+ * los numeros de pedido no son enumerables ni exponen PII.
+ */
+app.get('/api/orders/:number', rateLimit('track', 30), (req, res) => {
+  const number = String(req.params.number ?? '').trim().toUpperCase()
+  const token = String(req.query.token ?? req.headers['x-order-token'] ?? '').trim()
+  const order = db.prepare('SELECT * FROM orders WHERE number = ?').get(number)
+  /* Misma respuesta para "no existe" y "token incorrecto": no revelamos cuales hay. */
+  if (!order || !token || !tokenMatches(token, trackingToken(order.number)))
+    return res.status(404).json({ error: 'No se encontró un pedido con esos datos' })
+
+  const rows = db.prepare('SELECT name, size, color, quantity, price_usd FROM order_items WHERE order_id = ?').all(order.id)
   const items = rows.map((r) => ({
-    productId: r.product_id, name: r.name, size: r.size, color: r.color,
-    quantity: r.quantity, price: r.price_usd, image: r.image,
+    name: r.name, size: r.size, color: r.color, quantity: r.quantity, price: r.price_usd,
   }))
-  res.json({ order: { ...order, items } })
+  res.json({
+    order: {
+      number: order.number,
+      status: order.status,
+      createdAt: order.created_at,
+      shipCity: order.ship_city ? String(order.ship_city).slice(0, 60) : null,
+      items,
+      totals: {
+        subtotal: order.subtotal_usd, shipping: order.shipping_usd,
+        discount: order.discount_usd, total: order.total_usd, currency: order.currency,
+      },
+    },
+  })
 })
 
 /* ---------------- public: contact & newsletter ---------------- */
 
-app.post('/api/contact', (req, res) => {
+app.post('/api/contact', rateLimit('contact', 10), (req, res) => {
   const name = String(req.body.name ?? '').trim()
   const email = String(req.body.email ?? '').trim()
   const subject = String(req.body.subject ?? '').trim()
@@ -572,7 +733,7 @@ app.post('/api/contact', (req, res) => {
   res.status(201).json({ ok: true })
 })
 
-app.post('/api/newsletter', (req, res) => {
+app.post('/api/newsletter', rateLimit('newsletter', 15), (req, res) => {
   const email = String(req.body.email ?? '').trim().toLowerCase()
   if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(422).json({ error: 'Email inválido' })
   db.prepare('INSERT OR IGNORE INTO subscribers (email) VALUES (?)').run(email)
@@ -581,9 +742,20 @@ app.post('/api/newsletter', (req, res) => {
 
 /* ---------------- public: reviews ---------------- */
 
-app.get('/api/reviews', (_req, res) => {
-  const rows = db.prepare('SELECT * FROM reviews ORDER BY created_at DESC, id DESC LIMIT 50').all()
-  res.json({ items: rows })
+app.get('/api/reviews', (req, res) => {
+const productId = String(req.query.product ?? '').trim()
+  /* Solo reseñas aprobadas y nunca de demostración: publicar testimonios
+     inventados como si fueran de clientes reales es publicidad engañosa. */
+  const rows = productId
+    ? db.prepare("SELECT * FROM reviews WHERE status = 'approved' AND is_demo = 0 AND product_id = ? ORDER BY created_at DESC, id DESC LIMIT 100").all(productId)
+    : db.prepare("SELECT * FROM reviews WHERE status = 'approved' AND is_demo = 0 ORDER BY created_at DESC, id DESC LIMIT 50").all()
+  const agg = productId
+    ? db.prepare("SELECT COUNT(*) AS n, AVG(rating) AS avg FROM reviews WHERE status = 'approved' AND is_demo = 0 AND product_id = ?").get(productId)
+    : db.prepare("SELECT COUNT(*) AS n, AVG(rating) AS avg FROM reviews WHERE status = 'approved' AND is_demo = 0").get()
+  res.json({
+    items: rows,
+    summary: { count: agg.n, average: agg.avg ? Math.round(agg.avg * 10) / 10 : 0 },
+  })
 })
 
 app.post('/api/reviews', (req, res) => {
@@ -591,12 +763,17 @@ app.post('/api/reviews', (req, res) => {
   const city = String(req.body.city ?? '').trim()
   const rating = Math.round(toNum(req.body.rating, 5))
   const comment = String(req.body.comment ?? '').trim()
+  const productId = String(req.body.productId ?? '').trim()
   if (!name || name.length > 60) return res.status(422).json({ error: 'Nombre requerido' })
   if (rating < 1 || rating > 5) return res.status(422).json({ error: 'Calificación inválida' })
   if (comment.length < 4 || comment.length > 800) return res.status(422).json({ error: 'El comentario debe tener al menos 4 caracteres' })
-  db.prepare('INSERT INTO reviews (name, city, rating, comment) VALUES (?,?,?,?)').run(name, city || null, rating, comment)
-  audit(null, 'review.create', 'reviews', null, `${name} dejó una reseña de ${rating}★`)
-  res.status(201).json({ ok: true })
+  if (productId && !db.prepare('SELECT id FROM products WHERE id = ? OR slug = ?').get(productId, productId))
+    return res.status(422).json({ error: 'Producto no válido' })
+  /* Las reseñas públicas quedan pendientes de moderación. */
+  db.prepare("INSERT INTO reviews (name, city, rating, comment, product_id, status) VALUES (?,?,?,?,?,'pending')")
+    .run(name, city || null, rating, comment, productId || null)
+  audit(null, 'review.create', 'reviews', null, name + ' - pendiente de moderación')
+  res.status(201).json({ ok: true, status: 'pending' })
 })
 
 /* ---------------- admin: imágenes del catálogo ---------------- */
@@ -951,11 +1128,56 @@ app.post('/api/admin/auth/login', rateLimit('login', 10), (req, res) => {
     return res.status(401).json({ error: 'Credenciales inválidas' })
   const token = signAuth(user)
   audit(user.username, 'auth.login', 'admin_users', user.username)
-  res.json({ token, user: { username: user.username, name: user.name, role: user.role } })
+  res.json({
+    token,
+    user: {
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      mustChangePassword: !!user.must_change_password,
+    },
+  })
 })
 
 app.get('/api/admin/me', requireAuth, (req, res) => {
-  res.json({ user: { username: req.auth.username, name: req.auth.name, role: req.auth.role } })
+  const row = db.prepare('SELECT must_change_password FROM admin_users WHERE username = ?').get(req.auth.username)
+  res.json({
+    user: {
+      username: req.auth.username,
+      name: req.auth.name,
+      role: req.auth.role,
+      mustChangePassword: !!row?.must_change_password,
+    },
+  })
+})
+
+function passwordStrength(pw) {
+  if (pw.length < 10) return 'La contraseña debe tener al menos 10 caracteres'
+  if (pw.length > 200) return 'La contraseña es demasiado larga'
+  if (!/[a-z]/.test(pw) || !/[A-Z]/.test(pw)) return 'Debe combinar mayúsculas y minúsculas'
+  if (!/\d/.test(pw)) return 'Debe incluir al menos un número'
+  if (!/[^A-Za-z0-9]/.test(pw)) return 'Debe incluir al menos un símbolo'
+  return null
+}
+
+app.post('/api/admin/auth/password', requireAuth, (req, res) => {
+  const current = String(req.body.currentPassword ?? '')
+  const nextPw = String(req.body.newPassword ?? '')
+  const row = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(req.auth.username)
+  if (!row || !verifyPassword(current, row.salt, row.password_hash))
+    return res.status(401).json({ error: 'La contraseña actual no es correcta' })
+  const weak = passwordStrength(nextPw)
+  if (weak) return res.status(422).json({ error: weak })
+  if (verifyPassword(nextPw, row.salt, row.password_hash))
+    return res.status(422).json({ error: 'La nueva contraseña debe ser distinta de la actual' })
+
+  const salt = randomBytes(16).toString('hex')
+  db.prepare('UPDATE admin_users SET password_hash = ?, salt = ?, must_change_password = 0 WHERE username = ?')
+    .run(hashPassword(nextPw, salt), salt, row.username)
+  audit(req.auth.username, 'auth.password_changed', 'admin_users', row.username, 'Contraseña actualizada')
+  /* Token nuevo: el resto de la sesión queda invalidado. */
+  const fresh = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(row.username)
+  res.json({ ok: true, token: signAuth(fresh) })
 })
 
 /* ---------------- admin: dashboard ---------------- */
@@ -1007,11 +1229,12 @@ app.get('/api/admin/stats', requireAuth, (req, res) => {
     from: req.query.from ? String(req.query.from) : null,
     to: req.query.to ? String(req.query.to) : null,
   })
+  /* is_demo = 0: los pedidos de prueba no cuentan como ingresos reales. */
   const base = start === null
-    ? "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled'"
+    ? "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND is_demo = 0"
     : end
-      ? "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND created_at >= ? AND created_at <= ?"
-      : "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND created_at >= ?"
+      ? "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND is_demo = 0 AND created_at >= ? AND created_at <= ?"
+      : "SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND is_demo = 0 AND created_at >= ?"
   const revenue = start === null
     ? db.prepare(base).get()
     : end
@@ -1019,7 +1242,7 @@ app.get('/api/admin/stats', requireAuth, (req, res) => {
       : db.prepare(base).get(start.toISOString())
   const previousRevenue = prevStart === null || start === null
     ? null
-    : db.prepare("SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND created_at >= ? AND created_at < ?")
+    : db.prepare("SELECT COALESCE(SUM(total_usd),0) AS total, COUNT(*) AS n FROM orders WHERE status != 'cancelled' AND is_demo = 0 AND created_at >= ? AND created_at < ?")
         .get(prevStart.toISOString(), start.toISOString())
   const revenueDelta = previousRevenue && previousRevenue.total > 0
     ? Math.round(((revenue.total - previousRevenue.total) / previousRevenue.total) * 100)
@@ -1041,7 +1264,7 @@ app.get('/api/admin/stats', requireAuth, (req, res) => {
     const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
     const row = db.prepare(
       `SELECT COUNT(*) AS orders, COALESCE(SUM(total_usd),0) AS revenue
-       FROM orders WHERE status != 'cancelled' AND strftime('%Y-%m', created_at) = ?`,
+       FROM orders WHERE status != 'cancelled' AND is_demo = 0 AND strftime('%Y-%m', created_at) = ?`,
     ).get(month)
     months.push({ month, label: d.toLocaleString('en-US', { month: 'short', year: '2-digit' }), orders: row.orders, revenue: Math.round(row.revenue) })
   }
@@ -1052,13 +1275,18 @@ app.get('/api/admin/stats', requireAuth, (req, res) => {
     : end
       ? db.prepare('SELECT * FROM orders WHERE created_at >= ? AND created_at <= ? ORDER BY created_at DESC LIMIT 8').all(start.toISOString(), end.toISOString())
       : db.prepare('SELECT * FROM orders WHERE created_at >= ? ORDER BY created_at DESC LIMIT 8').all(start.toISOString())
-  const lowStock = db.prepare(
+  const lowStockRows = db.prepare(
     'SELECT * FROM products WHERE active = 1 AND stock > 0 AND stock <= 8 ORDER BY stock ASC LIMIT 8',
-  ).all().map(toProduct)
+  ).all()
+  const lowStockRatings = realRatingsFor(lowStockRows.map((r) => r.id))
+  const lowStock = lowStockRows.map((row) => toProduct(row, { ratings: lowStockRatings }))
 
   const top = db.prepare(`
     SELECT oi.product_id, oi.name, SUM(oi.quantity) AS qty, SUM(oi.quantity * oi.price_usd) AS revenue
-    FROM order_items oi GROUP BY oi.product_id ORDER BY revenue DESC LIMIT 5
+    FROM order_items oi
+    JOIN orders o ON o.id = oi.order_id
+    WHERE o.is_demo = 0
+    GROUP BY oi.product_id ORDER BY revenue DESC LIMIT 5
   `).all()
 
   res.json({
@@ -1082,7 +1310,8 @@ app.get('/api/admin/products', requireAuth, (req, res) => {
     ? db.prepare('SELECT * FROM products WHERE LOWER(name) LIKE ? OR LOWER(sku) LIKE ? ORDER BY created_at DESC')
         .all(`%${q}%`, `%${q}%`)
     : db.prepare('SELECT * FROM products ORDER BY created_at DESC').all()
-  res.json({ items: rows.map(toProduct) })
+  const adminRatings = realRatingsFor(rows.map((r) => r.id))
+  res.json({ items: rows.map((row) => toProduct(row, { admin: true, ratings: adminRatings })) })
 })
 
 function nextProductId() {
@@ -1122,7 +1351,7 @@ app.post('/api/admin/products', requireAuth, (req, res) => {
   )
   audit(req.auth.username, 'product.create', 'products', id, `Creó ${body.name}`)
   const row = db.prepare('SELECT * FROM products WHERE id = ?').get(id)
-  res.status(201).json({ product: toProduct(row) })
+  res.status(201).json({ product: toProduct(row, { admin: true }) })
 })
 
 app.put('/api/admin/products/:id', requireAuth, (req, res) => {
@@ -1145,7 +1374,7 @@ app.put('/api/admin/products/:id', requireAuth, (req, res) => {
   )
   audit(req.auth.username, 'product.update', 'products', row.id, `Actualizó ${body.name}`)
   const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(row.id)
-  res.json({ product: toProduct(updated) })
+  res.json({ product: toProduct(updated, { admin: true }) })
 })
 
 app.patch('/api/admin/products/:id', requireAuth, (req, res) => {
@@ -1168,7 +1397,7 @@ app.patch('/api/admin/products/:id', requireAuth, (req, res) => {
   db.prepare(`UPDATE products SET ${fields.join(', ')} WHERE id = ?`).run(...params)
   audit(req.auth.username, 'product.update', 'products', row.id, req.body.active !== undefined ? 'Cambió disponibilidad' : 'Actualizó precio/stock')
   const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(row.id)
-  res.json({ product: toProduct(updated) })
+  res.json({ product: toProduct(updated, { admin: true }) })
 })
 
 app.delete('/api/admin/products/:id', requireAuth, (req, res) => {
@@ -1194,14 +1423,16 @@ app.get('/api/admin/orders', requireAuth, (req, res) => {
   const period = String(req.query.period ?? '').trim()
   const { start } = periodRange(period)
   let rows
+  const demo = String(req.query.demo ?? '')
+  const demoClause = demo === 'exclude' ? ' AND is_demo = 0' : demo === 'only' ? ' AND is_demo = 1' : ''
   if (status && start) {
-    rows = db.prepare('SELECT * FROM orders WHERE status = ? AND created_at >= ? ORDER BY created_at DESC').all(status, start.toISOString())
+    rows = db.prepare(`SELECT * FROM orders WHERE status = ?${demoClause} AND created_at >= ? ORDER BY created_at DESC`).all(status, start.toISOString())
   } else if (status) {
-    rows = db.prepare('SELECT * FROM orders WHERE status = ? ORDER BY created_at DESC').all(status)
+    rows = db.prepare(`SELECT * FROM orders WHERE status = ?${demoClause} ORDER BY created_at DESC`).all(status)
   } else if (start) {
-    rows = db.prepare('SELECT * FROM orders WHERE created_at >= ? ORDER BY created_at DESC').all(start.toISOString())
+    rows = db.prepare(`SELECT * FROM orders WHERE${demoClause} created_at >= ? ORDER BY created_at DESC`).all(start.toISOString())
   } else {
-    rows = db.prepare('SELECT * FROM orders ORDER BY created_at DESC').all()
+    rows = db.prepare(`SELECT * FROM orders WHERE 1 = 1${demoClause} ORDER BY created_at DESC`).all()
   }
   const orderItemCount = db.prepare('SELECT order_id, COUNT(*) AS n, SUM(quantity) AS qty FROM order_items GROUP BY order_id')
   const counts = Object.fromEntries(orderItemCount.all().map((r) => [r.order_id, { n: r.n, qty: r.qty }]))
@@ -1452,8 +1683,117 @@ app.get('/api/admin/customers', requireAuth, (_req, res) => {
   res.json({ items })
 })
 
-app.get('/api/admin/reviews', requireAuth, (_req, res) => {
-  res.json({ items: db.prepare('SELECT * FROM reviews ORDER BY created_at DESC, id DESC LIMIT 200').all() })
+app.get('/api/admin/reviews', requireAuth, (req, res) => {
+  const status = String(req.query.status ?? '').trim()
+  const q = String(req.query.q ?? '').trim().toLowerCase()
+  const where = []
+  const params = []
+  if (status) { where.push('r.status = ?'); params.push(status) }
+  if (q) {
+    where.push("(LOWER(r.name) LIKE ? OR LOWER(r.comment) LIKE ? OR LOWER(COALESCE(p.name,'')) LIKE ?)")
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`)
+  }
+  const sql = `SELECT r.*, p.name AS product_name, p.slug AS product_slug
+    FROM reviews r LEFT JOIN products p ON p.id = r.product_id${where.length ? ' WHERE ' + where.join(' AND ') : ''}
+    ORDER BY r.created_at DESC, r.id DESC LIMIT 300`
+const items = db.prepare(sql).all(...params)
+  const counts = db.prepare('SELECT status, COUNT(*) AS n FROM reviews GROUP BY status').all()
+  const demo = db.prepare('SELECT COUNT(*) AS n FROM reviews WHERE is_demo = 1').get().n
+  res.json({
+    items,
+    counts: Object.fromEntries(counts.map((c) => [c.status, c.n])),
+    demoCount: demo,
+  })
+})
+
+/* Vacía el contenido de demostración (reseñas, pedidos y cupones inventados).
+   Solo se permite si no hay pedidos ni reseñas reales: es una operación de
+   limpieza, no un borrado rutinario. */
+app.post('/api/admin/demo/purge', requireAuth, (req, res) => {
+  const scope = String(req.body.scope ?? 'reviews')
+  const realOrders = db.prepare('SELECT COUNT(*) AS n FROM orders WHERE is_demo = 0').get().n
+  const realReviews = db.prepare('SELECT COUNT(*) AS n FROM reviews WHERE is_demo = 0').get().n
+
+  if (scope === 'reviews') {
+    if (realReviews > 0) {
+      return res.status(409).json({
+        error: 'Hay reseñas reales en la base. Revísalas y bórralas una a una si no las necesitas.',
+        realReviews,
+      })
+    }
+    const n = db.prepare('DELETE FROM reviews WHERE is_demo = 1').run().changes
+    audit(req.auth.username, 'demo.purge', 'reviews', null, `Eliminó ${n} reseñas de demostración`)
+    return res.json({ ok: true, removed: { reviews: n } })
+  }
+
+  if (scope === 'orders') {
+    if (realOrders > 0) {
+      return res.status(409).json({
+        error: 'Hay pedidos reales en la base. La limpieza de pedidos demo se hace cuando no quede ninguno real.',
+        realOrders,
+      })
+    }
+    const delItems = db.prepare('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE is_demo = 1)').run().changes
+    const n = db.prepare('DELETE FROM orders WHERE is_demo = 1').run().changes
+    db.prepare('DELETE FROM customers WHERE id NOT IN (SELECT customer_id FROM orders WHERE customer_id IS NOT NULL)').run()
+    audit(req.auth.username, 'demo.purge', 'orders', null, `Eliminó ${n} pedidos de demostración`)
+    return res.json({ ok: true, removed: { orders: n, orderItems: delItems } })
+  }
+
+  return res.status(422).json({ error: 'Ámbito no válido' })
+})
+
+function reviewBody(body) {
+  const rating = Math.round(toNum(body.rating, 5))
+  return {
+    name: String(body.name ?? '').trim().slice(0, 60),
+    city: String(body.city ?? '').trim().slice(0, 60) || null,
+    rating,
+    comment: String(body.comment ?? '').trim().slice(0, 800),
+    productId: String(body.productId ?? '').trim() || null,
+    status: ['pending', 'approved', 'rejected'].includes(body.status) ? body.status : 'approved',
+  }
+}
+
+function validateReview(r) {
+  if (r.name.length < 2) return 'El nombre es obligatorio'
+  if (r.rating < 1 || r.rating > 5) return 'Calificación inválida'
+  if (r.comment.length < 4) return 'El comentario debe tener al menos 4 caracteres'
+  if (r.productId && !db.prepare('SELECT id FROM products WHERE id = ? OR slug = ?').get(r.productId, r.productId))
+    return 'Producto no válido'
+  return null
+}
+
+app.post('/api/admin/reviews', requireAuth, (req, res) => {
+  const r = reviewBody(req.body)
+  const err = validateReview(r)
+  if (err) return res.status(422).json({ error: err })
+  const result = db.prepare("INSERT INTO reviews (name, city, rating, comment, product_id, status, created_at, updated_at) VALUES (?,?,?,?,?,?,datetime('now'),datetime('now'))")
+    .run(r.name, r.city, r.rating, r.comment, r.productId, r.status)
+  audit(req.auth.username, 'review.create', 'reviews', String(result.lastInsertRowid), `${r.name} · ${r.rating} · ${r.status}`)
+  res.status(201).json({ review: db.prepare('SELECT * FROM reviews WHERE id = ?').get(result.lastInsertRowid) })
+})
+
+app.put('/api/admin/reviews/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Reseña no encontrada' })
+  const r = reviewBody(req.body)
+  const err = validateReview(r)
+  if (err) return res.status(422).json({ error: err })
+  db.prepare("UPDATE reviews SET name=?, city=?, rating=?, comment=?, product_id=?, status=?, updated_at=datetime('now') WHERE id=?")
+    .run(r.name, r.city, r.rating, r.comment, r.productId, r.status, row.id)
+  audit(req.auth.username, 'review.update', 'reviews', row.id, `${r.name} · ${r.status}`)
+  res.json({ review: db.prepare('SELECT * FROM reviews WHERE id = ?').get(row.id) })
+})
+
+app.patch('/api/admin/reviews/:id', requireAuth, (req, res) => {
+  const row = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id)
+  if (!row) return res.status(404).json({ error: 'Reseña no encontrada' })
+  if (!['pending', 'approved', 'rejected'].includes(req.body.status))
+    return res.status(422).json({ error: 'Estado no válido' })
+  db.prepare("UPDATE reviews SET status=?, updated_at=datetime('now') WHERE id=?").run(req.body.status, row.id)
+  audit(req.auth.username, 'review.moderate', 'reviews', row.id, `${row.name} → ${req.body.status}`)
+  res.json({ ok: true })
 })
 
 app.delete('/api/admin/reviews/:id', requireAuth, (req, res) => {
@@ -1469,6 +1809,9 @@ app.get('/api/admin/audit', requireAuth, (_req, res) => {
 })
 
 /* ---------------- misc ---------------- */
+
+/* Pasarela de pago: sesión, webhook y estado. */
+app.use('/api/payments', paymentRoutes({ db, audit, getSetting, nowIso, rateLimit, toNum }))
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Ruta no encontrada' }))
 
@@ -1492,7 +1835,16 @@ if (existsSync(distDir)) {
   app.get('/', (_req, res) => res.json({ ok: true, service: 'sultan-black-api' }))
 }
 
+/* Cierre limpio: el WAL se fusiona para que el archivo .db quede completo. */
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => {
+    console.log(`[servidor] ${signal} recibido, cerrando...`)
+    checkpoint()
+    process.exit(0)
+  })
+}
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`SULTAN BLACK API escuchando en http://0.0.0.0:${PORT}`)
-  console.log(`Admin: /admin  (admin / sultan2026)`)
+  console.log('Admin: /admin')
 })

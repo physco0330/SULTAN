@@ -13,6 +13,9 @@ server/data/*.bak-*
 # Imágenes subidas (se regeneran desde el panel)
 server/uploads/
 
+# Imágenes subidas cuando viven en la carpeta de datos configurable
+server/data/uploads/
+
 # Logs
 *.log
 

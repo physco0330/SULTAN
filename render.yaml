@@ -1,13 +1,59 @@
+# Despliegue del API + frontend en Render (un solo dominio, sin CORS).
+#
+# ATENCION: el disco persistente no es gratis. Sin `disk`, Render usa un
+# sistema de archivos efimero y TODOS los pedidos, clientes, cupones y las
+# imagenes subidas se pierden en cada redespliegue.
 services:
   - type: web
     name: sultan-black
     runtime: node
-    plan: free
-    buildCommand: npm install && npm run build
+    plan: starter
+
+    buildCommand: npm ci && npm run build
     startCommand: npm start
+
+    # La API sirve /api y tambien el build de Vite desde el mismo dominio.
+    healthCheckPath: /api/health
+
+    # --- Datos persistentes -------------------------------------------
+    # Base de datos SQLite e imagenes subidas viven aqui. Si cambias la ruta,
+    # cambia tambien SULTAN_DATA_DIR.
+    disk:
+      name: sultan-data
+      mountPath: /data
+      sizeGB: 1
+
     envVars:
       - key: NODE_VERSION
         value: "24"
+
+      - key: NODE_ENV
+        value: production
+
+      # Carpeta de datos persistentes (coincide con disk.mountPath).
+      - key: SULTAN_DATA_DIR
+        value: /data
+
+      # Firma los tokens de admin y el token de seguimiento de pedidos.
+      # Render genera uno automaticamente: nunca lo subas al repositorio.
       - key: SULTAN_SECRET
         generateValue: true
+
+      # Origen de tu frontend, p. ej. https://sultan-black.onrender.com
+      - key: SITE_URL
+        sync: false
+
+      # Solo si el frontend vive en OTRO dominio; separado por comas.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      # Contrasena del usuario admin la PRIMERA vez que se crea la base.
+      # Despues se ignora (la contrasena vive en la base de datos).
+      - key: SULTAN_ADMIN_PASSWORD
+        sync: false
+
+      # Cuantas copias automaticas de la base de datos se conservan.
+      - key: MAX_DB_BACKUPS
+        value: "5"
+
     autoDeploy: true

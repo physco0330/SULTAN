@@ -7,6 +7,7 @@ import { Badge } from '@/components/Badge'
 import { Price } from '@/components/Price'
 import { Rating } from '@/components/Rating'
 import { Modal } from '@/components/Modal'
+import { SafeImage } from '@/components/SafeImage'
 import { useCart } from '@/store/cart'
 import { useWishlist } from '@/store/wishlist'
 import { useUi } from '@/store/ui'
@@ -38,19 +39,21 @@ export function ProductCard({ product, className }: { product: Product; classNam
           className="relative block aspect-[3/4] overflow-hidden bg-ash"
           aria-label={product.name}
         >
-          <img
+          <SafeImage
             src={product.images[0]?.src}
             alt={product.images[0]?.alt ?? product.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-0"
+            className="transition-all duration-700 ease-out group-hover:scale-105 group-hover:opacity-0"
           />
-          <img
-            src={product.images[1]?.src ?? product.images[0]?.src}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            className="absolute inset-0 h-full w-full scale-105 object-cover opacity-0 transition-all duration-700 ease-out group-hover:scale-100 group-hover:opacity-100"
-          />
+          {product.images[1]?.src && (
+            <img
+              src={product.images[1].src}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+              className="absolute inset-0 h-full w-full scale-105 object-cover opacity-0 transition-all duration-700 ease-out group-hover:scale-100 group-hover:opacity-100"
+            />
+          )}
           <span className="pointer-events-none absolute inset-0 bg-night/0 transition-colors duration-500 group-hover:bg-night/30" />
 
           <span className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
@@ -85,7 +88,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
             <p className="text-[0.65rem] font-medium uppercase tracking-[0.28em] text-bone">
               {t(`catalog.types.${product.category}`)}
             </p>
-            <Rating value={product.rating} />
+            <Rating value={product.rating} count={product.reviews} />
           </div>
           <h3 className="mt-1.5 font-display text-[1.05rem] leading-snug text-ivory transition-colors group-hover:text-gold-soft">
             <Link to={`/producto/${product.slug}`} className="focus:outline-none after:absolute after:inset-0 after:z-0">
@@ -109,11 +112,7 @@ export function ProductCard({ product, className }: { product: Product; classNam
       <Modal open={quickView} onClose={() => setQuickView(false)} title={product.name} maxWidth="max-w-4xl">
         <div className="grid gap-6 p-6 md:grid-cols-2">
           <div className="aspect-[3/4] overflow-hidden border border-gold/15 bg-ash">
-            <img
-              src={product.images[0]?.src}
-              alt={product.name}
-              className="h-full w-full object-cover"
-            />
+            <SafeImage src={product.images[0]?.src} alt={product.name} />
           </div>
           <div>
             <Rating value={product.rating} count={product.reviews} />
