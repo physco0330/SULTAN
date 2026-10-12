@@ -55,9 +55,11 @@ function toProduct(d: ApiProduct): Product {
     images,
     colors: d.colors ?? [],
     sizes: d.sizes ?? [],
-    description: d.description,
-    material: d.material,
-    sku: d.sku,
+    description: d.description ?? '',
+    material: d.material ?? '',
+    /* El catálogo público no incluye el SKU; sin este valor el buscador
+     * llamaba a `.toLowerCase()` sobre undefined y tumbaba la app. */
+    sku: d.sku ?? '',
     stock: d.stock,
     rating: d.rating,
     reviews: d.reviews,
@@ -142,12 +144,8 @@ function offlineCatalog(filters: CatalogFilters): Product[] {
   if (filters.collection?.length) list = list.filter((p) => filters.collection!.includes(p.collection))
   if (filters.q) {
     const q = filters.q.toLowerCase()
-    list = list.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q) ||
-        p.material.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q),
+    list = list.filter((p) =>
+      [p.name, p.sku, p.material, p.category].some((v) => (v ?? '').toLowerCase().includes(q)),
     )
   }
   if (list.length > 200) list = list.slice(0, 200)

@@ -54,20 +54,17 @@ export function SearchOverlay() {
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (q.length < 2) return { products: [], categories: [] }
-    const products = catalogProducts.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q) ||
-        p.material.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.collection.toLowerCase().includes(q),
+    const products = catalogProducts.filter((p) =>
+      [p.name, p.sku, p.material, p.category, p.collection].some((v) =>
+        (v ?? '').toLowerCase().includes(q),
+      ),
     )
     /* Se busca en el nombre del idioma activo y también en el original (id y etiqueta de la API). */
     const categories = allCategories.filter(
       (c) =>
         categoryName(c).toLowerCase().includes(q) ||
-        c.label.toLowerCase().includes(q) ||
-        c.id.toLowerCase().includes(q),
+        (c.label ?? '').toLowerCase().includes(q) ||
+        (c.id ?? '').toLowerCase().includes(q),
     )
     return { products, categories }
   }, [query, t, catalogProducts, allCategories])

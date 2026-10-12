@@ -61,14 +61,10 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
   const results = useMemo(() => {
     let list = base
     if (query) {
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.sku.toLowerCase().includes(query) ||
-          p.material.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        p.collection.toLowerCase().includes(query) ||
-        p.quality.toLowerCase().includes(query),
+      list = list.filter((p) =>
+        [p.name, p.sku, p.material, p.category, p.collection, p.quality].some((v) =>
+          (v ?? '').toLowerCase().includes(query),
+        ),
       )
     }
     return list.filter((p) => {
