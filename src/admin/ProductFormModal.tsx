@@ -15,6 +15,12 @@ import type { AdminProduct, ProductImageRow } from '@/services/adminService'
 
 const GENDERS: Gender[] = isFeatureEnabled('women') ? ['men', 'women', 'unisex'] : ['men', 'unisex']
 
+/** Los precios en COP se escriben con separadores de miles ("3.649.000"). */
+const copToNumber = (v: string) => Number(v.replace(/\D/g, ''))
+
+/** Guarda en USD con decimales: redondear a dólares enteros cambiaba el precio al volver a COP. */
+const usdFromCop = (cop: number) => Math.round(convertPrice(cop, 'COP', 'USD') * 1e6) / 1e6
+
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
 
@@ -57,6 +63,7 @@ export function ProductFormModal({
     isOnSale: false,
   })
   const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [images, setImages] = useState<ProductImageRow[]>([])
   const [pending, setPending] = useState<PendingFile[]>([])
@@ -85,8 +92,8 @@ export function ProductFormModal({
         gender: product.gender,
         category: product.category,
         collection: product.collection,
-        price: String(Math.round(convertPrice(product.price, 'USD', 'COP'))),
-        compareAtPrice: product.compareAtPrice ? String(Math.round(convertPrice(product.compareAtPrice, 'USD', 'COP'))) : '',
+        price: String(Math.round(convertPrice(product.compareAtPrice || product.price, 'USD', 'COP'))),
+        compareAtPrice: product.compareAtPrice ? String(Math.round(convertPrice(product.price, 'USD', 'COP'))) : '',
         stock: String(product.stock),
         material: product.material,
         description: product.description,
@@ -172,25 +179,27 @@ export function ProductFormModal({
   const validate = () => {
     const er: Record<string, string> = {}
     if (!form.name.trim()) er.name = 'El nombre es obligatorio'
-    const price = Number(form.price)
+    const price = copToNumber(form.price)
     if (!Number.isFinite(price) || price <= 0) er.price = 'Precio inválido'
-    if (form.compareAtPrice && (!Number.isFinite(Number(form.compareAtPrice)) || Number(form.compareAtPrice) <= 0))
-      er.compareAtPrice = 'Precio inválido'
+    const offer = copToNumber(form.compareAtPrice)
+    if (form.compareAtPrice && (!Number.isFinite(offer) || offer <= 0)) er.compareAtPrice = 'Precio inválido'
+    else if (form.compareAtPrice && offer >= price) er.compareAtPrice = 'La oferta debe ser menor que el precio normal'
     if (!/^\d+$/.test(form.stock)) er.stock = 'Stock numérico'
     setErrors(er)
     return Object.keys(er).length === 0
   }
 
   const save = async () => {
-    if (!validate() || saving) return
+    if (savingRef.current || !validate()) return
+    savingRef.current = true
     setSaving(true)
     const payload = {
       name: form.name.trim(),
       gender: form.gender,
       category: form.category,
       collection: form.collection,
-      price: Math.round(convertPrice(Number(form.price), 'COP', 'USD')),
-      compareAtPrice: form.compareAtPrice ? Math.round(convertPrice(Number(form.compareAtPrice), 'COP', 'USD')) : undefined,
+      price: usdFromCop(copToNumber(form.compareAtPrice || form.price)),
+      compareAtPrice: form.compareAtPrice ? usdFromCop(copToNumber(form.price)) : undefined,
       stock: Math.max(0, Number(form.stock)),
       material: form.material.trim() || 'Premium cotton blend',
       sku: product?.sku ?? '',
@@ -214,25 +223,41 @@ export function ProductFormModal({
         ? await adminService.updateProduct(product.id, payload)
         : await adminService.createProduct(payload)
       const savedId = res.product?.id
+      let failedImages = 0
+      let saved: AdminProduct = res.product
       if (pending.length > 0 && savedId) {
-        await adminService.uploadImages(
-          savedId,
-          pending.map((p) => ({ data: p.dataUrl, alt: '' })),
-        )
+        for (const p of pending) {
+          try {
+            await adminService.uploadImages(savedId, [{ data: p.dataUrl, alt: '' }])
+          } catch {
+            failedImages += 1
+          }
+        }
+        try {
+          const imgs = await adminService.productImages(savedId)
+          saved = { ...res.product, images: imgs.items.map((i) => ({ src: i.path, alt: i.alt })) }
+        } catch {
+          /* la lista se actualizará al recargar */
+        }
       }
       invalidateCatalogCache()
-      pushToast(
-        product
-          ? 'Producto actualizado'
-          : pending.length > 0
-            ? 'Producto creado con imágenes'
-            : 'Producto creado',
-      )
-      onSaved(res.product)
+      if (failedImages > 0) {
+        pushToast(`Producto guardado, pero ${failedImages} imagen(es) no se pudieron subir`, 'error')
+      } else {
+        pushToast(
+          product
+            ? 'Producto actualizado'
+            : pending.length > 0
+              ? 'Producto creado con imágenes'
+              : 'Producto creado',
+        )
+      }
+      onSaved(saved)
       onClose()
     } catch (err) {
       pushToast(err instanceof Error ? err.message : 'No se pudo guardar', 'error')
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
   }
@@ -342,12 +367,13 @@ export function ProductFormModal({
         </div>
 
         <div>
-          <label className={label}>Precio (COP) *</label>
+          <label className={label}>Precio normal (COP) *</label>
           {input('price', 'Ej. 890')}
           {errors.price && <p className="mt-1 text-xs text-red-400">{errors.price}</p>}
         </div>
         <div>
           <label className={label}>Precio de oferta (COP)</label>
+          <p className="mb-1.5 text-[0.62rem] leading-relaxed text-bone">Si lo llenas, este es el precio que se cobra y el normal aparece tachado.</p>
           {input('compareAtPrice', 'Opcional')}
         </div>
         <div>

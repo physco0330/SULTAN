@@ -17,6 +17,8 @@ import type { AdminUser } from '@/services/adminService'
 
 type Section = 'dashboard' | 'products' | 'orders' | 'taxonomies' | 'suppliers' | AdminSettingsSection
 
+const SECTION_KEY = 'sultan-admin-section'
+
 const NAV: { key: Section; label: string; icon: typeof LayoutDashboard; group: 'general' | 'ventas' | 'catalogo' }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, group: 'general' },
   { key: 'products', label: 'Productos', icon: Package, group: 'ventas' },
@@ -54,7 +56,14 @@ export default function Admin() {
   const [checking, setChecking] = useState(!!getAdminToken())
   const [user, setUser] = useState<AdminUser | null>(null)
   const [authorized, setAuthorized] = useState(!getAdminToken() ? false : true)
-  const [section, setSection] = useState<Section>('dashboard')
+  const [section, setSection] = useState<Section>(() => {
+    const saved = localStorage.getItem(SECTION_KEY)
+    return [...NAV, ...CONFIG_NAV].some((n) => n.key === saved) ? (saved as Section) : 'dashboard'
+  })
+
+  useEffect(() => {
+    localStorage.setItem(SECTION_KEY, section)
+  }, [section])
 
   useEffect(() => {
     const token = getAdminToken()

@@ -93,7 +93,7 @@ export function applyFilters(products: Product[], f: FilterInput): Product[] {
 }
 
 export function parseCatalogoParams(params: URLSearchParams): FilterInput {
-  const parse = (key: string): string[] => params.getAll(key)
+  const parse = (key: string): string[] => params.getAll(key).filter(Boolean)
   const pick = (key: string): string[] | undefined => {
     const vals = parse(key)
     return vals.length ? vals : undefined
@@ -119,6 +119,7 @@ export function catalogoQuery(f: FilterState): string {
   f.sizes.forEach((s) => params.append('size', s))
   f.colors.forEach((c) => params.append('color', c))
   f.collections.forEach((c) => params.append('collection', c))
+  f.quality.forEach((q) => params.append('quality', q))
   f.availability.forEach((a) => params.append('availability', a))
   if (f.minPrice > 0) params.set('min', String(f.minPrice))
   if (f.maxPrice < 5000) params.set('max', String(f.maxPrice))

@@ -52,7 +52,7 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
   const state = useMemo(() => {
     const s = toState(params)
     if (gender && s.genders.length === 0) s.genders = [gender]
-    if (presetCollection) s.collections = [presetCollection]
+    if (presetCollection && !params.has('collection')) s.collections = [presetCollection]
     return s
   }, [params, gender, presetCollection])
 
@@ -108,6 +108,8 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
     next.sizes.forEach((s: string) => sp.append('size', s))
     next.colors.forEach((c: string) => sp.append('color', c))
     next.collections.forEach((c: string) => sp.append('collection', c))
+    if (presetCollection && next.collections.length === 0) sp.append('collection', '')
+    next.quality.forEach((q: string) => sp.append('quality', q))
     next.availability.forEach((a: string) => sp.append('availability', a))
     next.minPrice > bounds.min && sp.set('min', String(next.minPrice))
     next.maxPrice < bounds.max && sp.set('max', String(next.maxPrice))
@@ -126,6 +128,7 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
     if (s.sizes.length) n++
     if (s.colors.length) n++
     if (s.collections.length) n++
+    if (s.quality.length) n++
     if (s.availability.length) n++
     if (s.minPrice > bounds.min || s.maxPrice < bounds.max) n++
     if (s.sort !== 'relevance') n++

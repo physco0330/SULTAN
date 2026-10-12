@@ -26,9 +26,9 @@ async function loadOnce(): Promise<void> {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as { rates?: Record<string, number>; date?: string }
       const rates = data.rates || {}
-      // Frankfurter no publica COP en todas las instancias; si falta se conserva la referencia.
+      // Frankfurter no publica COP: ese valor se conserva de la referencia local (no se fuerza a 1).
       if (rates && Object.keys(rates).length > 0) {
-        setRates({ COP: 1, USD: 1, ...rates }, {
+        setRates({ ...rates, USD: 1 }, {
           date: data.date || new Date().toISOString().slice(0, 10),
           source: 'Banco Central Europeo (frankfurter.dev)',
           verified: true,

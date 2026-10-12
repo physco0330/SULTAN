@@ -3,6 +3,7 @@ import { Mail, Phone, MapPin, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useUi } from '@/store/ui'
 import { brandConfig } from '@/config/brand'
+import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { sendContact } from '@/services/productService'
 import { cn } from '@/utils/cn'
 
@@ -12,6 +13,7 @@ export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
+  const cfg = useStoreConfig()
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -32,9 +34,9 @@ export default function Contact() {
   }
 
   const info = [
-    { icon: Mail, label: t('contact.email'), value: brandConfig.email || 'info@sultanblack.com' },
-    { icon: Phone, label: t('contact.phone'), value: brandConfig.whatsappNumber?.replace('+', '+ ') || '+90 212 000 00 00' },
-    { icon: MapPin, label: t('contact.address'), value: brandConfig.address },
+    { icon: Mail, label: t('contact.email'), value: cfg.companyEmail || brandConfig.email || 'info@sultanblack.com' },
+    { icon: Phone, label: t('contact.phone'), value: cfg.companyPhone || cfg.companyWhatsapp || '+90 212 000 00 00' },
+    { icon: MapPin, label: t('contact.address'), value: cfg.companyAddress || brandConfig.address },
     { icon: Clock, label: t('contact.hours'), value: t('contact.hoursValue') },
   ]
 

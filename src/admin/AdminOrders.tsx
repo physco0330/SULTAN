@@ -3,6 +3,7 @@ import { Eye, FileText, Trash2, Plus, FileSpreadsheet, File as FileIcon, Search,
 import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { useUi } from '@/store/ui'
+import { useLiveReload } from '@/hooks/useLiveReload'
 import { Modal } from '@/components/Modal'
 import { OrderFormModal } from '@/admin/OrderFormModal'
 import { PeriodPicker, periodLabel } from '@/admin/Calendar'
@@ -71,6 +72,7 @@ export function AdminOrders() {
   useEffect(() => {
     load()
   }, [load])
+  useLiveReload(() => { void load() })
 
   /* Filtros combinados sobre los datos reales ya cargados (sin recargar la página). */
   const filtered = useMemo(() => {
@@ -294,6 +296,7 @@ export function AdminOrders() {
                 <Th>Cliente</Th>
                 <Th>Artículos</Th>
                 <Th>Subtotal</Th>
+                <Th>Envío</Th>
                 <Th>Desc.</Th>
                 <Th>Total</Th>
                 <Th>Estado</Th>
@@ -301,8 +304,8 @@ export function AdminOrders() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {loading && orders.length === 0 && <EmptyRow colSpan={9} message="Cargando…" />}
-              {!loading && filtered.length === 0 && <EmptyRow colSpan={9} message="No hay pedidos que coincidan con los filtros" />}
+              {loading && orders.length === 0 && <EmptyRow colSpan={10} message="Cargando…" />}
+              {!loading && filtered.length === 0 && <EmptyRow colSpan={10} message="No hay pedidos que coincidan con los filtros" />}
               {pageItems.map((o) => (
                 <tr key={o.id} className="hover:bg-carbon/60">
                   <Td className="text-gold">{o.number}</Td>
@@ -313,6 +316,7 @@ export function AdminOrders() {
                   </Td>
                   <Td>{o.quantity} uds</Td>
                   <Td>{usd(o.subtotal_usd)}</Td>
+                  <Td>{o.shipping_usd === 0 ? <span className="text-bone">Gratis</span> : usd(o.shipping_usd)}</Td>
                   <Td>{o.discount_usd > 0 ? <span className="text-gold">−{usd(o.discount_usd)}</span> : <span className="text-bone">—</span>}</Td>
                   <Td className="font-medium">{usd(o.total_usd)}</Td>
                   <Td>

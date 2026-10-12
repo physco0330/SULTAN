@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus, Trash2, Pencil, Search, Truck, Power } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { useUi } from '@/store/ui'
+import { useLiveReload } from '@/hooks/useLiveReload'
 import { Modal } from '@/components/Modal'
 import { Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { cn } from '@/utils/cn'
@@ -46,6 +47,7 @@ export function AdminSuppliers() {
   }, [pushToast])
 
   useEffect(() => { load() }, [load])
+  useLiveReload(() => { void load() })
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -194,7 +196,7 @@ export function AdminSuppliers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {loading && <EmptyRow colSpan={7} message="Cargando…" />}
+              {loading && rows.length === 0 && <EmptyRow colSpan={7} message="Cargando…" />}
               {!loading && filtered.length === 0 && (
                 <EmptyRow colSpan={7} message={rows.length === 0 ? 'Aún no hay proveedores registrados. Crea el primero con “Nuevo proveedor”.' : 'Ningún proveedor coincide con la búsqueda'} />
               )}

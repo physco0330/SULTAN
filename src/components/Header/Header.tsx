@@ -8,6 +8,7 @@ import { CurrencySelector } from '@/components/CurrencySelector'
 import { useCart } from '@/store/cart'
 import { useWishlist } from '@/store/wishlist'
 import { useUi } from '@/store/ui'
+import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { cn } from '@/utils/cn'
 import { isFeatureEnabled } from '@/config/features'
 
@@ -22,13 +23,15 @@ const NAV_ITEMS = [
 
 function AnnouncementBar() {
   const { t } = useTranslation()
-  const items = [
-    t('sections.marquee.freeShipping'),
-    t('sections.marquee.international'),
-    t('sections.marquee.authentic'),
-    t('sections.marquee.returns'),
-    t('sections.marquee.secure'),
-  ]
+  const cfg = useStoreConfig()
+  const items = cfg.announcements.length
+    ? cfg.announcements
+    : [
+        t('sections.marquee.freeShipping'),
+        t('sections.marquee.international'),
+        t('sections.marquee.authentic'),
+        t('sections.marquee.secure'),
+      ]
   const row = [...items, ...items]
   return (
     <div className="overflow-hidden border-b border-gold/15 bg-carbon py-2 text-[0.62rem] font-medium uppercase tracking-[0.28em] text-gold" aria-hidden="true">

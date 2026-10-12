@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Share2, ShieldCheck, ShoppingBag, Copy, Heart, Minus, Plus, ZoomIn } from 'lucide-react'
+import { Share2, ShieldCheck, ShoppingBag, Copy, Heart, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ZoomImage } from '@/components/ZoomImage'
 import { useTranslation } from 'react-i18next'
 import { getProduct } from '@/data/products'
 import { fetchProductById } from '@/services/productService'
@@ -143,20 +144,40 @@ export default function Product() {
       <div className="grid gap-10 lg:grid-cols-2">
         {/* Gallery */}
         <div>
-          <div className="group relative overflow-hidden border border-gold/15 bg-ash">
-            <SafeImage
+          <div className="relative overflow-hidden border border-gold/15 bg-ash">
+            <ZoomImage
               src={product.images[activeImg]?.src}
               alt={product.name}
-              className="aspect-[3/4] w-full transition-transform duration-700 group-hover:scale-105"
+              className="aspect-[3/4] w-full"
             />
             <div className="absolute right-4 top-4 flex flex-col gap-2">
               {product.isNew && <Badge tone="silver">{t('badges.new')}</Badge>}
               {product.isLimited && <Badge tone="gold">{t('badges.limited')}</Badge>}
               {product.isOnSale && <Badge tone="outline">{t('badges.sale')}</Badge>}
             </div>
-            <ZoomIn size={20} className="absolute bottom-4 right-4 text-gold/70" aria-hidden="true" />
+            {product.images.length > 1 && (
+              <>
+                <button
+                  onClick={() => setActiveImg((i) => (i - 1 + product.images.length) % product.images.length)}
+                  aria-label="Foto anterior"
+                  className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center bg-night/70 text-ivory hover:bg-gold hover:text-night"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={() => setActiveImg((i) => (i + 1) % product.images.length)}
+                  aria-label="Foto siguiente"
+                  className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center bg-night/70 text-ivory hover:bg-gold hover:text-night"
+                >
+                  <ChevronRight size={20} />
+                </button>
+                <span className="absolute bottom-4 left-4 bg-night/70 px-2 py-1 text-[0.65rem] tracking-widest text-ivory">
+                  {activeImg + 1} / {product.images.length}
+                </span>
+              </>
+            )}
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-3">
+          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
             {product.images.map((img, i) => (
               <button
                 key={i}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Plus, Trash2, Pencil } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { invalidateConfigCache } from '@/hooks/useStoreConfig'
+import { useLiveReload } from '@/hooks/useLiveReload'
 import { useUi } from '@/store/ui'
 import { usd, shortDate, StatusBadge, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { cn } from '@/utils/cn'
@@ -92,6 +93,7 @@ function SettingsForm() {
     { key: 'flat_shipping', label: 'Tarifa envío estándar (USD)' },
     { key: 'express_shipping', label: 'Tarifa envío exprés (USD)' },
     { key: 'instagram_url', label: 'Instagram URL' },
+    { key: 'announcement_bar', label: 'Cinta superior (separa los mensajes con |, vacío = textos automáticos)' },
   ]
 
   if (busy) {
@@ -108,7 +110,7 @@ function SettingsForm() {
         <h3 className="font-display mb-5 text-sm tracking-[0.2em] text-ivory">INFORMACIÓN DE LA EMPRESA</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           {FIELDS.map((f) => (
-            <div key={f.key} className={f.key === 'company_tagline' || f.key === 'company_address' ? 'sm:col-span-2' : ''}>
+            <div key={f.key} className={['company_tagline', 'company_address', 'announcement_bar'].includes(f.key) ? 'sm:col-span-2' : ''}>
               <label className="mb-1.5 block text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-bone">{f.label}</label>
               <input
                 type={f.type || 'text'}
@@ -162,6 +164,7 @@ function CouponsPanel() {
       .catch((e) => pushToast(e instanceof Error ? e.message : 'Error', 'error'))
       .finally(() => setBusy(false))
   }, [pushToast])
+  useLiveReload(load)
 
   useEffect(() => {
     load()
@@ -283,6 +286,7 @@ function SubscribersPanel() {
       .catch((e) => pushToast(e instanceof Error ? e.message : 'Error', 'error'))
       .finally(() => setBusy(false))
   }, [pushToast])
+  useLiveReload(load)
 
   useEffect(() => {
     load()
@@ -340,6 +344,7 @@ function CustomersPanel() {
       .catch((e) => pushToast(e instanceof Error ? e.message : 'Error', 'error'))
       .finally(() => setBusy(false))
   }, [pushToast])
+  useLiveReload(() => { void adminService.customers().then((r) => setItems(r.items)).catch(() => {}) })
 
   return (
     <div className="overflow-hidden border border-gold/15 bg-carbon/40">
@@ -383,6 +388,7 @@ function AuditPanel() {
       .catch((e) => pushToast(e instanceof Error ? e.message : 'Error', 'error'))
       .finally(() => setBusy(false))
   }, [pushToast])
+  useLiveReload(() => { void adminService.audit().then((r) => setItems(r.items)).catch(() => {}) })
 
   return (
     <div className="overflow-hidden border border-gold/15 bg-carbon/40">

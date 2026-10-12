@@ -3,6 +3,7 @@ import { Search, Plus, Pencil, Trash2, Eye, EyeOff, Star } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
 import { useUi } from '@/store/ui'
+import { useLiveReload } from '@/hooks/useLiveReload'
 import { ProductFormModal } from '@/admin/ProductFormModal'
 import { ProductThumb } from '@/admin/ProductThumb'
 import { Modal } from '@/components/Modal'
@@ -43,6 +44,7 @@ export function AdminProducts() {
     const id = setTimeout(() => load(query.trim() || undefined), 350)
     return () => clearTimeout(id)
   }, [query, load])
+  useLiveReload(() => { void load(query.trim() || undefined) })
 
   const toggleActive = async (p: AdminProduct) => {
     try {
@@ -140,9 +142,9 @@ export function AdminProducts() {
                       </div>
                     </div>
                   </Td>
-                  <Td>{usd(p.price)}</Td>
+                  <Td>{usd(p.compareAtPrice ?? p.price)}</Td>
                   <Td className="text-bone">{categories.find((c) => c.id === p.category)?.label ?? p.category}</Td>
-                  <Td>{p.compareAtPrice ? <span className="text-gold">{usd(p.compareAtPrice)}</span> : <span className="text-bone">—</span>}</Td>
+                  <Td>{p.compareAtPrice ? <span className="text-gold">{usd(p.price)}</span> : <span className="text-bone">—</span>}</Td>
                   <Td>
                     <span className={cn('font-medium', p.stock === 0 ? 'text-red-400' : p.stock <= 8 ? 'text-gold' : 'text-ivory')}>
                       {p.stock}

@@ -3,6 +3,7 @@ import { Plus, Trash2, Pencil, ArrowUp, ArrowDown, Tags, Layers } from 'lucide-r
 import { adminService } from '@/services/adminService'
 import { invalidateTaxonomyCache } from '@/hooks/useTaxonomies'
 import { useUi } from '@/store/ui'
+import { useLiveReload } from '@/hooks/useLiveReload'
 import { Modal } from '@/components/Modal'
 import { Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
 import { cn } from '@/utils/cn'
@@ -47,6 +48,7 @@ export function AdminTaxonomies() {
   }, [pushToast])
 
   useEffect(() => { load() }, [load])
+  useLiveReload(() => { void load() })
 
   const saveEdit = async () => {
     if (!editing || formLabel.trim().length < 2 || busy) return
@@ -172,8 +174,8 @@ export function AdminTaxonomies() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {loading && <EmptyRow colSpan={5} message="Cargando…" />}
-              {!loading && tab === 'categories' && catRows.map((c, i) => (
+              {loading && catRows.length + colRows.length === 0 && <EmptyRow colSpan={5} message="Cargando…" />}
+              {tab === 'categories' && catRows.map((c, i) => (
                 <tr key={c.id} className="hover:bg-carbon/60">
                   <Td className="text-ivory">{c.label_es}</Td>
                   <Td><span className="text-xs text-bone">{c.id}</span></Td>
@@ -190,7 +192,7 @@ export function AdminTaxonomies() {
                   </Td>
                 </tr>
               ))}
-              {!loading && tab === 'collections' && colRows.map((c, i) => (
+              {tab === 'collections' && colRows.map((c, i) => (
                 <tr key={c.id} className="hover:bg-carbon/60">
                   <Td className="text-ivory">{c.label_es}</Td>
                   <Td><span className="text-xs text-bone">{c.id}</span></Td>

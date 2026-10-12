@@ -140,8 +140,8 @@ setInterval(() => {
   for (const [k, v] of rateBuckets) if (now > v.reset) rateBuckets.delete(k)
 }, RATE_WINDOW_MS).unref()
 
-app.use(express.json({ limit: '1mb' }))
 app.use('/api/admin/products/:id/images', express.json({ limit: '12mb' }))
+app.use(express.json({ limit: '1mb' }))
 
 /* ---------- utilidades de validación de imágenes ---------- */
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -211,6 +211,7 @@ const toNum = (v, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback
 }
 const toBool = (v) => v === true || v === 1 || v === '1' || v === 'true'
+const cents = (n) => Math.round(n * 100) / 100
 
 const asArray = (v) => {
   if (v === undefined || v === null) return []
@@ -320,6 +321,7 @@ function publicConfig() {
     flatShipping: toNum(getSetting('flat_shipping', '15')),
     expressShipping: toNum(getSetting('express_shipping', '45')),
     instagramUrl: getSetting('instagram_url'),
+    announcements: getSetting('announcement_bar').split('|').map((s) => s.trim()).filter(Boolean),
   }
 }
 
@@ -435,7 +437,7 @@ app.get('/api/coupons/validate', (req, res) => {
     return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'max_uses' })
   if (subtotal < row.min_subtotal)
     return res.json({ valid: false, code, percent: 0, discount: 0, reason: 'min_subtotal', minSubtotal: row.min_subtotal })
-  const discount = Math.round((subtotal * row.percent) / 100)
+  const discount = cents((subtotal * row.percent) / 100)
   res.json({ valid: true, code, percent: row.percent, discount, minSubtotal: row.min_subtotal })
 })
 
@@ -604,11 +606,11 @@ app.post('/api/orders', rateLimit('orders', 20), (req, res) => {
     const vigente = c && (!c.expires_at || new Date(c.expires_at + 'T23:59:59Z').getTime() >= Date.now())
     const disponible = c && (c.max_uses == null || c.used_count < c.max_uses)
     if (c && vigente && disponible && subtotal >= c.min_subtotal) {
-      discount = Math.round((subtotal * c.percent) / 100)
+      discount = cents((subtotal * c.percent) / 100)
       couponCode = code
     }
   }
-  const total = Math.round(subtotal + shipping - discount)
+  const total = cents(subtotal + shipping - discount)
 
   db.exec('BEGIN')
   let customerId = null
@@ -628,7 +630,7 @@ app.post('/api/orders', rateLimit('orders', 20), (req, res) => {
       number, customerId, String(info.name).trim(), String(info.email).trim().toLowerCase(),
       String(info.phone ?? '').trim(), String(info.city ?? '').trim(), String(info.country ?? '').trim(),
       String(info.address ?? '').trim(), String(info.zip ?? '').trim(),
-      Math.round(subtotal), shipping, discount, total, 'USD', couponCode, 'pending', nowIso(),
+      cents(subtotal), shipping, discount, total, 'USD', couponCode, 'pending', nowIso(),
     )
     orderId = Number(orderRes.lastInsertRowid)
 
@@ -769,11 +771,11 @@ app.post('/api/reviews', (req, res) => {
   if (comment.length < 4 || comment.length > 800) return res.status(422).json({ error: 'El comentario debe tener al menos 4 caracteres' })
   if (productId && !db.prepare('SELECT id FROM products WHERE id = ? OR slug = ?').get(productId, productId))
     return res.status(422).json({ error: 'Producto no válido' })
-  /* Las reseñas públicas quedan pendientes de moderación. */
-  db.prepare("INSERT INTO reviews (name, city, rating, comment, product_id, status) VALUES (?,?,?,?,?,'pending')")
+  /* Se publican al instante; el admin puede eliminarlas desde el panel. */
+  db.prepare("INSERT INTO reviews (name, city, rating, comment, product_id, status) VALUES (?,?,?,?,?,'approved')")
     .run(name, city || null, rating, comment, productId || null)
-  audit(null, 'review.create', 'reviews', null, name + ' - pendiente de moderación')
-  res.status(201).json({ ok: true, status: 'pending' })
+  audit(null, 'review.create', 'reviews', null, name + ' - publicada')
+  res.status(201).json({ ok: true, status: 'approved' })
 })
 
 /* ---------------- admin: imágenes del catálogo ---------------- */
@@ -1492,11 +1494,11 @@ app.post('/api/admin/orders', requireAuth, (req, res) => {
     const vigente = c && (!c.expires_at || new Date(c.expires_at + 'T23:59:59Z').getTime() >= Date.now())
     const disponible = c && (c.max_uses == null || c.used_count < c.max_uses)
     if (c && vigente && disponible && subtotal >= c.min_subtotal) {
-      discount = Math.round((subtotal * c.percent) / 100)
+      discount = cents((subtotal * c.percent) / 100)
       couponCode = code
     }
   }
-  const total = Math.round(subtotal + shipping - discount)
+  const total = cents(subtotal + shipping - discount)
 
   if (String(info.email ?? '').trim()) {
     db.prepare(`
@@ -1523,7 +1525,7 @@ app.post('/api/admin/orders', requireAuth, (req, res) => {
     number, String(info.name).trim(), String(info.email ?? '').trim().toLowerCase(),
     String(info.phone ?? '').trim(), String(info.city ?? '').trim(), String(info.country ?? '').trim(),
     String(info.address ?? '').trim(), String(info.zip ?? '').trim(),
-    Math.round(subtotal), shipping, discount, total, 'USD', couponCode, 'pending', nowIso(),
+    cents(subtotal), shipping, discount, total, 'USD', couponCode, 'pending', nowIso(),
   )
   const orderId = Number(orderRes.lastInsertRowid)
   const adminCustomerId = resolveCustomer(info)
@@ -1553,7 +1555,7 @@ app.post('/api/admin/orders', requireAuth, (req, res) => {
     ship_country: String(info.country ?? '').trim() || null,
     ship_address: String(info.address ?? '').trim() || null,
     ship_zip: String(info.zip ?? '').trim() || null,
-    subtotal_usd: Math.round(subtotal),
+    subtotal_usd: cents(subtotal),
     shipping_usd: shipping,
     discount_usd: discount,
     total_usd: total,
@@ -1599,7 +1601,7 @@ app.put('/api/admin/settings', requireAuth, (req, res) => {
   const allowed = [
     'company_name', 'company_tagline', 'company_email', 'company_phone',
     'company_whatsapp', 'company_address', 'default_currency', 'free_shipping_threshold',
-    'flat_shipping', 'express_shipping', 'instagram_url',
+    'flat_shipping', 'express_shipping', 'instagram_url', 'announcement_bar',
   ]
   const upd = db.prepare('INSERT INTO settings (key, value, updated_at) VALUES (?,?,datetime(\'now\')) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime(\'now\')')
   for (const k of allowed) {
@@ -1816,6 +1818,7 @@ app.use('/api/payments', paymentRoutes({ db, audit, getSetting, nowIso, rateLimi
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Ruta no encontrada' }))
 
 app.use((err, _req, res, _next) => {
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'La foto es demasiado grande (máx. 5 MB por imagen)' })
   console.error(err)
   res.status(500).json({ error: 'Error interno del servidor' })
 })

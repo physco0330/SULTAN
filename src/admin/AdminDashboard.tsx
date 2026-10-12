@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { DollarSign, ShoppingBag, Package, AlertTriangle, Star, Users, Mail, Truck, FileSpreadsheet, File as FileIcon, FileText, Receipt } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { useUi } from '@/store/ui'
+import { useLiveReload } from '@/hooks/useLiveReload'
 import { PeriodPicker, periodLabel } from '@/admin/Calendar'
 import type { PeriodValue } from '@/admin/Calendar'
 import { Section, StatCard, StatusBadge, shortDate, usd, Spinner, EmptyRow, Th, Td, TableScroller } from '@/admin/ui'
@@ -28,6 +29,14 @@ export function AdminDashboard({ onNavigate }: { onNavigate?: (s: 'orders' | 'pr
   const [periodValue, setPeriodValue] = useState<PeriodValue>(EMPTY_PERIOD)
   const [exporting, setExporting] = useState(false)
   const pushToast = useUi((s) => s.pushToast)
+
+  useLiveReload(() => {
+    const q = periodToQuery(periodValue)
+    adminService
+      .stats(q.period, { from: q.from, to: q.to })
+      .then(setStats)
+      .catch(() => {})
+  })
 
   useEffect(() => {
     let dead = false

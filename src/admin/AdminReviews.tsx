@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Plus, Trash2, Pencil, Search } from 'lucide-react'
 import { adminService } from '@/services/adminService'
 import { useUi } from '@/store/ui'
+import { useLiveReload } from '@/hooks/useLiveReload'
 import { Modal } from '@/components/Modal'
 import { Spinner, EmptyRow, Th, Td, TableScroller, shortDate } from '@/admin/ui'
 import { cn } from '@/utils/cn'
@@ -53,6 +54,7 @@ export function AdminReviews() {
   }, [status, q, pushToast])
 
   useEffect(() => { void load() }, [load])
+  useLiveReload(() => { void load() })
   useEffect(() => {
     adminService.products().then((r) => setProducts(r.items)).catch(() => setProducts([]))
   }, [])
@@ -228,7 +230,7 @@ export function AdminReviews() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gold/10">
-              {busy && <EmptyRow colSpan={6} message="Cargando…" />}
+              {busy && items.length === 0 && <EmptyRow colSpan={6} message="Cargando…" />}
               {!busy && items.length === 0 && <EmptyRow colSpan={6} message="No hay reseñas para mostrar" />}
               {items.map((r) => (
                 <tr key={r.id} className="hover:bg-carbon/60">

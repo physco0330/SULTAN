@@ -23,12 +23,17 @@ interface ModalProps {
 
 export function Modal({ open, onClose, children, title, maxWidth = 'max-w-2xl', labelledBy }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     lockBody(open)
     if (!open) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKey)
     dialogRef.current?.focus()
@@ -36,7 +41,7 @@ export function Modal({ open, onClose, children, title, maxWidth = 'max-w-2xl', 
       lockBody(false)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 

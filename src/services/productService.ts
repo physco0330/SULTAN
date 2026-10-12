@@ -88,12 +88,13 @@ export function toApiProduct(p: Product) {
     isLimited: p.isLimited,
     isBestSeller: p.isBestSeller,
     isOnSale: p.isOnSale,
+    quality: p.quality,
     material: p.material,
     sku: p.sku,
     description: p.description,
     colors: p.colors,
     sizes: p.sizes,
-    active: true,
+    active: (p as { active?: boolean }).active ?? true,
   }
 }
 
@@ -181,6 +182,7 @@ export interface StoreConfig {
   flatShipping: number
   expressShipping: number
   instagramUrl: string
+  announcements: string[]
 }
 
 export const FALLBACK_CONFIG: StoreConfig = {
@@ -195,6 +197,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   flatShipping: FLAT_SHIPPING_USD,
   expressShipping: EXPRESS_SHIPPING_USD,
   instagramUrl: '',
+  announcements: [],
 }
 
 export async function fetchConfig(): Promise<StoreConfig> {

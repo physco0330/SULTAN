@@ -119,7 +119,7 @@ export default function Checkout() {
   const [couponError, setCouponError] = useState('')
   const setPromo = useCart((s) => s.setPromo)
   const [form, setForm] = useState({
-    email: '', name: '', city: '', address: '', neighborhood: '', country: '', phone: '',
+    email: '', name: '', city: '', address: '', neighborhood: '', country: 'Colombia', phone: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 

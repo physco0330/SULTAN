@@ -334,6 +334,17 @@ const MIGRATIONS = [
     },
   },
   {
+    id: 'm012_swap_inverted_offers',
+    run: () => {
+      /* Antes el campo "precio de oferta" se guardaba como tachado, con los
+         valores al revés: el descuento aparecía como precio real. Donde el
+         tachado es menor que el precio se intercambian. */
+      db.exec(`UPDATE products
+        SET price = compare_at_price, compare_at_price = price
+        WHERE compare_at_price IS NOT NULL AND compare_at_price > 0 AND compare_at_price < price`)
+    },
+  },
+  {
     id: 'm010_demo_content',
     run: () => {
       /* Distingue el contenido inventado del contenido real.

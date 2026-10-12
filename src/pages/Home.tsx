@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { heroImage, categoryImage, editorialImage } from '@/utils/placeholder'
-import { PRODUCTS } from '@/data/products'
+import { useCatalog } from '@/hooks/useCatalog'
 import { Reveal } from '@/components/Reveal'
 import { SectionTitle } from '@/components/SectionTitle'
 import { ProductGrid } from '@/components/ProductGrid'
@@ -125,7 +125,8 @@ function Categories() {
 
 function Featured() {
   const { t } = useTranslation()
-  const featured = PRODUCTS.filter((p) => p.featured && p.collection !== 'offers').slice(0, 8)
+  const { products } = useCatalog()
+  const featured = products.filter((p) => p.featured && p.collection !== 'offers').slice(0, 10)
   return (
     <section className="border-y border-gold/10 bg-carbon/40 py-20 md:py-28">
       <div className="mx-auto max-w-[1600px] px-4 lg:px-8">
