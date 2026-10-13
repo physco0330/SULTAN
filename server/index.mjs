@@ -126,6 +126,7 @@ setInterval(() => {
 
 app.use('/api/admin/products/:id/images', express.json({ limit: '12mb' }))
 app.use('/api/admin/settings/philosophy-image', express.json({ limit: '12mb' }))
+app.use('/api/admin/settings/category-image', express.json({ limit: '12mb' }))
 app.use(express.json({ limit: '1mb' }))
 
 /* ---------- utilidades de validación de imágenes ---------- */
@@ -309,6 +310,7 @@ app.get('/api/config', async (_req, res) => {
     philosophyText: get('philosophy_text'),
     philosophyImage1: get('philosophy_image_1'),
     philosophyImage2: get('philosophy_image_2'),
+    categoryImages: ['1', '2', '3', '4'].map((n) => get(`category_image_${n}`)),
     philosophyItems: (() => {
       try {
         const arr = JSON.parse(get('philosophy_items') || '[]')
@@ -980,6 +982,7 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
     'company_whatsapp', 'company_address', 'default_currency', 'free_shipping_threshold',
     'flat_shipping', 'express_shipping', 'instagram_url', 'announcement_bar',
     'philosophy_title', 'philosophy_text', 'philosophy_image_1', 'philosophy_image_2', 'philosophy_items',
+    'category_image_1', 'category_image_2', 'category_image_3', 'category_image_4',
   ]
   const entries = {}
   for (const k of allowed) {
@@ -1005,6 +1008,24 @@ app.post('/api/admin/settings/philosophy-image', requireAuth, rateLimit('upload'
   }
   await content.saveSettings({ [`philosophy_image_${slot}`]: uploaded.url })
   await audit(req.auth.username, 'settings.image', 'settings', `philosophy_image_${slot}`, 'Actualizó imagen de filosofía')
+  res.status(201).json({ url: uploaded.url })
+})
+
+/* Imágenes de las 4 tarjetas de "Diseñado en Colombia" (Inicio): se guardan por posición. */
+app.post('/api/admin/settings/category-image', requireAuth, rateLimit('upload', 60), async (req, res) => {
+  const slot = String(req.body.slot ?? '')
+  if (!['1', '2', '3', '4'].includes(slot)) return res.status(422).json({ error: 'Posición de imagen no válida' })
+  const decoded = decodeBase64Image(req.body.data)
+  if (!decoded || decoded.error) return res.status(422).json({ error: decoded?.error ?? 'Imagen inválida' })
+  let uploaded
+  try {
+    uploaded = await uploadSiteImage(decoded.buf, `category-${slot}`)
+  } catch (err) {
+    console.error('[upload tarjetas]', err)
+    return res.status(500).json({ error: 'No se pudo guardar la imagen' })
+  }
+  await content.saveSettings({ [`category_image_${slot}`]: uploaded.url })
+  await audit(req.auth.username, 'settings.image', 'settings', `category_image_${slot}`, 'Actualizó imagen de tarjeta de Inicio')
   res.status(201).json({ url: uploaded.url })
 })
 

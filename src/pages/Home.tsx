@@ -86,6 +86,9 @@ const CATEGORY_CARDS = [
 
 function Categories() {
   const { t } = useTranslation()
+  const cfg = useStoreConfig()
+  /* Imágenes de las 4 tarjetas: se cargan desde Admin › Empresa › Tarjetas de Inicio. */
+  const images = cfg.categoryImages ?? []
   return (
     <section id="categories" className="mx-auto max-w-[1600px] px-4 py-20 md:py-28 lg:px-8">
       <SectionTitle eyebrow={t('hero.title')} title={t('sections.categories.title')} subtitle={t('sections.categories.subtitle')} />
@@ -94,15 +97,15 @@ function Categories() {
           <Reveal key={c.label} delay={i * 100}>
             <Link
               to={c.to}
-              className="group relative block aspect-[3/4] overflow-hidden bg-ash md:aspect-[3/4.4]"
+              className="group relative block aspect-[3/4] overflow-hidden border border-gold/15 bg-ash transition-colors duration-500 hover:border-gold/60 md:aspect-[3/4.4]"
             >
               <img
-                src={c.image}
+                src={images[i] || c.image}
                 alt={c.label}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               />
-              <span className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent transition-opacity duration-500 group-hover:opacity-90" />
+              <span className="absolute inset-0 bg-gradient-to-t from-night via-night/15 to-transparent transition-opacity duration-500 group-hover:opacity-70" />
               <span className="absolute inset-0 flex items-end justify-between p-5">
                 <span>
                   <span className="text-[0.62rem] font-semibold uppercase tracking-[0.3em] text-gold">{c.label}</span>

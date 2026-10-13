@@ -189,6 +189,7 @@ export interface StoreConfig {
   philosophyImage1: string
   philosophyImage2: string
   philosophyItems: PhilosophyItem[]
+  categoryImages: string[]
 }
 
 export const FALLBACK_CONFIG: StoreConfig = {
@@ -209,6 +210,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   philosophyImage1: '',
   philosophyImage2: '',
   philosophyItems: [],
+  categoryImages: [],
 }
 
 export async function fetchConfig(): Promise<StoreConfig> {

@@ -229,6 +229,8 @@ export const adminService = {
   saveSettings: (body: Record<string, string>) => api.put<{ ok: boolean }>('/admin/settings', body),
   uploadPhilosophyImage: (slot: 1 | 2, data: string) =>
     api.post<{ url: string }>('/admin/settings/philosophy-image', { slot, data }),
+  uploadCategoryImage: (slot: 1 | 2 | 3 | 4, data: string) =>
+    api.post<{ url: string }>('/admin/settings/category-image', { slot, data }),
 
   createCoupon: (body: { code: string; percent: number; minSubtotal: number; active: boolean }) =>
     api.post<{ coupon: CouponRow }>('/admin/coupons', body),

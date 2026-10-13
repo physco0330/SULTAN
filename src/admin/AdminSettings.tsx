@@ -135,6 +135,7 @@ function SettingsForm() {
 
       <div className="space-y-6">
         <PhilosophyEditor form={form} onChange={setField} onSave={save} saving={saving} />
+        <CategoryImagesEditor form={form} onChange={setField} onSave={save} saving={saving} />
         <div className="border border-gold/15 bg-carbon/40 p-6">
           <h3 className="font-display mb-3 text-sm tracking-[0.2em] text-ivory">VISIBILIDAD</h3>
           <p className="text-sm font-light leading-relaxed text-bone">
@@ -327,6 +328,115 @@ function PhilosophyEditor({
         className="mt-6 flex items-center justify-center bg-gold px-8 py-3 text-xs font-bold uppercase tracking-[0.24em] text-night hover:bg-gold-soft disabled:opacity-50"
       >
         {saving && <Spinner className="mr-2 border-night/30 border-t-night" />} Guardar filosofía
+      </button>
+    </div>
+  )
+}
+
+const HOME_CARD_LABELS = ['Catálogo', 'Nueva colección', 'Ofertas', 'Edición limitada']
+
+/** Imágenes de las 4 tarjetas de la sección "Diseñado en Colombia" (Inicio). */
+function CategoryImagesEditor({
+  form,
+  onChange,
+  onSave,
+  saving,
+}: {
+  form: Record<string, string>
+  onChange: (k: string, v: string) => void
+  onSave: () => void
+  saving: boolean
+}) {
+  const pushToast = useUi((s) => s.pushToast)
+  const [uploading, setUploading] = useState<0 | 1 | 2 | 3 | 4>(0)
+
+  const upload = async (slot: 1 | 2 | 3 | 4, file: File | undefined) => {
+    if (!file) return
+    if (!PHOTO_TYPES.includes(file.type)) {
+      pushToast('Formato no permitido. Usa JPEG, PNG o WebP', 'error')
+      return
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      pushToast('La imagen supera el máximo de 5 MB', 'error')
+      return
+    }
+    setUploading(slot)
+    try {
+      const data = await readAsDataUrl(file)
+      const res = await adminService.uploadCategoryImage(slot, data)
+      onChange(`category_image_${slot}`, res.url)
+      invalidateConfigCache()
+      pushToast(`Imagen de "${HOME_CARD_LABELS[slot - 1]}" guardada`)
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'No se pudo subir la imagen', 'error')
+    } finally {
+      setUploading(0)
+    }
+  }
+
+  return (
+    <div className="border border-gold/15 bg-carbon/40 p-6">
+      <h3 className="font-display mb-3 text-sm tracking-[0.2em] text-ivory">TARJETAS DE INICIO</h3>
+      <p className="mb-5 text-xs leading-relaxed text-bone">
+        Son las 4 tarjetas de la sección "Diseñado en Colombia" (Inicio). Sube una foto para cada una: la imagen se muestra
+        destacada en la tarjeta. Si la dejas vacía, se usa la imagen por defecto.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {([1, 2, 3, 4] as const).map((slot) => {
+          const url = form[`category_image_${slot}`] ?? ''
+          return (
+            <div key={slot} className="space-y-2">
+              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-bone">{HOME_CARD_LABELS[slot - 1]}</p>
+              <div className="aspect-[3/4] w-full overflow-hidden border border-gold/20 bg-night">
+                {url ? (
+                  <img src={url} alt={HOME_CARD_LABELS[slot - 1]} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center px-3 text-center text-xs text-bone">Sin imagen</div>
+                )}
+              </div>
+              <label
+                className={cn(
+                  'flex cursor-pointer items-center justify-center gap-2 border border-gold/40 py-2.5 text-[0.62rem] font-semibold uppercase tracking-widest text-gold hover:bg-gold/10',
+                  uploading !== 0 && 'pointer-events-none opacity-50',
+                )}
+              >
+                {uploading === slot && <Spinner />}
+                {uploading === slot ? 'Subiendo…' : 'Subir foto'}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    void upload(slot, e.target.files?.[0])
+                    e.target.value = ''
+                  }}
+                />
+              </label>
+              <input
+                value={url}
+                onChange={(e) => onChange(`category_image_${slot}`, e.target.value)}
+                placeholder="o pega una URL https://…"
+                className={input}
+              />
+              {url && (
+                <button
+                  type="button"
+                  onClick={() => onChange(`category_image_${slot}`, '')}
+                  className="text-[0.6rem] font-semibold uppercase tracking-widest text-bone underline-offset-4 hover:text-gold hover:underline"
+                >
+                  Quitar imagen
+                </button>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className="mt-6 flex items-center justify-center bg-gold px-8 py-3 text-xs font-bold uppercase tracking-[0.24em] text-night hover:bg-gold-soft disabled:opacity-50"
+      >
+        {saving && <Spinner className="mr-2 border-night/30 border-t-night" />} Guardar tarjetas
       </button>
     </div>
   )
