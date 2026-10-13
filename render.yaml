@@ -43,7 +43,7 @@ services:
       - key: CLOUDINARY_URL
         sync: false
 
-      # Origen de tu frontend, p. ej. https://sultan-black.onrender.com
+      # Dominio propio del frontend. Ej.: https://sultanblack.com.co
       - key: SITE_URL
         sync: false
 
