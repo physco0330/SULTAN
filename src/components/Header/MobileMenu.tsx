@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Heart, ShoppingBag, User, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { useEffect } from 'react'
@@ -7,24 +7,12 @@ import { Logo } from '@/components/Logo'
 import { LanguageSelector } from '@/components/LanguageSelector'
 import { CurrencySelector } from '@/components/CurrencySelector'
 import { useUi } from '@/store/ui'
-import { cn } from '@/utils/cn'
-import { isFeatureEnabled } from '@/config/features'
 
+/* Mismas secciones que la barra de escritorio: Inicio / Catálogo / Ofertas. */
 const LINKS = [
   { to: '/', key: 'home' },
-  { to: '/hombre', key: 'men' },
-  ...(isFeatureEnabled('women') ? [{ to: '/mujer', key: 'women' }] : []),
-  { to: '/nueva-coleccion', key: 'newCollection' },
   { to: '/catalogo', key: 'catalog' },
   { to: '/ofertas', key: 'offers' },
-]
-
-const SECONDARY = [
-  { to: '/favoritos', key: 'nav.favorites', icon: Heart },
-  { to: '/admin', key: 'nav.account', icon: User },
-  { to: '/contacto', key: 'footer.contactTitle' },
-  { to: '/sobre-nosotros', key: 'about.title' },
-  { to: '/faq', key: 'faq.title' },
 ]
 
 export function MobileMenu() {
@@ -71,41 +59,11 @@ export function MobileMenu() {
               </li>
             ))}
           </ul>
-
-          <p className="mt-8 text-[0.62rem] font-semibold uppercase tracking-[0.3em] text-bone">
-            {t('account.title')}
-          </p>
-          <ul className="mt-2 space-y-1">
-            {SECONDARY.map((l) => {
-              const Icon = 'icon' in l ? l.icon : undefined
-              return (
-                <li key={l.to}>
-                  <Link
-                    to={l.to}
-                    onClick={close}
-                    className={cn('flex items-center gap-3 py-3 text-sm text-silver transition-colors hover:text-gold')}
-                  >
-                    {Icon && <Icon size={16} />} {t(l.key)}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
         </nav>
 
-        <div className="flex items-center justify-between gap-2 border-t border-gold/15 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <LanguageSelector />
-          </div>
-          <CurrencySelector />
-          <div className="flex items-center gap-1 text-silver">
-            <Link to="/favoritos" aria-label={t('nav.favorites')} className="p-2 hover:text-gold" onClick={close}>
-              <Heart size={18} />
-            </Link>
-            <Link to="/carrito" aria-label={t('nav.cart')} className="p-2 hover:text-gold" onClick={close}>
-              <ShoppingBag size={18} />
-            </Link>
-          </div>
+        <div className="space-y-1 border-t border-gold/15 px-4 py-3">
+          <LanguageSelector menu />
+          <CurrencySelector menu />
         </div>
       </aside>
     </div>,

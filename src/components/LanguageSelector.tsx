@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/utils/cn'
 import { CountryFlag } from '@/components/CountryFlag'
 
-export function LanguageSelector({ compact = false }: { compact?: boolean }) {
+export function LanguageSelector({ compact = false, menu = false }: { compact?: boolean; menu?: boolean }) {
   const { t } = useTranslation()
   const { language, setLanguage } = useLanguage()
   const [open, setOpen] = useState(false)
@@ -17,13 +17,14 @@ export function LanguageSelector({ compact = false }: { compact?: boolean }) {
   const current = getLanguage(language)
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={cn('relative', menu && 'w-full')}>
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={t('misc.language')}
         className={cn(
           'flex h-10 items-center gap-1.5 px-2 text-xs font-medium uppercase tracking-widest text-silver transition-colors hover:text-gold',
+          menu && 'w-full justify-between',
         )}
       >
         {compact ? <Languages size={16} /> : null}
@@ -32,7 +33,12 @@ export function LanguageSelector({ compact = false }: { compact?: boolean }) {
         <ChevronDown size={12} className={cn('transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
-        <div className="absolute end-0 top-full mt-2 max-h-80 w-52 overflow-y-auto border border-gold/25 bg-carbon py-2 shadow-2xl shadow-black/70 animate-scale-in">
+        <div
+          className={cn(
+            'absolute overflow-y-auto border border-gold/25 bg-carbon py-2 shadow-2xl shadow-black/70 animate-scale-in',
+            menu ? 'bottom-full mb-2 start-0 max-h-[55vh] w-full' : 'end-0 top-full mt-2 max-h-80 w-52',
+          )}
+        >
           <p className="px-4 pb-2 pt-1 text-[0.6rem] font-semibold uppercase tracking-[0.3em] text-bone">
             {t('misc.language')}
           </p>

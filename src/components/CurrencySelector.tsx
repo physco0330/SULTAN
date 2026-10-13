@@ -8,7 +8,7 @@ import { useClickOutside } from '@/hooks/useClickOutside'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/utils/cn'
 
-export function CurrencySelector({ compact = false }: { compact?: boolean }) {
+export function CurrencySelector({ compact = false, menu = false }: { compact?: boolean; menu?: boolean }) {
   const { t } = useTranslation()
   const { country, code, manual, setCountry, setCode, resetToCountryCurrency } = useCurrency()
   const [open, setOpen] = useState(false)
@@ -25,12 +25,15 @@ export function CurrencySelector({ compact = false }: { compact?: boolean }) {
   const current = getCountry(country)
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={cn('relative', menu && 'w-full')}>
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={t('misc.currency')}
-        className="flex h-10 items-center gap-1.5 px-2 text-xs font-medium tracking-widest text-silver transition-colors hover:text-gold"
+        className={cn(
+          'flex h-10 items-center gap-1.5 px-2 text-xs font-medium tracking-widest text-silver transition-colors hover:text-gold',
+          menu && 'w-full justify-between',
+        )}
       >
         {compact ? <Coins size={16} /> : null}
         <span className="hidden sm:inline">{current.code}</span>
@@ -39,7 +42,12 @@ export function CurrencySelector({ compact = false }: { compact?: boolean }) {
       </button>
 
       {open && (
-        <div className="absolute end-0 top-full z-50 mt-2 w-72 border border-gold/25 bg-carbon shadow-2xl shadow-black/70 animate-scale-in">
+        <div
+          className={cn(
+            'absolute z-50 border border-gold/25 bg-carbon shadow-2xl shadow-black/70 animate-scale-in',
+            menu ? 'bottom-full mb-2 start-0 w-full' : 'end-0 top-full mt-2 w-72',
+          )}
+        >
           <div className="flex border-b border-gold/15">
             <button
               onClick={() => setTab('country')}
