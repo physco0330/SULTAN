@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { heroImage, categoryImage, editorialImage } from '@/utils/placeholder'
+import { matchesCollection } from '@/utils/collections'
 import { useCatalog } from '@/hooks/useCatalog'
 import { useStoreConfig } from '@/hooks/useStoreConfig'
 import { Reveal } from '@/components/Reveal'
@@ -124,8 +125,8 @@ function Categories() {
 function Featured() {
   const { t } = useTranslation()
   const { products } = useCatalog()
-  /* Edición limitada: solo productos de la colección "limited" (la API ya devuelve activos), máximo 5. */
-  const featured = products.filter((p) => p.collection === 'limited').slice(0, 5)
+  /* Edición limitada: colección "limited" o etiqueta "Edición limitada" (máx. 5). */
+  const featured = products.filter((p) => matchesCollection(p, 'limited')).slice(0, 5)
   return (
     <section className="border-y border-gold/10 bg-carbon/40 py-20 md:py-28">
       <div className="mx-auto max-w-[1600px] px-4 lg:px-8">

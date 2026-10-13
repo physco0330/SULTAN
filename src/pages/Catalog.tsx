@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { parseCatalogoParams, DEFAULT_FILTERS } from '@/components/Filters/filterState'
 import { isFeatureEnabled } from '@/config/features'
 import type { CollectionId } from '@/types'
+import { matchesCollection } from '@/utils/collections'
 
 interface CatalogPageProps {
   gender?: 'men' | 'women'
@@ -72,7 +73,7 @@ export default function Catalog({ gender, titleKey, presetCollection }: CatalogP
       if (state.categories.length && !state.categories.includes(p.category)) return false
       if (state.sizes.length && !state.sizes.some((s) => p.sizes.includes(s))) return false
       if (state.colors.length && !state.colors.some((c) => p.colors.some((pc) => pc.id === c))) return false
-      if (state.collections.length && !state.collections.includes(p.collection)) return false
+      if (state.collections.length && !state.collections.some((c) => matchesCollection(p, c))) return false
       if (state.quality.length && !state.quality.includes(p.quality)) return false
       if (state.availability.length) {
         const a =
