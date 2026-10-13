@@ -124,6 +124,10 @@ export function Footer() {
           </p>
           <p>{t('footer.madeIn')} — {brandConfig.address}</p>
         </div>
+
+        <p className="mt-8 text-center text-[0.6rem] font-light tracking-[0.2em] text-bone/40">
+          {t('footer.credits', 'Desarrollada por Mateo Ortiz y Miguel Ocampo')}
+        </p>
       </div>
     </footer>
   )
