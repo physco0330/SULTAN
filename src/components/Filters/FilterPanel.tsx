@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SIZES, FABRIC_COLORS } from '@/data/categories'
 import { cn } from '@/utils/cn'
@@ -5,6 +6,7 @@ import type { FilterState, SortKey } from './filterState'
 import type { Availability, CollectionId, Gender } from '@/types'
 import { isFeatureEnabled } from '@/config/features'
 import { useCategories, useCollections } from '@/hooks/useTaxonomies'
+import { useStoreConfig } from '@/hooks/useStoreConfig'
 
 
 type FilterCallbacks = Partial<FilterState>
@@ -72,6 +74,7 @@ export function FilterPanel({
   bounds: { min: number; max: number }
 }) {
   const { t, i18n } = useTranslation()
+  const cfg = useStoreConfig()
 
   const toggle = (field: 'genders' | 'categories' | 'sizes' | 'colors' | 'collections' | 'availability' | 'quality') => (id: string) => {
     const current = state[field] as string[]
@@ -91,7 +94,18 @@ export function FilterPanel({
     { id: 'out-of-stock', label: t('catalog.soldOut') },
   ]
 
-  const colorOptions = FABRIC_COLORS.map((c) => ({ id: c.id, label: c.id.charAt(0).toUpperCase() + c.id.slice(1), swatch: c.hex }))
+  const colorOptions = useMemo(() => {
+    const base = FABRIC_COLORS.map((c) => ({
+      id: c.id,
+      label: c.id.charAt(0).toUpperCase() + c.id.slice(1),
+      swatch: c.hex,
+    }))
+    const seen = new Set(base.map((c) => c.id))
+    const extra = (cfg.customColors ?? [])
+      .filter((c) => !seen.has(c.id))
+      .map((c) => ({ id: c.id, label: c.name || c.id, swatch: c.hex }))
+    return [...base, ...extra]
+  }, [cfg.customColors])
 
   const categories = useCategories()
   const allCollections = useCollections()

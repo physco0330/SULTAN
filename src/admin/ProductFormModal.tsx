@@ -1,20 +1,30 @@
-import { useEffect, useRef, useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Trash2, X } from 'lucide-react'
 import { Modal } from '@/components/Modal'
 import { useCategories, useCollections, createCategory, createCollection } from '@/hooks/useTaxonomies'
 import { convertPrice } from '@/data/currencies'
 import { useUi } from '@/store/ui'
 import { adminService } from '@/services/adminService'
 import { invalidateCatalogCache } from '@/hooks/useCatalog'
+import { invalidateConfigCache, useStoreConfig } from '@/hooks/useStoreConfig'
 import { SIZES, FABRIC_COLORS } from '@/data/categories'
 import { Spinner } from '@/admin/ui'
 import { ProductThumb } from '@/admin/ProductThumb'
 import { cn } from '@/utils/cn'
 import { isFeatureEnabled } from '@/config/features'
-import type { Gender, CollectionId, CategoryId, ProductQuality } from '@/types'
+import type { Gender, CollectionId, CategoryId, ProductQuality, ProductColor } from '@/types'
 import type { AdminProduct, ProductImageRow } from '@/services/adminService'
 
 const GENDERS: Gender[] = isFeatureEnabled('women') ? ['men', 'women', 'unisex'] : ['men', 'unisex']
+
+/** Identificador estable a partir del nombre comercial (sin acentos ni signos). */
+const colorIdFromName = (name: string) =>
+  name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 
 /** Los precios en COP se escriben con separadores de miles ("3.649.000"). */
 const copToNumber = (v: string) => Number(v.replace(/\D/g, ''))
@@ -85,12 +95,31 @@ export function ProductFormModal({
   const [productOptions, setProductOptions] = useState<AdminProduct[]>([])
   const [comboPick, setComboPick] = useState('')
   const [comboPhotos, setComboPhotos] = useState(true)
+  /* Paleta personalizada (global, se guarda en ajustes y se reutiliza en todos los productos). */
+  const cfg = useStoreConfig()
+  const [customColors, setCustomColors] = useState<ProductColor[]>([])
+  const [newColor, setNewColor] = useState({ name: '', hex: '#C9A227' })
   /* Último nombre/descripción generados por el combo: si el admin no los tocó,
    * se regeneran al añadir o quitar prendas. */
   const autoNameRef = useRef('')
   const autoDescRef = useRef('')
   const categories = useCategories()
   const collections = useCollections()
+
+  useEffect(() => {
+    setCustomColors(cfg.customColors ?? [])
+  }, [cfg.customColors])
+
+  /* Paleta base + colores agregados a mano (sin duplicados). */
+  const palette = useMemo(() => {
+    const base: ProductColor[] = FABRIC_COLORS.map((c) => ({
+      id: c.id,
+      name: c.id.charAt(0).toUpperCase() + c.id.slice(1),
+      hex: c.hex,
+    }))
+    const seen = new Set(base.map((c) => c.id))
+    return [...base, ...customColors.filter((c) => !seen.has(c.id))]
+  }, [customColors])
 
   useEffect(() => {
     if (!open) return
@@ -252,6 +281,42 @@ export function ProductFormModal({
     )
   }
 
+  /* --- Colores personalizados: se guardan en ajustes y quedan para todos los productos. --- */
+  const persistCustomColors = async (list: ProductColor[]) => {
+    try {
+      await adminService.saveSettings({ custom_colors: JSON.stringify(list) })
+      invalidateConfigCache()
+    } catch (err) {
+      pushToast(err instanceof Error ? err.message : 'No se pudo guardar el color', 'error')
+    }
+  }
+
+  const addCustomColor = () => {
+    const name = newColor.name.trim()
+    if (!name) {
+      pushToast('Escribe un nombre para el color', 'error')
+      return
+    }
+    const taken = new Set(palette.map((c) => c.id))
+    const base = colorIdFromName(name) || 'color'
+    let id = base
+    for (let n = 2; taken.has(id); n += 1) id = `${base}-${n}`
+    const color: ProductColor = { id, name, hex: newColor.hex }
+    const list = [...customColors.filter((c) => c.id !== id), color]
+    setCustomColors(list)
+    if (!form.colors.includes(id)) set('colors', [...form.colors, id])
+    setNewColor({ name: '', hex: '#C9A227' })
+    void persistCustomColors(list)
+    pushToast(`Color "${name}" agregado`)
+  }
+
+  const removeCustomColor = (id: string) => {
+    const list = customColors.filter((c) => c.id !== id)
+    setCustomColors(list)
+    if (form.colors.includes(id)) set('colors', form.colors.filter((x) => x !== id))
+    void persistCustomColors(list)
+  }
+
   const validate = () => {
     const er: Record<string, string> = {}
     if (!form.name.trim()) er.name = 'El nombre es obligatorio'
@@ -280,11 +345,17 @@ export function ProductFormModal({
       material: form.material.trim() || 'Premium cotton blend',
       sku: product?.sku ?? '',
       description: form.description.trim(),
-      colors: FABRIC_COLORS.filter((c) => form.colors.includes(c.id)).map((c) => ({
-        id: c.id,
-        name: c.id.charAt(0).toUpperCase() + c.id.slice(1),
-        hex: c.hex,
-      })),
+      colors: (() => {
+        /* Resuelve los colores elegidos contra la paleta actual y, si alguno ya no
+         * está (p. ej. un color personalizado borrado), conserva el del producto. */
+        const map = new Map<string, ProductColor>()
+        for (const c of product?.colors ?? []) map.set(c.id, c)
+        for (const c of palette) if (!map.has(c.id)) map.set(c.id, c)
+        return form.colors
+          .map((id) => map.get(id))
+          .filter((c): c is ProductColor => Boolean(c))
+          .map((c) => ({ id: c.id, name: c.name, hex: c.hex }))
+      })(),
       sizes: form.sizes.length ? form.sizes : form.category === 'accessories' ? ['OS'] : ['S', 'M', 'L', 'XL', 'XXL'],
       featured: form.featured,
       isNew: form.isNew,
@@ -509,12 +580,12 @@ export function ProductFormModal({
         <div>
           <label className={label}>Colores</label>
           <div className="flex flex-wrap gap-2">
-            {FABRIC_COLORS.map((c) => (
+            {palette.map((c) => (
               <button
                 key={c.id}
                 type="button"
-                aria-label={c.id}
-                title={c.id}
+                aria-label={c.name}
+                title={`${c.name}${customColors.some((x) => x.id === c.id) ? ' (personalizado)' : ''}`}
                 onClick={() =>
                   set('colors', form.colors.includes(c.id) ? form.colors.filter((x) => x !== c.id) : [...form.colors, c.id])
                 }
@@ -526,6 +597,57 @@ export function ProductFormModal({
               />
             ))}
           </div>
+
+          {/* Agregar un color a mano: queda guardado para todos los productos. */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <input
+              type="color"
+              value={newColor.hex}
+              onChange={(e) => setNewColor((c) => ({ ...c, hex: e.target.value }))}
+              aria-label="Elegir color"
+              title="Elegir color"
+              className="h-9 w-12 shrink-0 cursor-pointer border border-gold/25 bg-night p-1"
+            />
+            <input
+              type="text"
+              value={newColor.name}
+              onChange={(e) => setNewColor((c) => ({ ...c, name: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  addCustomColor()
+                }
+              }}
+              placeholder="Nombre del color (ej. Verde militar)"
+              className="min-w-[160px] flex-1 border border-gold/25 bg-night px-3 py-2 text-sm text-ivory focus:border-gold focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={addCustomColor}
+              disabled={!newColor.name.trim()}
+              className="border border-gold/40 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-gold hover:bg-gold/10 disabled:opacity-40"
+            >
+              Agregar color
+            </button>
+          </div>
+          {customColors.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {customColors.map((c) => (
+                <span key={c.id} className="inline-flex items-center gap-1.5 border border-gold/20 px-2 py-1 text-[0.7rem] text-bone">
+                  <span className="h-3 w-3 rounded-full border border-bone/30" style={{ backgroundColor: c.hex }} />
+                  {c.name}
+                  <button
+                    type="button"
+                    onClick={() => removeCustomColor(c.id)}
+                    aria-label={`Quitar color ${c.name}`}
+                    className="text-bone hover:text-red-400"
+                  >
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-2 grid grid-cols-2 gap-3 border-t border-gold/15 pt-4 sm:grid-cols-3">

@@ -326,6 +326,17 @@ app.get('/api/config', async (_req, res) => {
         return []
       }
     })(),
+    customColors: (() => {
+      try {
+        const arr = JSON.parse(get('custom_colors') || '[]')
+        if (!Array.isArray(arr)) return []
+        return arr
+          .map((x) => ({ id: String(x?.id ?? ''), name: String(x?.name ?? ''), hex: String(x?.hex ?? '') }))
+          .filter((x) => x.id && x.hex)
+      } catch {
+        return []
+      }
+    })(),
   })
 })
 
@@ -1042,7 +1053,7 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
     'company_whatsapp', 'company_address', 'default_currency', 'free_shipping_threshold',
     'flat_shipping', 'express_shipping', 'instagram_url', 'announcement_bar',
     'philosophy_title', 'philosophy_text', 'philosophy_image_1', 'philosophy_image_2', 'philosophy_items',
-    'category_image_1', 'category_image_2', 'category_image_3', 'category_image_4',
+    'category_image_1', 'category_image_2', 'category_image_3', 'category_image_4', 'custom_colors',
   ]
   const entries = {}
   for (const k of allowed) {

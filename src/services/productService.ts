@@ -6,7 +6,7 @@ import { PRODUCTS, getProduct, getRelated } from '@/data/products'
 import { productImage } from '@/utils/placeholder'
 import { applyPromo, discountAmount, FLAT_SHIPPING_USD, FREE_SHIPPING_THRESHOLD_USD, EXPRESS_SHIPPING_USD } from '@/services/discounts'
 import { api, ApiError, isApiOffline } from '@/services/api'
-import type { Product, Gender, CollectionId, CategoryId } from '@/types'
+import type { Product, Gender, CollectionId, CategoryId, ProductColor } from '@/types'
 import type { PhilosophyItem } from '@/data/philosophy'
 
 /* ---------------- mapping ---------------- */
@@ -190,6 +190,7 @@ export interface StoreConfig {
   philosophyImage2: string
   philosophyItems: PhilosophyItem[]
   categoryImages: string[]
+  customColors: ProductColor[]
 }
 
 export const FALLBACK_CONFIG: StoreConfig = {
@@ -211,6 +212,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   philosophyImage2: '',
   philosophyItems: [],
   categoryImages: [],
+  customColors: [],
 }
 
 export async function fetchConfig(): Promise<StoreConfig> {
