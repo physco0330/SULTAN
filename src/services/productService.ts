@@ -191,6 +191,7 @@ export interface StoreConfig {
   philosophyItems: PhilosophyItem[]
   categoryImages: string[]
   customColors: ProductColor[]
+  hiddenColors: string[]
 }
 
 export const FALLBACK_CONFIG: StoreConfig = {
@@ -213,6 +214,7 @@ export const FALLBACK_CONFIG: StoreConfig = {
   philosophyItems: [],
   categoryImages: [],
   customColors: [],
+  hiddenColors: [],
 }
 
 export async function fetchConfig(): Promise<StoreConfig> {

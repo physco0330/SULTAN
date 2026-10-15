@@ -95,6 +95,7 @@ export function FilterPanel({
   ]
 
   const colorOptions = useMemo(() => {
+    const hidden = new Set(cfg.hiddenColors ?? [])
     const base = FABRIC_COLORS.map((c) => ({
       id: c.id,
       label: c.id.charAt(0).toUpperCase() + c.id.slice(1),
@@ -104,8 +105,8 @@ export function FilterPanel({
     const extra = (cfg.customColors ?? [])
       .filter((c) => !seen.has(c.id))
       .map((c) => ({ id: c.id, label: c.name || c.id, swatch: c.hex }))
-    return [...base, ...extra]
-  }, [cfg.customColors])
+    return [...base, ...extra].filter((c) => !hidden.has(c.id))
+  }, [cfg.customColors, cfg.hiddenColors])
 
   const categories = useCategories()
   const allCollections = useCollections()

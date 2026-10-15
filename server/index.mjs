@@ -337,6 +337,14 @@ app.get('/api/config', async (_req, res) => {
         return []
       }
     })(),
+    hiddenColors: (() => {
+      try {
+        const arr = JSON.parse(get('hidden_colors') || '[]')
+        return Array.isArray(arr) ? arr.map((x) => String(x)).filter(Boolean) : []
+      } catch {
+        return []
+      }
+    })(),
   })
 })
 
@@ -1054,6 +1062,7 @@ app.put('/api/admin/settings', requireAuth, async (req, res) => {
     'flat_shipping', 'express_shipping', 'instagram_url', 'announcement_bar',
     'philosophy_title', 'philosophy_text', 'philosophy_image_1', 'philosophy_image_2', 'philosophy_items',
     'category_image_1', 'category_image_2', 'category_image_3', 'category_image_4', 'custom_colors',
+    'hidden_colors',
   ]
   const entries = {}
   for (const k of allowed) {

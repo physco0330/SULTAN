@@ -98,6 +98,8 @@ export function ProductFormModal({
   /* Paleta personalizada (global, se guarda en ajustes y se reutiliza en todos los productos). */
   const cfg = useStoreConfig()
   const [customColors, setCustomColors] = useState<ProductColor[]>([])
+  const [hiddenColors, setHiddenColors] = useState<string[]>([])
+  const [editingPalette, setEditingPalette] = useState(false)
   const [newColor, setNewColor] = useState({ name: '', hex: '#C9A227' })
   /* Último nombre/descripción generados por el combo: si el admin no los tocó,
    * se regeneran al añadir o quitar prendas. */
@@ -108,18 +110,27 @@ export function ProductFormModal({
 
   useEffect(() => {
     setCustomColors(cfg.customColors ?? [])
-  }, [cfg.customColors])
+    setHiddenColors(cfg.hiddenColors ?? [])
+  }, [cfg.customColors, cfg.hiddenColors])
 
-  /* Paleta base + colores agregados a mano (sin duplicados). */
-  const palette = useMemo(() => {
-    const base: ProductColor[] = FABRIC_COLORS.map((c) => ({
-      id: c.id,
-      name: c.id.charAt(0).toUpperCase() + c.id.slice(1),
-      hex: c.hex,
-    }))
-    const seen = new Set(base.map((c) => c.id))
-    return [...base, ...customColors.filter((c) => !seen.has(c.id))]
-  }, [customColors])
+  const hiddenSet = useMemo(() => new Set(hiddenColors), [hiddenColors])
+
+  /* Toda la paleta disponible: base + colores propios + los del producto, sin duplicados. */
+  const allPalette = useMemo(() => {
+    const map = new Map<string, ProductColor>()
+    for (const c of FABRIC_COLORS) map.set(c.id, { id: c.id, name: c.id.charAt(0).toUpperCase() + c.id.slice(1), hex: c.hex })
+    for (const c of customColors) map.set(c.id, c)
+    for (const c of product?.colors ?? []) if (!map.has(c.id)) map.set(c.id, c)
+    return [...map.values()]
+  }, [customColors, product])
+
+  /* Colores visibles: se ocultan los que no interesan, salvo que el producto ya los use. */
+  const palette = useMemo(
+    () => allPalette.filter((c) => !hiddenSet.has(c.id) || form.colors.includes(c.id)),
+    [allPalette, hiddenSet, form.colors],
+  )
+
+  const paletteById = useMemo(() => new Map(allPalette.map((c) => [c.id, c])), [allPalette])
 
   useEffect(() => {
     if (!open) return
@@ -127,6 +138,7 @@ export function ProductFormModal({
     setPending([])
     setComboPick('')
     setComboPhotos(true)
+    setEditingPalette(false)
     autoNameRef.current = ''
     autoDescRef.current = ''
     adminService
@@ -282,14 +294,17 @@ export function ProductFormModal({
   }
 
   /* --- Colores personalizados: se guardan en ajustes y quedan para todos los productos. --- */
-  const persistCustomColors = async (list: ProductColor[]) => {
+  const persistSettings = async (entries: Record<string, string>, errorMsg: string) => {
     try {
-      await adminService.saveSettings({ custom_colors: JSON.stringify(list) })
+      await adminService.saveSettings(entries)
       invalidateConfigCache()
     } catch (err) {
-      pushToast(err instanceof Error ? err.message : 'No se pudo guardar el color', 'error')
+      pushToast(err instanceof Error ? err.message : errorMsg, 'error')
     }
   }
+
+  const persistCustomColors = (list: ProductColor[]) => persistSettings({ custom_colors: JSON.stringify(list) }, 'No se pudo guardar el color')
+  const persistHiddenColors = (list: string[]) => persistSettings({ hidden_colors: JSON.stringify(list) }, 'No se pudo guardar la paleta')
 
   const addCustomColor = () => {
     const name = newColor.name.trim()
@@ -297,24 +312,44 @@ export function ProductFormModal({
       pushToast('Escribe un nombre para el color', 'error')
       return
     }
-    const taken = new Set(palette.map((c) => c.id))
+    const taken = new Set(allPalette.map((c) => c.id))
     const base = colorIdFromName(name) || 'color'
     let id = base
     for (let n = 2; taken.has(id); n += 1) id = `${base}-${n}`
     const color: ProductColor = { id, name, hex: newColor.hex }
     const list = [...customColors.filter((c) => c.id !== id), color]
     setCustomColors(list)
+    /* Si estaba oculto, al recrearlo vuelve a mostrarse. */
+    if (hiddenSet.has(id)) {
+      const nextHidden = hiddenColors.filter((x) => x !== id)
+      setHiddenColors(nextHidden)
+      void persistHiddenColors(nextHidden)
+    }
     if (!form.colors.includes(id)) set('colors', [...form.colors, id])
     setNewColor({ name: '', hex: '#C9A227' })
     void persistCustomColors(list)
     pushToast(`Color "${name}" agregado`)
   }
 
-  const removeCustomColor = (id: string) => {
-    const list = customColors.filter((c) => c.id !== id)
-    setCustomColors(list)
+  /** Quita un color de la paleta: los agregados a mano se borran; los predefinidos se ocultan. */
+  const removeColor = (id: string) => {
+    if (customColors.some((c) => c.id === id)) {
+      const list = customColors.filter((c) => c.id !== id)
+      setCustomColors(list)
+      void persistCustomColors(list)
+    } else {
+      const list = [...new Set([...hiddenColors, id])]
+      setHiddenColors(list)
+      void persistHiddenColors(list)
+    }
     if (form.colors.includes(id)) set('colors', form.colors.filter((x) => x !== id))
-    void persistCustomColors(list)
+  }
+
+  /** Vuelve a mostrar un color predefinido oculto. */
+  const restoreColor = (id: string) => {
+    const list = hiddenColors.filter((x) => x !== id)
+    setHiddenColors(list)
+    void persistHiddenColors(list)
   }
 
   const validate = () => {
@@ -350,7 +385,7 @@ export function ProductFormModal({
          * está (p. ej. un color personalizado borrado), conserva el del producto. */
         const map = new Map<string, ProductColor>()
         for (const c of product?.colors ?? []) map.set(c.id, c)
-        for (const c of palette) if (!map.has(c.id)) map.set(c.id, c)
+        for (const c of allPalette) if (!map.has(c.id)) map.set(c.id, c)
         return form.colors
           .map((id) => map.get(id))
           .filter((c): c is ProductColor => Boolean(c))
@@ -578,25 +613,74 @@ export function ProductFormModal({
         </div>
 
         <div>
-          <label className={label}>Colores</label>
-          <div className="flex flex-wrap gap-2">
-            {palette.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                aria-label={c.name}
-                title={`${c.name}${customColors.some((x) => x.id === c.id) ? ' (personalizado)' : ''}`}
-                onClick={() =>
-                  set('colors', form.colors.includes(c.id) ? form.colors.filter((x) => x !== c.id) : [...form.colors, c.id])
-                }
-                className={cn(
-                  'h-7 w-7 rounded-full border transition-all',
-                  form.colors.includes(c.id) ? 'border-gold ring-2 ring-gold/40 ring-offset-2 ring-offset-carbon' : 'border-bone/40',
-                )}
-                style={{ backgroundColor: c.hex }}
-              />
-            ))}
+          <div className="flex items-center justify-between gap-2">
+            <label className={label}>Colores</label>
+            <button
+              type="button"
+              onClick={() => setEditingPalette((v) => !v)}
+              className="text-[0.62rem] font-semibold uppercase tracking-widest text-gold hover:underline"
+            >
+              {editingPalette ? 'Listo' : 'Editar paleta'}
+            </button>
           </div>
+
+          <div className="flex flex-wrap gap-2">
+            {palette.map((c) => {
+              const custom = customColors.some((x) => x.id === c.id)
+              const hidden = hiddenSet.has(c.id)
+              return (
+                <div key={c.id} className="relative">
+                  <button
+                    type="button"
+                    aria-label={c.name}
+                    title={`${c.name}${custom ? ' (personalizado)' : ''}${hidden ? ' (oculto, en uso)' : ''}`}
+                    onClick={() =>
+                      set('colors', form.colors.includes(c.id) ? form.colors.filter((x) => x !== c.id) : [...form.colors, c.id])
+                    }
+                    className={cn(
+                      'h-7 w-7 rounded-full border transition-all',
+                      form.colors.includes(c.id) ? 'border-gold ring-2 ring-gold/40 ring-offset-2 ring-offset-carbon' : 'border-bone/40',
+                    )}
+                    style={{ backgroundColor: c.hex }}
+                  />
+                  {editingPalette && (
+                    <button
+                      type="button"
+                      onClick={() => removeColor(c.id)}
+                      aria-label={`Quitar color ${c.name}`}
+                      title={custom ? 'Eliminar color' : 'Ocultar color'}
+                      className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-carbon bg-night text-red-400 hover:bg-red-500 hover:text-ivory"
+                    >
+                      <X size={10} />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {editingPalette && hiddenColors.length > 0 && (
+            <div className="mt-3">
+              <p className="text-[0.62rem] font-semibold uppercase tracking-widest text-bone">Colores ocultos</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {hiddenColors
+                  .map((id) => paletteById.get(id) ?? { id, name: id, hex: '#553a6b' })
+                  .map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => restoreColor(c.id)}
+                      title={`Volver a mostrar ${c.name}`}
+                      className="inline-flex items-center gap-1.5 border border-dashed border-gold/30 px-2 py-1 text-[0.7rem] text-bone hover:border-gold/60 hover:text-gold"
+                    >
+                      <span className="h-3 w-3 rounded-full border border-bone/30 opacity-50" style={{ backgroundColor: c.hex }} />
+                      {c.name}
+                      <span className="text-gold">↩</span>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
 
           {/* Agregar un color a mano: queda guardado para todos los productos. */}
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -630,24 +714,6 @@ export function ProductFormModal({
               Agregar color
             </button>
           </div>
-          {customColors.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {customColors.map((c) => (
-                <span key={c.id} className="inline-flex items-center gap-1.5 border border-gold/20 px-2 py-1 text-[0.7rem] text-bone">
-                  <span className="h-3 w-3 rounded-full border border-bone/30" style={{ backgroundColor: c.hex }} />
-                  {c.name}
-                  <button
-                    type="button"
-                    onClick={() => removeCustomColor(c.id)}
-                    aria-label={`Quitar color ${c.name}`}
-                    className="text-bone hover:text-red-400"
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="md:col-span-2 grid grid-cols-2 gap-3 border-t border-gold/15 pt-4 sm:grid-cols-3">
