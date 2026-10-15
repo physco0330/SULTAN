@@ -328,9 +328,6 @@ export default function Product() {
 
           {/* Accordions */}
           <div className="mt-8">
-            <AccordionItem title={t('product.description')} defaultOpen>
-              {product.description}
-            </AccordionItem>
             <AccordionItem title={t('product.material')}>{product.material}</AccordionItem>
             <AccordionItem title={t('product.manufacturing')}>{t('product.manufacturingText')}</AccordionItem>
             <AccordionItem title={t('product.care')}>{t('product.careText')}</AccordionItem>

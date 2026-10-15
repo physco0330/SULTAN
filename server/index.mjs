@@ -236,7 +236,11 @@ function productBody(body, { partial = false } = {}) {
   if (has('gender')) out.gender = ['men', 'women', 'unisex'].includes(body.gender) ? body.gender : 'unisex'
   if (has('collection')) out.collection = String(body.collection ?? 'new').trim()
   if (has('price')) out.price = toNum(body.price)
-  if (has('compareAtPrice')) out.compareAtPrice = body.compareAtPrice === undefined || body.compareAtPrice === '' ? null : toNum(body.compareAtPrice)
+  if (has('compareAtPrice')) {
+    const raw = body.compareAtPrice
+    const n = raw === undefined || raw === null || raw === '' ? 0 : toNum(raw)
+    out.compareAtPrice = n > 0 ? n : null
+  }
   if (has('stock')) out.stock = Math.max(0, Math.floor(toNum(body.stock)))
   if (has('featured')) out.featured = toBool(body.featured)
   if (has('isNew')) out.isNew = toBool(body.isNew)
@@ -551,6 +555,62 @@ app.post('/api/admin/products/:id/images', requireAuth, rateLimit('upload', 60),
 
   await audit(req.auth.username, 'image.upload', 'product_images', product.id, `Subió ${saved.length} imagen(es) para ${product.name}`)
   res.status(201).json({ items: saved })
+})
+
+/* Copia las fotos de las prendas de un combo (sube copias propias a Cloudinary
+ * para que borrar el combo nunca borre las fotos de las prendas originales). */
+app.post('/api/admin/products/:id/combo-images', requireAuth, rateLimit('upload', 60), async (req, res) => {
+  const product = await products.getProductRow(req.params.id)
+  if (!product) return res.status(404).json({ error: 'Producto no encontrado' })
+
+  const sourceIds = Array.isArray(req.body.productIds)
+    ? [...new Set(req.body.productIds.map((x) => String(x ?? '').trim()).filter(Boolean))].slice(0, 12)
+    : []
+  if (sourceIds.length === 0) return res.status(422).json({ error: 'Elige al menos una prenda para el combo' })
+
+  const sources = await products.publishedImagesForProducts(sourceIds)
+  if (sources.length === 0) return res.status(422).json({ error: 'Las prendas elegidas no tienen fotos publicadas' })
+
+  const existing = await products.listProductImages(product.id)
+  const existingUrls = new Set(existing.map((im) => im.path))
+
+  const perProduct = new Map()
+  const selected = []
+  for (const im of sources) {
+    const used = perProduct.get(im.product_id) ?? 0
+    if (used >= 4) continue
+    perProduct.set(im.product_id, used + 1)
+    if (existingUrls.has(im.path)) continue
+    selected.push(im)
+    if (selected.length >= 12) break
+  }
+  if (selected.length === 0) return res.status(422).json({ error: 'Las fotos de esas prendas ya están en el combo' })
+
+  const uploaded = []
+  try {
+    for (const im of selected) {
+      const r = await fetch(im.path)
+      if (!r.ok) throw new Error(`No se pudo descargar la foto ${im.path}`)
+      const buf = Buffer.from(await r.arrayBuffer())
+      uploaded.push(await uploadProductImage(buf, product.id))
+    }
+    const saved = await products.addProductImages(
+      product.id,
+      selected.map((im, i) => ({
+        path: uploaded[i].url,
+        publicId: uploaded[i].publicId,
+        alt: im.alt || product.name,
+        status: 'published',
+      })),
+    )
+    await audit(req.auth.username, 'image.upload', 'product_images', product.id, `Combinó ${saved.length} foto(s) en ${product.name}`)
+    res.status(201).json({ items: saved })
+  } catch (err) {
+    await Promise.all(uploaded.map((u) => destroyImage(u.publicId)))
+    if (err instanceof StoreError) return res.status(err.status).json({ error: err.message })
+    console.error('[combo imágenes]', err)
+    return res.status(500).json({ error: 'No se pudieron combinar las fotos' })
+  }
 })
 
 app.patch('/api/admin/images/:id', requireAuth, async (req, res) => {

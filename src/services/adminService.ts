@@ -270,6 +270,9 @@ export const adminService = {
     productId: string,
     images: { data: string; alt?: string; status?: ImageStatus }[],
   ) => api.post<{ items: ProductImageRow[] }>(`/admin/products/${encodeURIComponent(productId)}/images`, { images }),
+  /** Copia las fotos publicadas de las prendas elegidas para armar el combo. */
+  comboImages: (productId: string, productIds: string[]) =>
+    api.post<{ items: ProductImageRow[] }>(`/admin/products/${encodeURIComponent(productId)}/combo-images`, { productIds }),
   updateImage: (id: number, patch: { alt?: string; status?: ImageStatus; isPrimary?: boolean }) =>
     api.patch<{ ok: boolean }>(`/admin/images/${id}`, patch),
   reorderImages: (ids: number[]) => api.post<{ ok: boolean }>('/admin/images/reorder', { ids }),

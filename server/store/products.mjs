@@ -76,7 +76,9 @@ export function shape(p, catalog, admin) {
     gender: p.gender,
     collection: p.collection,
     price: p.price,
-    compareAtPrice: p.compare_at_price ?? null,
+    /* Un precio normal ausente se guardó históricamente como 0 (no null):
+     * se normaliza aquí para que la ficha nunca muestre "$ 0". */
+    compareAtPrice: Number(p.compare_at_price) > 0 ? Number(p.compare_at_price) : null,
     currency: p.currency,
     stock: p.stock,
     rating: rr.rating,
@@ -197,7 +199,7 @@ function productDoc(id, slug, sku, b, createdAt) {
     gender: b.gender,
     collection: b.collection,
     price: b.price,
-    compare_at_price: b.compareAtPrice,
+    compare_at_price: Number(b.compareAtPrice) > 0 ? Number(b.compareAtPrice) : null,
     currency: 'USD',
     stock: b.stock,
     featured: b.featured,
@@ -273,7 +275,10 @@ export async function patchProduct(id, body) {
   if (body.active !== undefined) changes.active = toBool(body.active)
   if (body.stock !== undefined) changes.stock = Math.max(0, Math.floor(toNum(body.stock)))
   if (body.price !== undefined) changes.price = toNum(body.price)
-  if (body.compareAtPrice !== undefined) changes.compare_at_price = body.compareAtPrice === '' ? null : toNum(body.compareAtPrice)
+  if (body.compareAtPrice !== undefined) {
+    const n = body.compareAtPrice === null || body.compareAtPrice === '' ? 0 : toNum(body.compareAtPrice)
+    changes.compare_at_price = n > 0 ? n : null
+  }
   if (body.featured !== undefined) changes.featured = toBool(body.featured)
   if (body.quality !== undefined) {
     if (!['original', 'turkish'].includes(body.quality)) throw new StoreError(422, 'Calidad no válida')
@@ -311,6 +316,25 @@ export async function listAdminImages(q) {
 export async function listProductImages(productId) {
   const rows = await listWhere('product_images', 'product_id', productId)
   return rows.sort(byImageOrder)
+}
+
+/**
+ * Fotos publicadas de varias prendas, en el orden en que deben combinarse
+ * al armar un combo (primero por prenda, luego portada y posición).
+ */
+export async function publishedImagesForProducts(productIds) {
+  const ids = new Set((productIds ?? []).map((id) => String(id)))
+  if (ids.size === 0) return []
+  const images = await listAll('product_images')
+  return images
+    .filter((im) => ids.has(im.product_id) && im.status === 'published')
+    .sort(
+      (a, b) =>
+        cmpStr(a.product_id, b.product_id) ||
+        Number(b.is_primary) - Number(a.is_primary) ||
+        a.position - b.position ||
+        a.id - b.id,
+    )
 }
 
 export async function getProductRow(id) {

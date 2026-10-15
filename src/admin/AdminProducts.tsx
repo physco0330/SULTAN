@@ -142,7 +142,7 @@ export function AdminProducts() {
                       </div>
                     </div>
                   </Td>
-                  <Td>{usd(p.compareAtPrice ?? p.price)}</Td>
+                  <Td>{usd(p.compareAtPrice || p.price)}</Td>
                   <Td className="text-bone">{categories.find((c) => c.id === p.category)?.label ?? p.category}</Td>
                   <Td>{p.compareAtPrice ? <span className="text-gold">{usd(p.price)}</span> : <span className="text-bone">—</span>}</Td>
                   <Td>

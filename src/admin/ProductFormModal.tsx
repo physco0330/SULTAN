@@ -84,6 +84,11 @@ export function ProductFormModal({
   const [creatingBusy, setCreatingBusy] = useState(false)
   const [productOptions, setProductOptions] = useState<AdminProduct[]>([])
   const [comboPick, setComboPick] = useState('')
+  const [comboPhotos, setComboPhotos] = useState(true)
+  /* Último nombre/descripción generados por el combo: si el admin no los tocó,
+   * se regeneran al añadir o quitar prendas. */
+  const autoNameRef = useRef('')
+  const autoDescRef = useRef('')
   const categories = useCategories()
   const collections = useCollections()
 
@@ -92,6 +97,9 @@ export function ProductFormModal({
     setErrors({})
     setPending([])
     setComboPick('')
+    setComboPhotos(true)
+    autoNameRef.current = ''
+    autoDescRef.current = ''
     adminService
       .products()
       .then((r) => setProductOptions(r.items))
@@ -198,19 +206,50 @@ export function ProductFormModal({
   }
 
   /* --- Combos: agrupan prendas ya creadas y llevan su propio precio. --- */
+  /** Nombres y descripciones de las prendas elegidas, unidos en un solo texto. */
+  const comboNameFrom = (items: typeof form.comboItems) =>
+    items.length ? `Combo ${items.map((i) => i.name).join(' + ')}` : ''
+
+  const comboDescriptionFrom = (items: typeof form.comboItems) => {
+    if (items.length === 0) return ''
+    const lines = items.map((it) => {
+      const source = productOptions.find((o) => o.id === it.productId)
+      const qty = it.qty > 1 ? ` (x${it.qty})` : ''
+      const desc = (source?.description ?? '').trim()
+      return desc ? `• ${it.name}${qty}: ${desc}` : `• ${it.name}${qty}`
+    })
+    return `Este combo incluye:\n${lines.join('\n')}`
+  }
+
+  /** Aplica una nueva lista de prendas y, si el admin no editó a mano, rellena nombre y descripción. */
+  const applyComboItems = (items: typeof form.comboItems) => {
+    const autoName = comboNameFrom(items)
+    const autoDesc = comboDescriptionFrom(items)
+    setForm((f) => ({
+      ...f,
+      comboItems: items,
+      name: !f.name.trim() || f.name === autoNameRef.current ? autoName : f.name,
+      description: !f.description.trim() || f.description === autoDescRef.current ? autoDesc : f.description,
+    }))
+    autoNameRef.current = autoName
+    autoDescRef.current = autoDesc
+  }
+
   const addComboItem = () => {
     const picked = productOptions.find((p) => p.id === comboPick)
     if (!picked) return
-    set('comboItems', [...form.comboItems, { productId: picked.id, name: picked.name, qty: 1 }])
+    applyComboItems([...form.comboItems, { productId: picked.id, name: picked.name, qty: 1 }])
     setComboPick('')
   }
 
   const removeComboItem = (index: number) => {
-    set('comboItems', form.comboItems.filter((_, i) => i !== index))
+    applyComboItems(form.comboItems.filter((_, i) => i !== index))
   }
 
   const changeComboQty = (index: number, qty: number) => {
-    set('comboItems', form.comboItems.map((ci, i) => (i === index ? { ...ci, qty: Math.max(1, Math.min(99, qty)) } : ci)))
+    applyComboItems(
+      form.comboItems.map((ci, i) => (i === index ? { ...ci, qty: Math.max(1, Math.min(99, qty)) } : ci)),
+    )
   }
 
   const validate = () => {
@@ -272,6 +311,17 @@ export function ProductFormModal({
             failedImages += 1
           }
         }
+      }
+      /* Combo: combina las fotos de las prendas elegidas en el propio producto. */
+      const combinePhotos = !!savedId && form.isCombo && comboPhotos && form.comboItems.length > 0
+      if (combinePhotos && savedId) {
+        try {
+          await adminService.comboImages(savedId, form.comboItems.map((ci) => ci.productId))
+        } catch (err) {
+          pushToast(err instanceof Error ? err.message : 'No se pudieron combinar las fotos del combo', 'error')
+        }
+      }
+      if (savedId && (pending.length > 0 || combinePhotos)) {
         try {
           const imgs = await adminService.productImages(savedId)
           saved = { ...res.product, images: imgs.items.map((i) => ({ src: i.path, alt: i.alt })) }
@@ -506,7 +556,8 @@ export function ProductFormModal({
           <div className="md:col-span-2 space-y-3 border-t border-gold/15 pt-5">
             <label className={label}>Prendas del combo</label>
             <p className="text-[0.62rem] leading-relaxed text-bone">
-              Elige prendas ya creadas. El precio del combo es el precio de este producto; también puedes escribir el combo a mano en la descripción.
+              Elige prendas ya creadas: se unen sus <span className="text-gold">nombres</span>, <span className="text-gold">descripciones</span> y
+              (opcional) sus <span className="text-gold">fotos</span> para armar el combo. El precio del combo es el precio de este producto.
             </p>
             <div className="flex flex-wrap gap-2">
               <select
@@ -531,23 +582,38 @@ export function ProductFormModal({
               </button>
             </div>
             <ul className="space-y-1">
-              {form.comboItems.map((ci, i) => (
-                <li key={`${ci.productId}-${i}`} className="flex items-center justify-between gap-3 border border-gold/15 bg-night px-3 py-2 text-sm text-ivory">
-                  <span className="min-w-0 flex-1 truncate">{ci.name}</span>
-                  <span className="flex items-center gap-3">
-                    <span className="flex items-center gap-1">
-                      <button type="button" onClick={() => changeComboQty(i, ci.qty - 1)} aria-label="−" className="flex h-6 w-6 items-center justify-center border border-gold/25 text-gold hover:bg-gold/10">−</button>
-                      <span className="w-6 text-center">{ci.qty}</span>
-                      <button type="button" onClick={() => changeComboQty(i, ci.qty + 1)} aria-label="+" className="flex h-6 w-6 items-center justify-center border border-gold/25 text-gold hover:bg-gold/10">+</button>
+              {form.comboItems.map((ci, i) => {
+                const source = productOptions.find((o) => o.id === ci.productId)
+                return (
+                  <li key={`${ci.productId}-${i}`} className="flex items-center gap-3 border border-gold/15 bg-night px-3 py-2 text-sm text-ivory">
+                    <ProductThumb src={source?.images?.[0]?.src} alt={ci.name} className="h-10 w-8 shrink-0 border border-gold/15" />
+                    <span className="min-w-0 flex-1 truncate">{ci.name}</span>
+                    <span className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <button type="button" onClick={() => changeComboQty(i, ci.qty - 1)} aria-label="−" className="flex h-6 w-6 items-center justify-center border border-gold/25 text-gold hover:bg-gold/10">−</button>
+                        <span className="w-6 text-center">{ci.qty}</span>
+                        <button type="button" onClick={() => changeComboQty(i, ci.qty + 1)} aria-label="+" className="flex h-6 w-6 items-center justify-center border border-gold/25 text-gold hover:bg-gold/10">+</button>
+                      </span>
+                      <button type="button" onClick={() => removeComboItem(i)} aria-label="Quitar prenda" className="text-bone hover:text-red-400">
+                        <Trash2 size={14} />
+                      </button>
                     </span>
-                    <button type="button" onClick={() => removeComboItem(i)} aria-label="Quitar prenda" className="text-bone hover:text-red-400">
-                      <Trash2 size={14} />
-                    </button>
-                  </span>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
               {form.comboItems.length === 0 && <li className="text-xs text-bone">Sin prendas todavía.</li>}
             </ul>
+            {form.comboItems.length > 0 && (
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-ivory">
+                <input
+                  type="checkbox"
+                  checked={comboPhotos}
+                  onChange={(e) => setComboPhotos(e.target.checked)}
+                  className="h-4 w-4 accent-[#C9A227]"
+                />
+                Combinar las fotos de las prendas en el combo
+              </label>
+            )}
           </div>
         )}
 
