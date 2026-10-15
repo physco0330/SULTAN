@@ -26,12 +26,12 @@ function make(
     compareAtPrice,
     currency: 'USD',
     quality: (opts.quality ?? 'turkish') as ProductQuality,
-images: [
+    images: [
       { src: productImage(name, 0), alt: `${name} — front view` },
       { src: productImage(name, 1), alt: `${name} — detail view` },
       { src: productImage(name, 2), alt: `${name} — texture view` },
     ],
-    colors: opts.colors ?? [{ id: 'black', name: 'Black', hex: '#111111' }],
+    colors: opts.colors ?? allColors,
     sizes: opts.sizes ?? (category === 'accessories' ? ['OS'] : ['S', 'M', 'L', 'XL', 'XXL']),
     description:
       opts.description ??
@@ -50,13 +50,44 @@ images: [
   }
 }
 
+/* ---------- Complete color palette for SULTAN BLACK products ---------- */
+export const allColors = [
+  { id: 'black', name: 'Black', hex: '#111111' },
+  { id: 'gold', name: 'Gold', hex: '#C9A227' },
+  { id: 'silver', name: 'Silver', hex: '#C0C0C0' },
+  { id: 'navy', name: 'Navy', hex: '#000080' },
+  { id: 'white', name: 'White', hex: '#FFFFFF' },
+  { id: 'cream', name: 'Cream', hex: '#F5F5DC' },
+  { id: 'maroon', name: 'Maroon', hex: '#800000' },
+  { id: 'olive', name: 'Olive', hex: '#808000' },
+  { id: 'lime', name: 'Lime', hex: '#00FF00' },
+  { id: 'teal', name: 'Teal', hex: '#008080' },
+  { id: 'purple', name: 'Purple', hex: '#800080' },
+  { id: 'fuchsia', name: 'Fuchsia', hex: '#FF00FF' },
+  { id: 'orange', name: 'Orange', hex: '#FFA500' },
+  { id: 'yellow', name: 'Yellow', hex: '#FFFF00' },
+  { id: 'green', name: 'Green', hex: '#008000' },
+  { id: 'maroon', name: 'Maroon', hex: '#800000' },
+  { id: 'aqua', name: 'Aqua', hex: '#00FFFF' },
+  { id: 'brown', name: 'Brown', hex: '#A52A2A' },
+  { id: 'peach', name: 'Peach', hex: '#FFDAB9' },
+  { id: 'rose', name: 'Rose', hex: '#FF007F' },
+  { id: 'violet', name: 'Violet', hex: '#EE82EE' },
+  { id: 'indigo', name: 'Indigo', hex: '#4B0082' },
+  { id: 'turquoise', name: 'Turquoise', hex: '#40E0D0' },
+]
+
+/* ---------- Small palettes (keep backward compatibility) ---------- */
 const two = [
   { id: 'black', name: 'Black', hex: '#111111' },
   { id: 'gold', name: 'Gold', hex: '#C9A227' },
+  ...allColors,
 ]
+
 const metals = [
   { id: 'gold', name: 'Gold', hex: '#C9A227' },
   { id: 'silver', name: 'Silver', hex: '#C0C0C0' },
+  ...allColors,
 ]
 
 export const PRODUCTS: Product[] = [
